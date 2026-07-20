@@ -1,0 +1,73 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One web service running the Next.js app. Everything stateful lives elsewhere:
+# Postgres is Neon (via Pluggie), object storage is R2, auth is Clerk. So this
+# service is stateless and safe to scale horizontally.
+#
+# Deploy: Render Dashboard → New → Blueprint → point at this repo.
+# Secrets are marked `sync: false`, so Render prompts for them on first deploy
+# and stores them encrypted. They are deliberately NOT in this file — it is
+# committed to a git repo.
+
+services:
+  - type: web
+    name: hatchly-web
+    runtime: node
+    # `free` sleeps after ~15 min idle and cold-starts on the next request.
+    # Fine pre-launch; the spotlight settles lazily on read, so a sleeping
+    # service delays settlement rather than breaking it. Move to `starter`
+    # before you have users who'd feel the cold start.
+    plan: free
+    region: oregon
+    # The app is in a subdirectory; the repo root holds docs and the design spec.
+    rootDir: web
+    # `npm ci` (not `install`) so the lockfile is authoritative and builds are
+    # reproducible.
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    # Cheap liveness probe. Must NOT be `/` — that renders the stream and would
+    # spend the shared Pluggie rate limit on every health check.
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+
+    envVars:
+      # Next 16 needs a modern Node. Pin it so a platform default can't move
+      # the build out from under us.
+      - key: NODE_VERSION
+        value: "22"
+
+      # --- Public origin -------------------------------------------------
+      # NEXT_PUBLIC_* values are inlined at BUILD time, so this must be set
+      # before the build runs, not just at runtime. Without it metadataBase
+      # falls back to localhost and every shared link advertises an og:image
+      # no crawler can fetch — invisible in dev, total in production.
+      # Set it to the service's real URL (custom domain, or the onrender.com
+      # host) in the dashboard.
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+
+      # --- Pluggie -------------------------------------------------------
+      # Two DIFFERENT scopes; they are not interchangeable and swapping them
+      # fails with E_SCOPE.
+      #   delivery — public reads from the site
+      #   mcp      — server-side writes (economy, moderation). Full write access
+      #              to wallets and the ledger: treat as a production secret.
+      - key: AGENTX_DELIVERY_TOKEN
+        sync: false
+      - key: AGENTX_MCP_TOKEN
+        sync: false
+
+      # --- Clerk ---------------------------------------------------------
+      # The publishable key is public by design but is still inlined at build
+      # time, so it must be present for the build to produce a working client.
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+
+      # --- BYOK vault ----------------------------------------------------
+      # 32+ char random secret. Encrypts users' own Anthropic keys at rest
+      # (AES-256-GCM). ROTATING THIS ORPHANS EVERY STORED KEY — users would
+      # have to reconnect. Keep it stable across deploys.
+      - key: HATCHLY_KEY_SECRET
+        sync: false

@@ -45,6 +45,27 @@ API by design, so no client token can ever move money.
 
 For Claude Code, copy `.mcp.json.example` to `.mcp.json` and paste an MCP-scoped token.
 
+## Deploying
+
+[`render.yaml`](render.yaml) is a Render Blueprint: **New → Blueprint**, point it at this repo.
+It provisions one stateless web service — Postgres (Neon), object storage (R2) and auth (Clerk)
+all live outside it.
+
+Every secret is marked `sync: false`, so Render prompts for the values on first deploy and
+stores them encrypted rather than keeping them in this repo. Set all six from the table above.
+
+Two things that bite:
+
+- `NEXT_PUBLIC_*` values are **inlined at build time**, not read at runtime. `NEXT_PUBLIC_SITE_URL`
+  and the Clerk publishable key must be set *before* the first build, or you ship a bundle
+  pointing at localhost.
+- The health check is `/api/health`, deliberately not `/`. `/` renders the stream, which costs
+  several Pluggie calls; a probe hitting it every few seconds would spend the shared 300/min
+  rate limit that real users need.
+
+`HATCHLY_KEY_SECRET` must stay stable across deploys — rotating it orphans every stored BYOK
+key and forces all users to reconnect.
+
 ## The economy
 
 Rules live in [ECONOMY.md](ECONOMY.md). Two properties matter most:
