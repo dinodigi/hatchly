@@ -2,6 +2,8 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
+import ArtifactActions from "@/components/ArtifactActions";
+import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
 import Composer from "@/components/Composer";
 import CoverEditor from "@/components/CoverEditor";
@@ -59,9 +61,22 @@ interface ActivityRow {
   id: string;
   data: { type: string; text: string; old_value?: string; new_value?: string; created_at?: string };
 }
+interface ArtifactSection {
+  heading: string;
+  paragraph?: string;
+  list_heading?: string;
+  list_items?: string[];
+}
 interface ArtifactRow {
   id: string;
-  data: { type: string; title: string; subtitle?: string; is_brief?: boolean };
+  data: {
+    type: string;
+    title: string;
+    subtitle?: string;
+    is_brief?: boolean;
+    on_public_page?: boolean;
+    body?: ArtifactSection[];
+  };
 }
 interface ListingRow {
   id: string;
@@ -111,7 +126,7 @@ export default async function IdeaHub({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; chat?: string; sub?: string }>;
+  searchParams: Promise<{ tab?: string; chat?: string; sub?: string; doc?: string }>;
 }) {
   if (!clerkEnabled) redirect("/");
   const { userId } = await auth();
@@ -119,6 +134,7 @@ export default async function IdeaHub({
   const { id } = await params;
   const sp = await searchParams;
   const tab = HUB_TABS.some((t) => t.key === sp.tab) ? sp.tab! : "overview";
+  const openDoc = tab === "artifacts" ? sp.doc : undefined;
 
   let idea: Entry<IdeaData>;
   try {
@@ -154,7 +170,8 @@ export default async function IdeaHub({
     callTool<{ entries: ArtifactRow[] }>("query_entries", {
       collection: "artifacts",
       where: [{ field: "idea", op: "eq", value: id }],
-      select: ["type", "title", "subtitle", "is_brief"],
+      // No `body` here — the grid only needs headers, and bodies are large.
+      select: ["type", "title", "subtitle", "is_brief", "on_public_page"],
       limit: 30,
     }),
     callTool<{ entries: ListingRow[] }>("query_entries", {
@@ -174,6 +191,14 @@ export default async function IdeaHub({
     (b.data.last_message_at ?? "").localeCompare(a.data.last_message_at ?? ""),
   );
   const activeChat = sp.chat ? chatList.find((c) => c.id === sp.chat) ?? null : null;
+
+  // Only the open document needs its body loaded.
+  const doc =
+    openDoc && openDoc !== "brief"
+      ? await callTool<ArtifactRow>("get_entry", { collection: "artifacts", id: openDoc })
+          .then((a) => (a.data.type && artifacts.entries.some((x) => x.id === a.id) ? a : null))
+          .catch(() => null)
+      : null;
 
   const messages = activeChat
     ? await callTool<{ entries: MessageRow[] }>("query_entries", {
@@ -490,9 +515,75 @@ export default async function IdeaHub({
         )}
 
         {/* ---- Artifacts: the brief (idea-tabs.jsx PageDoc, read view) ---- */}
-        {tab === "artifacts" && (
+        {/* ---- Artifacts: the library, and one document (idea-tabs.jsx FilesList / PageDoc) ---- */}
+        {tab === "artifacts" && !openDoc && (
+          <div className="scrollarea" style={{ height: "100%" }}>
+            <div style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 28px 80px" }}>
+              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 22, gap: 16, flexWrap: "wrap" }}>
+                <div>
+                  <h2 style={{ fontSize: 24, margin: "0 0 6px", letterSpacing: "-0.01em" }}>Artifacts</h2>
+                  <p className="muted" style={{ fontSize: 14.5, margin: 0, maxWidth: 560 }}>
+                    Documents that help you understand your idea — the brief, scope, positioning and
+                    more. The agent drafts them from what you&apos;ve actually said.
+                  </p>
+                </div>
+                <ArtifactPicker ideaId={id} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14 }}>
+                {/* The brief is live state, not a generated doc — it always leads. */}
+                <Link href={href({ tab: "artifacts", doc: "brief" })}>
+                  <Card hover style={{ padding: 18 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                      <span className="file-glyph glyph-page"><Icons.doc size={18} /></span>
+                      <span className="badge b-idea" style={{ fontSize: 9.5 }}>Live</span>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>Product brief</div>
+                    <div className="faint" style={{ fontSize: 12.5 }}>
+                      Written in chat ·{" "}
+                      {gate.open
+                        ? "build-ready"
+                        : `${[gate.problem, gate.who, gate.value, gate.feature].filter(Boolean).length}/4 to open the gate`}
+                    </div>
+                  </Card>
+                </Link>
+
+                {artifacts.entries
+                  .filter((a) => !a.data.is_brief && a.data.type !== "brief")
+                  .map((a) => (
+                    <Link key={a.id} href={href({ tab: "artifacts", doc: a.id })}>
+                      <Card hover style={{ padding: 18 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                          <span className="file-glyph glyph-page"><Icons.doc size={18} /></span>
+                          {a.data.on_public_page ? (
+                            <span className="badge b-launch" style={{ fontSize: 9.5 }}>
+                              <Icons.globe size={10} /> Public
+                            </span>
+                          ) : (
+                            <span className="pill" style={{ fontSize: 10.5 }}>Artifact</span>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{a.data.title}</div>
+                        <div className="faint clamp2" style={{ fontSize: 12.5, lineHeight: 1.45 }}>
+                          {a.data.subtitle}
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+
+                <ArtifactPicker ideaId={id} trigger="card" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* the brief, read as a document */}
+        {tab === "artifacts" && openDoc === "brief" && (
           <div className="scrollarea" style={{ height: "100%" }}>
             <div style={{ maxWidth: 760, margin: "0 auto", padding: "34px 28px 90px" }}>
+              <Link href={href({ tab: "artifacts" })} className="link-btn" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, marginBottom: 18 }}>
+                <Icons.back size={14} /> All artifacts
+              </Link>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                 <span className="file-glyph glyph-page"><Icons.doc size={15} /></span>
                 <h1 style={{ fontSize: 26, margin: 0, letterSpacing: "-0.01em" }}>Product brief</h1>
@@ -534,20 +625,102 @@ export default async function IdeaHub({
                             <span style={{ color, flex: "none", marginTop: 1 }}>
                               {icon === "check" ? <Icons.check size={15} /> : <Icons.search size={15} />}
                             </span>
-                            <span>{x}</span>
+                            {x}
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="faint" style={{ fontSize: 14, margin: 0, fontStyle: "italic" }}>Not captured yet.</p>
+                      <p className="faint" style={{ fontSize: 14, margin: 0, fontStyle: "italic" }}>
+                        Nothing here yet.
+                      </p>
                     )}
                   </div>
                 ))}
-                <div style={{ height: 1, background: "var(--border)" }} />
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 18 }}>
                   <GateChecklist gate={gate} compact />
                 </div>
               </Card>
+            </div>
+          </div>
+        )}
+
+        {/* a generated artifact, read as a document */}
+        {tab === "artifacts" && openDoc && openDoc !== "brief" && (
+          <div className="scrollarea" style={{ height: "100%" }}>
+            <div style={{ maxWidth: 760, margin: "0 auto", padding: "34px 28px 90px" }}>
+              <Link href={href({ tab: "artifacts" })} className="link-btn" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, marginBottom: 18 }}>
+                <Icons.back size={14} /> All artifacts
+              </Link>
+              {!doc ? (
+                <Empty
+                  icon={Icons.doc}
+                  title="That artifact is gone"
+                  body="It may have been deleted from another tab."
+                />
+              ) : (
+                <>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
+                    <span className="file-glyph glyph-page" style={{ marginTop: 6 }}><Icons.doc size={15} /></span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h1 className="serif" style={{ fontSize: 34, margin: 0, fontStyle: "italic", lineHeight: 1.1, fontWeight: 400 }}>
+                        {doc.data.title}
+                      </h1>
+                      <p className="muted" style={{ fontSize: 13.5, margin: "8px 0 0" }}>
+                        {doc.data.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ margin: "18px 0 22px" }}>
+                    <ArtifactActions
+                      id={doc.id}
+                      ideaId={id}
+                      title={doc.data.title}
+                      onPublicPage={!!doc.data.on_public_page}
+                    />
+                  </div>
+                  <Card style={{ padding: "26px 28px", display: "flex", flexDirection: "column", gap: 24 }}>
+                    {(doc.data.body ?? []).length === 0 && (
+                      <p className="faint" style={{ fontSize: 14, margin: 0, fontStyle: "italic" }}>
+                        This document is empty.
+                      </p>
+                    )}
+                    {(doc.data.body ?? []).map((s, i) => (
+                      <div key={i} className="artifact-section">
+                        <SectionLabel style={{ marginBottom: 8 }}>{s.heading}</SectionLabel>
+                        {s.paragraph ? (
+                          <p style={{ fontSize: 14.5, lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+                            {s.paragraph}
+                          </p>
+                        ) : null}
+                        {s.list_items?.length ? (
+                          <>
+                            {s.list_heading && (
+                              <div className="faint" style={{ fontSize: 12.5, margin: s.paragraph ? "12px 0 6px" : "0 0 6px" }}>
+                                {s.list_heading}
+                              </div>
+                            )}
+                            <ul style={{ margin: s.paragraph && !s.list_heading ? "12px 0 0" : 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                              {s.list_items.map((x, j) => (
+                                <li key={j} style={{ display: "flex", gap: 10, fontSize: 14.5, lineHeight: 1.5 }}>
+                                  <span style={{ color: "var(--accent-text)", flex: "none", marginTop: 1 }}>
+                                    <Icons.check size={15} />
+                                  </span>
+                                  {x}
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : null}
+                        {!s.paragraph && !s.list_items?.length && (
+                          <p className="faint" style={{ fontSize: 14, margin: 0, fontStyle: "italic" }}>
+                            Nothing captured for this yet — talk it through in chat and regenerate.
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </Card>
+                </>
+              )}
             </div>
           </div>
         )}

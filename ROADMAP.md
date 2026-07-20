@@ -16,7 +16,7 @@
 | M1 Schema | ✅ done | All collections live and seeded |
 | M2 Agent loop | ✅ done | Verified against the 3 failure modes; gate + signal map replaced brief % |
 | M3 Idea hub | ✅ done | 5 tabs, multi-chat, memory w/ provenance. **No build prompt** — dropped from the product |
-| M4 Artifacts | 🟡 partial | Brief renders as live state; the other 9 generated types aren't built |
+| M4 Artifacts | ✅ done | All 10 types. Picker (taken ones disabled), agent drafting from memories, reader, redraft/delete, publish-to-public-page |
 | M5 Publish + public pages | ✅ done | Visibility, tags, share, dynamic OG image (brand fonts vendored), cover upload → R2 |
 | M6 Economy core | ✅ done | 8 invariants pass under audit; 8/8 concurrent invests apply after the CAS-backoff fix |
 | M6b Admin & moderation | ✅ done | `/admin` console + report buttons + audit trail. Collusion scan, ledger-drift alarm |
@@ -26,12 +26,21 @@
 | M10 Community + notifications | 🟡 partial | Feedback + demand signals done. **No contact unlock, no CSV, no Resend emails** |
 | M11 Marketing, settings, launch | 🟡 partial | Settings done. No landing/how-it-works, legal, onboarding, analytics |
 
-**Biggest remaining gap:** M4 artifacts — nine of ten types unbuilt, and the largest single
-chunk of product left.
+**Biggest remaining gap:** M10 notifications — Resend is connected but no events are declared,
+so nothing tells anyone anything. Being outbid on a spotlight is the sharpest example: you only
+find out by revisiting the page.
 
-**Deploy requirement:** set `NEXT_PUBLIC_SITE_URL` to the real origin. Without it `metadataBase`
-falls back to localhost and every shared link advertises an og:image no crawler can fetch —
-invisible in dev, total in production.
+**Unverified:** artifact *generation* against the live model. Every surface around it is tested
+(picker, dedupe, reader, publish toggle, guards), but the account used for testing has no BYOK
+key, and using the owner's key to test would have spent their credit without asking. First real
+generation is worth watching.
+
+**Deploy:** `render.yaml` blueprint is in place (stateless web service, `rootDir: web`, health
+probe at `/api/health`, all six secrets `sync: false`). Verified against a real production
+build. Remaining manual step: paste the six env values in the Render dashboard.
+`NEXT_PUBLIC_*` is inlined at build time, so `NEXT_PUBLIC_SITE_URL` and the Clerk publishable
+key must be set *before* the first build or the bundle ships pointing at localhost.
+Repo: https://github.com/dinodigi/hatchly
 
 **Deferred by decision:** the mobile pass. Nothing has been checked below 900px; parked until
 last on the owner's call.

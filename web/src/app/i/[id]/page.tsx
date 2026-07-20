@@ -8,7 +8,18 @@ import ReportButton from "@/components/ReportButton";
 import { Icons } from "@/components/icons";
 import { Bucks, Card, Pill, SectionLabel, Spark } from "@/components/ui";
 import { getAgentX } from "@/lib/server";
+import { callTool } from "@/lib/mcp";
 import { AgentXError } from "@/lib/agentx";
+
+interface PublicArtifact {
+  id: string;
+  data: {
+    title: string;
+    subtitle?: string;
+    type: string;
+    body?: { heading: string; paragraph?: string; list_heading?: string; list_items?: string[] }[];
+  };
+}
 
 /* Public idea page — v4's IdeaPage (Design/app/idea.jsx), server-rendered. */
 
@@ -60,6 +71,32 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const listing = await loadListing(id);
   if (!listing) notFound();
+
+  // Artifacts the founder opted to publish. `listing.idea` isn't public, so
+  // resolve the idea from the listing row server-side, then read its opted-in
+  // documents. A failure here must not take the page down — the listing is
+  // the point, the artifacts are a bonus.
+  // NB: `id` is not a queryable field in `where` — single lookups go through
+  // get_entry.
+  const publicDocs = await callTool<{ data?: { idea?: { id: string } } }>("get_entry", {
+    collection: "listings",
+    id,
+  })
+    .then(async (r) => {
+      const ideaId = r?.data?.idea?.id;
+      if (!ideaId) return [] as PublicArtifact[];
+      const docs = await callTool<{ entries: PublicArtifact[] }>("query_entries", {
+        collection: "artifacts",
+        where: [
+          { field: "idea", op: "eq", value: ideaId },
+          { field: "on_public_page", op: "eq", value: true },
+        ],
+        select: ["title", "subtitle", "body", "type"],
+        limit: 10,
+      });
+      return docs.entries;
+    })
+    .catch(() => [] as PublicArtifact[]);
 
   const brief = (listing.brief_snapshot ?? {}) as Record<string, unknown>;
   const posted = daysAgo(listing.published_at);
@@ -147,6 +184,45 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
                 })}
               </div>
             </Card>
+
+            {/* Artifacts the founder chose to show. Read via MCP rather than
+                the delivery API: the artifacts collection is owner-scoped, and
+                on_public_page is the founder's explicit opt-in per document. */}
+            {publicDocs.map((a) => (
+              <Card key={a.id} style={{ padding: "26px 28px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                  <span className="file-glyph glyph-page"><Icons.doc size={15} /></span>
+                  <h2 style={{ fontSize: 18, margin: 0, letterSpacing: "-0.01em" }}>{a.data.title}</h2>
+                </div>
+                {a.data.subtitle && (
+                  <p className="muted" style={{ fontSize: 13.5, margin: "6px 0 0" }}>{a.data.subtitle}</p>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 20 }}>
+                  {(a.data.body ?? []).map((s, i) => (
+                    <div key={i}>
+                      <SectionLabel style={{ marginBottom: 8 }}>{s.heading}</SectionLabel>
+                      {s.paragraph && (
+                        <p style={{ fontSize: 14.5, lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+                          {s.paragraph}
+                        </p>
+                      )}
+                      {s.list_items?.length ? (
+                        <ul style={{ margin: s.paragraph ? "12px 0 0" : 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                          {s.list_items.map((x, j) => (
+                            <li key={j} style={{ display: "flex", gap: 10, fontSize: 14.5, lineHeight: 1.5 }}>
+                              <span style={{ color: "var(--accent-text)", flex: "none", marginTop: 1 }}>
+                                <Icons.check size={15} />
+                              </span>
+                              {x}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
 
             <FeedbackBox listingId={listing.id} founderFirstName={founderFirst} />
           </div>
