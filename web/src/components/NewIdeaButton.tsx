@@ -10,6 +10,11 @@ export default function NewIdeaButton({ label = "New idea" }: { label?: string }
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
+    // This button lives in the persistent TopNav, which does NOT unmount on a
+    // soft navigation — so `busy` must always be reset, or a successful create
+    // leaves it stuck reading "Creating…" until a hard refresh. (The guard stops
+    // a double-click from firing two creates while the first is in flight.)
+    if (busy) return;
     setBusy(true);
     try {
       const res = await fetch("/api/ideas", { method: "POST" });
@@ -21,6 +26,8 @@ export default function NewIdeaButton({ label = "New idea" }: { label?: string }
       if (!res.ok) throw new Error(json.error ?? "failed");
       router.push(`/ideas/${json.id}`);
     } catch {
+      // Swallow — the button simply returns to its idle label so it can be retried.
+    } finally {
       setBusy(false);
     }
   };
