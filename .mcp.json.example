@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agentx": {
+      "type": "http",
+      "url": "https://pluggie.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer agx_YOUR_MCP_SCOPED_TOKEN"
+      }
+    }
+  }
+}

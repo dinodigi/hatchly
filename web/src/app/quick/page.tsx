@@ -1,0 +1,92 @@
+import { BuildButton, QuickComposer, VoteButton } from "@/components/QuickControls";
+import { Card, Pill } from "@/components/ui";
+import { getAgentX } from "@/lib/server";
+
+/* Quick Ideas — v4's Reddit-style "someone should build this" board
+   (Design/app/quick.jsx), with voting, posting, and cloning wired. */
+
+export const metadata = {
+  title: "Quick Ideas — Hatchly",
+  description: "Ideas you wish someone would build.",
+};
+
+function ago(iso?: string) {
+  if (!iso) return "";
+  const h = Math.round((Date.now() - new Date(iso).getTime()) / 3600000);
+  if (h < 1) return "just now";
+  if (h < 24) return `${h}h`;
+  return `${Math.round(h / 24)}d`;
+}
+
+export default async function QuickIdeasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort === "new" ? "new" : "top";
+  const ax = getAgentX();
+  const ideas = ax
+    ? await ax.quick_ideas.list({
+        sort: sort === "new" ? { field: "created_at", dir: "desc" } : { field: "upvotes", dir: "desc" },
+        limit: 50,
+      })
+    : [];
+
+  return (
+    <div className="scrollarea">
+      <main style={{ maxWidth: 760, margin: "0 auto", padding: "36px 24px 90px" }}>
+        <h1 className="serif" style={{ fontSize: 40, margin: "0 0 6px", fontWeight: 400, lineHeight: 1.15 }}>
+          Ideas you wish <em className="italic">someone would build</em>
+        </h1>
+        <p className="muted" style={{ margin: "0 0 22px" }}>
+          One line is enough. Someone here might just build it.
+        </p>
+
+        <QuickComposer />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "24px 0 14px" }}>
+          {(
+            [
+              ["top", "Top"],
+              ["new", "New"],
+            ] as const
+          ).map(([k, l]) => (
+            <a key={k} href={k === "top" ? "/quick" : "/quick?sort=new"}>
+              <Pill accent={sort === k} style={{ cursor: "pointer" }}>{l}</Pill>
+            </a>
+          ))}
+          <span className="spacer" />
+          <span className="faint" style={{ fontSize: 12.5 }}>{ideas.length} ideas</span>
+        </div>
+
+        <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {ideas.map((q) => (
+            <Card key={q.id} style={{ display: "flex", gap: 16, padding: 16 }}>
+              <VoteButton quickId={q.id} upvotes={q.upvotes} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {q.tag && <span className="tag-pill">{q.tag}</span>}
+                  <strong style={{ fontSize: 15 }}>{q.title}</strong>
+                </div>
+                {q.description && (
+                  <p className="muted" style={{ fontSize: 13.5, margin: "5px 0 0", lineHeight: 1.5 }}>{q.description}</p>
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                  <span className="faint" style={{ fontSize: 12 }}>{q.author.label}</span>
+                  <span className="faint" style={{ fontSize: 12 }}>· {ago(q.created_at)}</span>
+                  <span className="faint" style={{ fontSize: 12 }}>· {q.comment_count} comments</span>
+                  {q.cloned_count > 0 && (
+                    <span className="faint" style={{ fontSize: 12 }}>· {q.cloned_count} building</span>
+                  )}
+                  <span className="spacer" />
+                  <BuildButton quickId={q.id} />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,16 @@
+/* Hatchly — global styles.
+   tokens.css is the design system ported VERBATIM from Design/Hatchly.html (v4).
+   Do not restyle primitives there; compose them. */
+@import "./tokens.css";
+
+/* ---- web-app adaptations (fonts come from next/font, not Google's CDN) ---- */
+body {
+  font-family: var(--font-geist-sans), "Geist", system-ui, -apple-system, sans-serif;
+}
+.serif {
+  font-family: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+}
+.mono,
+.kbd {
+  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+}

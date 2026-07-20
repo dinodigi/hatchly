@@ -1,0 +1,511 @@
+Hatchly — Product & Screens Handoff
+ Light
+ Dark
+ Product & Screens Handoff · v1
+ Hatchly
+screen specifications
+ The companion to the Hatchly design language. This document maps every screen — marketing through post-launch — the data each surface holds, the full data model, and a seeded mock dataset for the demo. Built to be handed directly to Claude Design and built against the existing tokens and primitives.
+ 00 · Read me
+ 01 · Concept
+ 02 · Architecture
+ 03 · Workspace shell
+ 04 · Marketing
+ 05 · Auth
+ 06 · All ideas
+ 07 · Idea tabs
+ 08 · Overlays
+ 09 · Account
+ 10 · The chat
+ 11 · Data models
+ 12 · Mock data
+ 13 · Build notes
+ 00
+How to read this
+This is a specification, not a pixel comp. It tells you what each screen is for, what data it shows, and how it behaves — then leaves the visual execution to the design language.
+ Inherits the design language
+Every token, font, and primitive comes from the Hatchly design-language file. Nothing here redefines color, type, or motion — it composes the existing Button, Card, PhaseBadge, ScoreRing, etc.
+ One object, one agent
+The whole app is one Idea record that accumulates state, and one phase-aware chat agent that reads it. Phases are views over that growing state — not separate apps. Keep this in mind on every screen.
+ Locked & empty states matter
+Most tabs exist in every phase but unlock progressively. Each screen spec calls out its locked state (gate not yet met) and empty state (unlocked, no data) — these are first-class, not afterthoughts.
+ Scope locked for v1
+Desktop-first. Marketing = landing + how-it-works. New ideas open straight into the chat (no form). The all-ideas board carries a smart insights strip. Connections are account-level. Mobile is a later pass.
+ 01
+The lifecycle
+Hatchly carries an idea from a sentence to a running business across four phases. The first three are the design-language spine; the fourth is an operating mode after launch.
+ IdeationShape it
+Chat captures the idea, builds tagged memory, fills the rubric.
+ ValidationPressure-test it
+Score the 13 dimensions, generate the report, run action items.
+ LaunchShip it
+Archetype playbook becomes a real task board: legal, payments, ops.
+ Post-launchRun it
+Chat becomes the standing advisor and source of truth.
+ Phase color contract. Ideation = amber (--accent-soft), Validation = info, Launch = success, Post-launch = neutral surface. This preserves "one accent" — post-launch deliberately gets no brand color because the work there is steady operation, not a milestone.
+ Gates between phases
+ Ideation → Validation
+Opens when the rubric reaches a completeness threshold — N of 13 dimensions have enough signal in memory.
+ Validation → Launch
+Opens when validation action items are complete and the business archetype is confirmed.
+ Launch → Post-launch
+Opens when the launch board's blocking tasks are done (or the user marks "we're live").
+ BrandBucket — earned, never pushed
+ Hatchly is a standalone product; BrandBucket is inventory injected at the right moment, not a storefront. Domain suggestions surface only on the Brand tab, only once the idea has a clear shape (positioning + ICP scored), framed as "names that fit what you're building." The agent already knows the phase and signal, so it knows when a suggestion is help versus an ad. Two earned moments: late validation (naming becomes relevant) and the launch unlock (a name is required to proceed).
+ 02
+Information architecture
+Six silos. A flat, extensible nav inside the workspace — phase is status, tabs are destinations. New tabs slot in without restructuring.
+ Marketing · public/
+ Landing/
+ How it works/how-it-works
+ Auth/auth
+ Sign up · Log in/signup · /login
+ Verify · Reset password/verify · /reset
+ All ideas · dashboard/ideas
+ Smart insights strip— component
+ Idea grid · New idea · Empty · Archived/ideas?view=…
+ Idea workspace · 3-column shell/ideas/:id
+ Overview/ideas/:id/overview
+ Memory/ideas/:id/memory
+ Scorecard/ideas/:id/scorecard
+ Plan · board/ideas/:id/plan
+ Brand · BrandBucket/ideas/:id/brand
+ Persistent chat · right rail— always present
+ Overlays: task detail · memory source · report generation · launch unlock · domain detail · idea settings
+ Account & settings/settings
+ Profile · Billing · Connections · Notifications · Security/settings/…
+ System · cross-cutting—
+ Onboarding · loading · error · 404 · empty patterns
+ 03
+The workspace shell
+Every idea screen lives in one three-column frame. The shell is constant; only the middle column changes with the active tab.
+ Left · sidebar
+Back-to-ideas, idea name + score, the phase tracker (Ideation ✓ → Validation ● → Launch 🔒 → Post-launch 🔒), then the flat nav. Settings pinned bottom. Width ~200px. Extensible — new destinations append to the nav list.
+ Middle · tab view
+The active tab's content. Fills remaining width, scrolls independently. This is the only column that changes between Overview / Memory / Scorecard / Plan / Brand.
+ Right · chat (collapsible)
+The persistent phase-aware agent. Multimodal input (text · link · voice). Width ~320px, collapses to a 44px rail. Default open in Ideation/Validation, default collapsed in Launch/Post-launch.
+ Shell behavior
+ Phase trackerDoubles as the gating UI. Completed phases show a check, current is filled, future phases show a lock. It is read-only — phase only advances when a gate is met.
+ Nav lock statesTabs mirror the phase. In Ideation, Scorecard and Brand are greyed/locked; they light up as their gates clear. Lock icon + tooltip explaining what unlocks them.
+ Chat defaultThe agent sets the sensible open/collapsed default per phase; the user can override and the choice persists per idea.
+ Header contextIdea one-liner sits at the top of the middle column; name + score live in the sidebar so they persist across tabs.
+ PrimitivesPhaseBadgeScoreRingIconBtnAvatarLiveDotTypewriter
+ 04
+Marketing screens
+Public, logged-out. Two screens for v1. Editorial Hatchly voice — Instrument Serif for the hero line, paper surfaces, one amber CTA.
+ Landing/
+ The pitch: take an idea from a sentence to a launched business with an AI that remembers everything along the way.
+ SectionsHero (serif headline + sub + amber "Start an idea" CTA) · the four-phase lifecycle strip · "a chat that remembers" feature moment · sample scorecard preview · social proof / outcomes · footer CTA.
+ Data shownStatic marketing copy. Optional live counters (ideas shaped, businesses launched) pulled from aggregate stats if available — otherwise hard-coded.
+ Primary action"Start an idea" → signup → drops straight into a new idea chat.
+ StatesLogged-in visitors see "Open Hatchly" instead of signup CTAs.
+ Primitivesserif displayButton primaryPhaseBadge ×4ScoreRing (preview)
+ How it works/how-it-works
+ Walks the four phases in depth so a visitor understands the arc before signing up.
+ SectionsOne block per phase (Ideation, Validation, Launch, Post-launch), each with a short narrative, a representative screenshot/mock, and what the AI does. Closes with the gate logic and a CTA.
+ Data shownStatic. Screenshots can reuse the seeded demo idea ("Loop") so marketing and product stay visually consistent.
+ PrimitivesCardPhaseBadgeserif sub-heads
+ 05
+Auth screens
+Minimal, centered card on the paper background. Email + OAuth. No marketing chrome.
+ Sign up & Log in/signup · /login
+ A single centered card. The two screens share a layout and toggle between each other.
+ FieldsEmail, password (signup adds name). OAuth buttons: Google, GitHub. "Continue" primary amber button.
+ Data writtenCreates / authenticates a User. On first signup, routes to onboarding (new idea chat).
+ StatesLoading (button spinner), invalid credentials (danger inline), OAuth redirect, rate-limited.
+ PrimitivesCard raisedButton primaryButton secondaryLogo
+ Verify email · Reset password/verify · /reset
+ Same centered-card pattern for transactional auth states.
+ Verify"Check your inbox" confirmation, resend link, success state on click-through.
+ ResetRequest (email) → email sent → set new password → success → redirect to login.
+ PrimitivesCard raisedButton primary
+ 06
+All ideas · main dashboard
+The portfolio home. A smart insights strip on top, then the idea grid. New ideas drop straight into a chat — no form.
+ Ideas board/ideas
+ Grid of idea cards. Each card is a glanceable summary of one Idea and its current phase.
+ Card dataName · one-liner · PhaseBadge · score or completeness ring · last-activity timestamp · a 1-line "next move" from the agent · archetype tag.
+ Sort / filterBy phase, score, recency. Filter chips across the top.
+ ActionsCard → opens workspace (last-viewed tab). "+ New idea" → creates an Idea and opens its chat focused. Overflow menu: rename, archive.
+ PrimitivesCard hoverPhaseBadgeScoreRingProgressBarPill (archetype)Stagger (entrance)
+ Smart insights strip— component on /ideas
+ The portfolio-level intelligence: what needs the founder's attention across all ideas. This is the "smart" layer, on by default.
+ Insight cardsStalled ("Pantry idle 9 days — 2 dimensions from validation") · Ready to advance ("Loop can move to Launch") · Top mover ("Drop +12 this week") · Suggested focus. Each links to the relevant idea/tab.
+ Data sourceDerived from Idea.phase, completeness, gate status, recent ActivityEvents, and score deltas across snapshots.
+ EmptyWith one idea, collapses to a single "keep going" nudge. Hidden entirely on the first-run empty state.
+ PrimitivesCardLiveDotPillamber-pulse (new)
+ New idea entry/ideas/:id (fresh)
+ No modal, no form. "+ New idea" creates the record and lands the user in the workspace with the chat open and focused, sidebar in Ideation.
+ First interactionAgent opens with a warm prompt ("What's the idea? A sentence is enough — or paste a link, or just talk."). The first user message becomes the idea's seed; the agent proposes a working name + one-liner the user can accept or edit.
+ Data writtenCreates Idea (phase=ideation, completeness=0), an empty ChatThread, and the first Source + Memory from the seed message.
+ Primitiveschat composerTypewriterserif framing line
+ Empty (first-run) & Archived/ideas (empty) · /ideas?view=archived
+ First-runSingle centered prompt: serif line + one amber "Start your first idea" button. No grid, no insights strip.
+ ArchivedGreyed cards, restore action, kept out of the main grid and insights.
+ 07
+Idea workspace · the tabs
+Five destinations plus the persistent chat. Each exists across phases but unlocks progressively and changes content with phase.
+ Overview/ideas/:id/overview
+ The command center for one idea. Reads the idea's state and surfaces the single most useful next move — the dashboard being smart, not just a readout.
+ Data shownPhase · score or completeness (ring) · "What's next" card (agent's top recommendation, with a one-tap action that routes through chat) · 3 key metrics (score, strongest dimension, weakest dimension) · recent activity feed.
+ By phaseIdeation: completeness ring + "what I still need to know." Validation: score + strongest/weakest. Launch: task progress + blockers. Post-launch: business pulse (open items, recent decisions).
+ SourcesIdea, latest ScorecardSnapshot, DimensionScore[], ActivityEvent[], top open Task.
+ EmptyFresh idea: ring at 0, "what's next" = "tell me about the idea in the chat."
+ PrimitivesScoreRingCountUpCard (amber border = what's next)StatusDotStagger
+ Memory/ideas/:id/memory
+ The AI's knowledge of the idea, browsable and correctable. The trust surface — and the raw material every other tab is computed from.
+ Data shownList of Memory items: the extracted fact/insight, its auto-tags, source link (the chat turn, pasted link, or voice note it came from), and confidence. Grouped or filterable by tag.
+ FiltersBy tag (the 13 dimensions + cross-cutting: problem, customer, competitor, risk, decision, founder, feature). Search.
+ ActionsEdit a memory, correct/remove it, re-tag, jump to source. Edits trigger re-scoring.
+ SourcesMemory[] joined to Source.
+ Empty"Nothing captured yet — start talking in the chat and memories appear here."
+ PrimitivesCardPill (tags)Avatar (source type icon)Stagger
+ Scorecard/ideas/:id/scorecard · LOCKED pre-validation
+ The validation report. The full 13-dimension assessment, versioned so it shows movement over time.
+ Data shownHeadline score + verdict · strongest / weakest / most-improved · scoreboard (4 categories) · all 13 metrics ranked · per-dimension detail (score, evidence, risks, "improve this") · SWOT · competitive landscape · top-5 action plan.
+ VersioningEach regeneration is a ScorecardSnapshot; the UI shows deltas vs the previous version ("+8 since v1"). Live score is always computed from current memories.
+ Actions"Add to plan" on any action item → creates a Task. "Regenerate" after new memories.
+ Locked stateGreyed with a lock: "Unlocks when your idea is clear enough to assess — N of 13 dimensions to go." Progress shown.
+ SourcesLatest ScorecardSnapshot + DimensionScore[] + diff vs prior snapshot.
+ PrimitivesScoreRingCountUpProgressBarStatusDot (strong/mod/weak)CardPill (delta)
+ Plan · board/ideas/:id/plan
+ The Asana-like task surface. One evolving board with three jobs across phases — validation action items, then the launch playbook, then ongoing ops.
+ LayoutColumns by Task.status (To do · In progress · Done), or grouped by category in launch (Legal · Payments · Ops · Marketing). Cards are draggable.
+ Card dataTitle · description (agent-authored) · status · category · subtasks (count/progress) · vendor suggestions · linked resources · source (which dimension/playbook it came from).
+ By phaseValidation: action items from the scorecard. Launch: instantiated from the archetype PlaybookTemplate, customized to the idea. Post-launch: ongoing operational tasks.
+ Chat-drivenThe agent creates, splits, edits, and completes tasks. Completion can be detected from conversation ("got 12 pre-orders") which also writes a memory and re-scores.
+ SourcesTask[], Subtask[], PlaybookTemplate (launch), DomainSuggestion/vendor refs.
+ EmptyValidation with no items: "Generate your validation plan" CTA. Launch pre-instantiation: "Confirm your business type to build the launch board."
+ PrimitivesCard (task)Pill (category)ProgressBar (subtasks)StatusDotslide-in (drawer)
+ Brand/ideas/:id/brand · LOCKED until naming relevant
+ Where the idea becomes a brand — and the native, earned home for BrandBucket domain suggestions.
+ Data shownName candidates (agent + user) · tagline / positioning (pulled from scorecard positioning dimension) · domain suggestions from BrandBucket that fit the idea's positioning + ICP, with price and a "view / acquire" handoff.
+ Injection ruleSuggestions appear only here, only once positioning + ICP are scored. Framed as "names that fit what you're building," never an interrupting ad. The sidebar Brand item shows a dot when fresh suggestions are ready.
+ ActionsSave a name candidate, set the chosen name (updates Idea.name), open a DomainSuggestion detail / handoff.
+ Locked state"Unlocks once your positioning is clear — keep shaping the idea."
+ SourcesBrandCandidate[], DomainSuggestion[], positioning DimensionScore.
+ PrimitivesCardPill (price)Button soft (acquire)serif (tagline)
+ Persistent chat— right rail, all phases
+ The spine. One thread per idea; the agent's tools and framing swap by phase. It writes into every tab.
+ Input modesText · paste link (fetched + summarized) · voice (transcribed). Composer placeholder: "Type, paste a link, or record…"
+ BehaviorReads the idea's full structured state each turn, so it resolves references ("the distribution problem", "that task") against real objects. Phase-aware system prompt + tool set (see §10).
+ DataChatMessage[] in one ChatThread; produces Source, Memory, Task, ScorecardSnapshot, ActivityEvent as side effects.
+ PrimitivesAvatar (AI amber / user surface)Typewritertyping dotsLiveDotIconBtn (mic)
+ 08
+Overlays & detail screens
+Open within the workspace as drawers or modals — they never navigate away from the idea.
+ Task detail · drawer
+Slides in from right. Full description, subtask checklist, status, category, vendor suggestions, linked resources, comments/agent notes. slide-in motion.
+ Memory source · viewer
+The original input behind a memory — chat turn, fetched link content, or voice transcript — with the extracted memory highlighted.
+ Validation report generation
+The Ideation→Validation moment. Agent scores all 13 dimensions with a staged reveal (rings filling, count-ups). Creates the first ScorecardSnapshot.
+ Launch unlock
+Validation→Launch transition. Confirms business archetype, then instantiates the playbook into the Plan board. Celebratory but calm.
+ Domain detail · handoff
+A DomainSuggestion expanded: name, price, why it fits, and the BrandBucket acquire handoff. The one place money changes hands with the partner.
+ Idea settings · modal
+Rename, edit one-liner, set/change business archetype, archive, delete. Archetype change can re-derive launch tasks.
+ 09
+Account & settings
+Account-level, shared across all ideas. Standard settings layout — left nav, right panel.
+ ProfileFounder info — name, avatar, bio, background. Doubles as input to founder-market-fit scoring, so prompts here feed the rubric.
+ BillingSubscription tier, payment method, invoices, plan change. (Maps to User.plan.)
+ ConnectionsAccount-level integrations reused across ideas: Stripe, email (Elastic Email), Shopify, bank, BrandBucket/domain. Surfaced contextually during launch but managed here. Each is a Connection with status.
+ NotificationsEmail/in-app preferences — stalled ideas, gate unlocked, score moved, weekly digest.
+ SecurityPassword, active sessions, sign out everywhere.
+ PrimitivesCardButtonStatusDot (connection)Pill
+ 10
+The phase-aware chat
+One thread, but the agent's system prompt and tools change with the idea's phase. This is what makes the product feel like a partner rather than a tracker.
+ Tool set by phase
+ PhaseAgent's jobTools (write side effects)
+ IdeationInterview-as-conversation; fill the rubricsave_memory · tag_memory · fetch_link · transcribe_voice · update_idea_field · assess_completeness
+ ValidationHonest assessmentscore_dimension · generate_snapshot · create_action_item · adjust_task · complete_task
+ LaunchOperational guidanceconfirm_archetype · instantiate_playbook · create_task · split_task · suggest_vendor · suggest_domain
+ Post-launchStanding advisor / source of truthretrieve_context · save_memory · create_task · advise
+ Completion detection
+The agent can mark a task done from conversation ("the landing page is live, got 12 pre-orders"), complete the Task, write a Memory, and re-score — not just react to checkbox clicks. This is the magic moment; it is also the riskiest loop to get right and should be prototyped first.
+ Honest scoring
+The scoring agent's contract is "assessment, not encouragement." It must be willing to score a dimension at 58. Test against deliberately weak ideas — a flatterer makes the whole product worthless.
+ Reference resolution
+Because the idea's structured state is in context every turn, "the distribution problem" resolves to dimension 13 and "that task" to a real Task id — no transcript re-reading.
+ Launch = playbook, not freeform
+Launch tasks are instantiated from an archetype PlaybookTemplate and customized — never invented from scratch each time. This is the difference between reliable and hallucinated.
+ 11
+Data models
+The persistent shape behind every screen. Three state layers: raw Source inputs → derived Memory → rolled-up scores & tasks. Keep them separate; the agent reads the middle and top layers.
+ Enums
+ EnumValues
+ Phaseideation · validation · launch · operating
+ BusinessArchetypephysical_ecom · dropship · saas · marketplace · service · content · mobile_app · other
+ SourceTypechat_text · link · voice · file
+ MemoryTag13 dimensions (problem_clarity, market_demand, icp_clarity, founder_market_fit, differentiation, competitive_moat, positioning, monetization, revenue_model, distribution, gtm_readiness, feasibility, risk_level) + cross-cutting (problem, customer, competitor, risk, decision, founder, feature, todo_seed)
+ DimensionCategoryfoundation · position · business · execution
+ TaskStatustodo · in_progress · blocked · done
+ TaskCategoryvalidation · legal · payments · ops · marketing · product · ongoing
+ Confidencelow · medium · high
+ ConnectionKindstripe · email · shopify · bank · domain · analytics
+ ConnectionStatusnot_connected · connected · error
+ User users
+ The founder. One-to-many with ideas. Profile fields feed founder-market-fit scoring.
+ FieldTypeNotes
+ iduuid · pk
+ emailstring · unique
+ namestring
+ avatar_urlstring?
+ biotext?Founder background — also a scoring input
+ planenumfree · founder · pro
+ created_attimestamp
+ Idea ideas
+ The central object. Accumulates state across all phases. Everything else hangs off this.
+ FieldTypeNotes
+ iduuid · pk
+ user_iduuid · fk→ users
+ namestringWorking or chosen name
+ one_linerstringThe pitch in a sentence
+ phaseenum PhaseDrives the whole UI
+ archetypeenum BusinessArchetype?Set in ideation/validation; drives launch playbook
+ completenessint 0–100Rubric fill % — the ideation gate
+ current_scoreint 0–100?Latest snapshot headline; null pre-validation
+ archivedbool
+ last_activity_attimestampPowers stalled detection
+ created_attimestamp
+ Source sources
+ Raw, immutable inputs. Memories are derived from these and link back. Never edited.
+ FieldTypeNotes
+ iduuid · pk
+ idea_iduuid · fk→ ideas
+ typeenum SourceType
+ contenttextRaw text, transcript, or fetched link body
+ urlstring?For link sources
+ message_iduuid?→ chat_messages if from chat
+ created_attimestamp
+ Memory memories
+ Atomic facts/insights the agent extracts, auto-tagged. The knowledge graph and the trust surface. Scores are computed over these.
+ FieldTypeNotes
+ iduuid · pk
+ idea_iduuid · fk→ ideas
+ source_iduuid · fk→ sources (traceability)
+ contenttextThe extracted fact/insight
+ tagsenum MemoryTag[]Auto-assigned; user-editable
+ confidenceenum Confidence
+ user_editedboolWas corrected by the founder
+ created_attimestamp
+ Dimension dimensions · DimensionScore dimension_scores
+ The 13 rubric dimensions are config (reference data). DimensionScore is the per-idea live state — the rolled-up layer computed from memories.
+ FieldTypeNotes
+ dimension.keyenumicp_clarity, distribution, …
+ dimension.labelstring"ICP Clarity"
+ dimension.categoryenum DimensionCategory
+ dimension.weightfloatFor weighted overall score
+ score.idea_iduuid · fk→ ideas
+ score.dimension_keyenum
+ score.valueint 0–100
+ score.bandenumstrong · moderate · weak
+ score.evidencetext[]"Why this score" bullets, from memories
+ score.riskstext[]
+ score.improvementstext[]"Improve this" — seeds for action items
+ score.deltaint?Change vs previous snapshot
+ ScorecardSnapshot scorecard_snapshots
+ A versioned freeze of the full report. Live score is recomputed from memories; snapshots exist to show deltas over time.
+ FieldTypeNotes
+ iduuid · pk
+ idea_iduuid · fk→ ideas
+ versionintv1, v2, …
+ overallint 0–100
+ verdicttext"Promising — a defensible bet…"
+ confidenceenum Confidence"12 inputs · 4 sources"
+ category_scoresjson{foundation, position, business, execution}
+ dimension_scoresjsonSnapshot of all 13 at this version
+ swotjson{strengths[], weaknesses[], opportunities[], threats[]}
+ competitorsjson[]{name, position, strength, gap, stance}
+ action_planjson[]Top 5 ranked {text, closes_dimension, current}
+ created_attimestamp
+ Task tasks · Subtask subtasks
+ The Plan board across all phases — validation items, launch playbook tasks, ongoing ops. Agent-created and editable.
+ FieldTypeNotes
+ iduuid · pk
+ idea_iduuid · fk→ ideas
+ titlestring
+ descriptiontextAgent-authored, idea-specific
+ statusenum TaskStatus
+ categoryenum TaskCategory
+ orderintBoard ordering
+ originenumscorecard · playbook · chat · user
+ origin_refstring?dimension key or playbook_item id
+ vendor_suggestionsjson[]?{name, note, url} — e.g. bank/Stripe options
+ resourcesjson[]?Linked refs
+ completed_viaenum?manual · chat_detected
+ subtask.title / donestring / bool→ tasks
+ PlaybookTemplate playbook_templates · PlaybookItem playbook_items
+ Per-archetype launch checklists. The agent instantiates a template into Tasks and customizes them — it does not free-generate.
+ FieldTypeNotes
+ template.archetypeenum BusinessArchetypeOne template per archetype
+ item.titlestring"Form an LLC", "Set up Stripe"
+ item.categoryenum TaskCategorylegal · payments · ops · marketing
+ item.description_templatetextCustomized per idea at instantiation
+ item.blockingboolMust be done to reach post-launch
+ item.vendor_optionsjson[]?Default vendor suggestions
+ item.orderint
+ BrandCandidate brand_candidates · DomainSuggestion domain_suggestions
+ Naming and the BrandBucket injection. Suggestions are scoped to the Brand tab and gated on positioning/ICP signal.
+ FieldTypeNotes
+ candidate.namestring
+ candidate.sourceenumagent · user
+ candidate.chosenboolSetting it updates idea.name
+ domain.namestring"tryloop.com"
+ domain.priceintUSD
+ domain.fit_reasontextWhy it fits positioning + ICP
+ domain.bb_listing_idstringBrandBucket handoff ref
+ domain.statusenumsuggested · viewed · acquired
+ ChatMessage chat_messages · Connection connections · ActivityEvent activity_events
+ The thread, account-level integrations, and the activity feed that powers Overview + the smart insights strip.
+ FieldTypeNotes
+ message.idea_id / roleuuid / enumuser · assistant
+ message.contenttext
+ message.attachmentsjson[]?link/voice/file refs → sources
+ message.tool_callsjson[]?Side effects fired this turn
+ connection.user_iduuid · fkAccount-level, reused across ideas
+ connection.kind / statusenum / enumstripe, email, shopify, bank, domain
+ event.idea_id / typeuuid / enummemory_added · score_changed · link_captured · voice_added · task_done · gate_unlocked · phase_advanced
+ event.summary / created_atstring / timestamp"GTM readiness rose +8 to 64"
+ Relationships
+ User 1─∞ Idea 1─∞ Source 1─∞ Memory // raw → derived
+Idea 1─∞ DimensionScore (13, computed from Memory) // rolled-up
+Idea 1─∞ ScorecardSnapshot (versioned, deltas)
+Idea 1─∞ Task 1─∞ Subtask // origin: scorecard | playbook | chat
+BusinessArchetype 1─1 PlaybookTemplate 1─∞ PlaybookItem ──▶ Task // instantiate + customize
+Idea 1─∞ BrandCandidate · DomainSuggestion // Brand tab, gated
+Idea 1─∞ ChatMessage · ActivityEvent
+User 1─∞ Connection // account-level, not per-idea
+ 12
+Mock data · demo seed
+A cohesive dataset spanning the lifecycle: one founder, three ideas — one in each of the early three phases — so the demo shows every screen with real-feeling content.
+ Founder & connections
+ user = {
+ id: "u_01", name: "Alex Rivera", email: "alex@rivera.co",
+ bio: "Ex-PM, left full-time in 2024 to build solo. Has shipped two small SaaS tools.",
+ plan: "founder"
+}
+connections = [
+ { kind: "stripe", status: "connected" },
+ { kind: "email", status: "connected" }, // Elastic Email
+ { kind: "shopify", status: "not_connected" },
+ { kind: "bank", status: "error" },
+ { kind: "domain", status: "connected" } // BrandBucket
+]
+ Idea A — "Loop" · Validation
+ idea = {
+ id: "i_loop", name: "Loop", phase: "validation", archetype: "saas",
+ one_liner: "A planner that remembers. — AI habit coaching for solo founders.",
+ completeness: 100, current_score: 84, last_activity_at: "2h ago"
+}
+scorecard_snapshot = {
+ version: 2, overall: 84, confidence: "high", // 12 inputs · 4 sources
+ verdict: "Promising. A defensible bet with a clear ICP and a soft GTM.",
+ category_scores: { foundation: 84, position: 68, business: 67, execution: 74 },
+ dimension_scores: [
+ { key:"icp_clarity", value:91, band:"strong", delta:+12 },
+ { key:"problem_clarity", value:88, band:"strong", delta:+6 },
+ { key:"feasibility", value:86, band:"strong" },
+ { key:"founder_market_fit", value:82, band:"strong" },
+ { key:"market_demand", value:76, band:"strong", delta:+3 },
+ { key:"monetization", value:74, band:"strong", delta:+8 },
+ { key:"risk_level", value:72, band:"moderate", delta:-3 },
+ { key:"differentiation", value:71, band:"moderate", delta:+4 },
+ { key:"positioning", value:69, band:"moderate", delta:+5 },
+ { key:"revenue_model", value:68, band:"moderate", delta:+2 },
+ { key:"gtm_readiness", value:64, band:"moderate", delta:+9 },
+ { key:"competitive_moat", value:63, band:"moderate", delta:-2 },
+ { key:"distribution", value:58, band:"moderate", delta:+1 }
+ ],
+ swot: {
+ strengths: ["ICP Clarity 91","Problem Clarity 88","Feasibility 86"],
+ weaknesses: ["Distribution 58","Competitive Moat 63","GTM Readiness 64"],
+ opportunities: ["Land via IH/MicroConf","Ship a 7-day landing"],
+ threats: ["Founder-tool channel saturation","Day-zero cold start"]
+ },
+ competitors: [
+ { name:"Notion+AI", stance:"indirect", gap:"not voice-first, no memory" },
+ { name:"Sunsama", stance:"adjacent", gap:"manual, forms-heavy" },
+ { name:"Reclaim", stance:"adjacent", gap:"no reflection loop" }
+ ],
+ action_plan: [
+ { text:"Import calendar + journal at onboarding to bootstrap the moat", closes:"competitive_moat", current:63 },
+ { text:"Publish weekly 'founder rhythm' essays as the wedge", closes:"distribution", current:58 },
+ { text:"Partner with 3 indie founder podcasts", closes:"distribution", current:58 },
+ { text:"Ship a one-page before/after landing in 7 days", closes:"gtm_readiness", current:64 }
+ ]
+}
+memories = [
+ { content:"Solo founders, 0–12 months, post-corporate transition", tags:["icp_clarity"], confidence:"high" },
+ { content:"Pain peaks ~3pm: lost rhythm, no one to push back", tags:["problem_clarity","customer"] },
+ { content:"Competitor Sunsama is forms-heavy and manual", tags:["competitor","differentiation"] },
+ { content:"Founder built v0 for self, 47-day streak", tags:["founder_market_fit","founder"] },
+ { content:"Distribution channel (IH/Twitter) is crowded", tags:["distribution","risk"] }
+]
+tasks = [ // validation action items
+ { title:"Ship a before/after landing page", status:"in_progress", category:"validation", origin:"scorecard", origin_ref:"gtm_readiness" },
+ { title:"Run a 100-founder waitlist sprint", status:"todo", category:"validation", origin:"scorecard" },
+ { title:"Interview 5 founders at the 12-month edge", status:"done", category:"validation", origin:"chat", completed_via:"chat_detected" }
+]
+brand_candidates = [ {name:"Loop", chosen:true}, {name:"Cadence"}, {name:"Rhythm"} ]
+domain_suggestions = [
+ { name:"tryloop.com", price:2495, fit_reason:"Short, verb-y, matches the habit loop positioning", status:"suggested" },
+ { name:"loophq.com", price:1850, fit_reason:"HQ pattern reads as a founder tool", status:"viewed" }
+]
+activity_events = [
+ { type:"score_changed", summary:"GTM readiness rose +8 to 64", at:"2h" },
+ { type:"memory_added", summary:"New memory: 12-month churn risk", at:"5h" },
+ { type:"link_captured", summary:"Captured: IndieHackers thread", at:"1d" }
+]
+ Idea B — "Drop" · Launch
+ idea = {
+ id: "i_drop", name: "Drop", phase: "launch", archetype: "physical_ecom",
+ one_liner: "Funko Pop mystery boxes — a curated drop every month.",
+ completeness: 100, current_score: 79, last_activity_at: "1d ago"
+}
+tasks = [ // instantiated from physical_ecom playbook, customized to Drop
+ { title:"Form an LLC", category:"legal", status:"done", blocking:true,
+ vendor_suggestions:[{name:"Stripe Atlas"},{name:"LegalZoom"},{name:"Firstbase"}] },
+ { title:"Open a business bank account", category:"legal", status:"in_progress", blocking:true,
+ vendor_suggestions:[{name:"Mercury"},{name:"Relay"},{name:"Novo"}] },
+ { title:"Set up Stripe payments", category:"payments", status:"done", blocking:true },
+ { title:"Pick a platform — Shopify vs custom", category:"product", status:"done",
+ description:"Recommend Shopify for a single-SKU mystery-box drop; Atlas/Stripe already connected." },
+ { title:"Source boxes & decide sizes", category:"ops", status:"in_progress",
+ description:"Funkos are fragile and odd-sized — spec a rigid 6x6x6 mailer with insert." },
+ { title:"Design shipping labels & inserts", category:"ops", status:"todo" },
+ { title:"Set per-box pricing & margin", category:"ops", status:"todo",
+ description:"Target $40/box; verify margin after Funko cost + box + shipping." },
+ { title:"Set up Elastic Email for the launch list", category:"marketing", status:"todo" },
+ { title:"Build the drop landing + waitlist", category:"marketing", status:"in_progress" }
+]
+ Idea C — "Pantry" · Ideation
+ idea = {
+ id: "i_pantry", name: "Pantry", phase: "ideation", archetype: null,
+ one_liner: "Tell it what's in your fridge; it plans dinner.",
+ completeness: 38, current_score: null, last_activity_at: "9d ago" // stalled → smart insight
+}
+memories = [
+ { content:"Target: busy parents who hate the 6pm 'what's for dinner' decision", tags:["icp_clarity","customer"], confidence:"medium" },
+ { content:"Pain is decision fatigue, not lack of recipes", tags:["problem_clarity"] },
+ { content:"Unsure on monetization — subscription vs grocery affiliate", tags:["monetization","risk"], confidence:"low" }
+]
+// Gate: 5 of 13 dimensions have signal — needs ~3 more to unlock validation.
+// Scorecard + Brand tabs LOCKED.
+activity_events = [ { type:"memory_added", summary:"Captured monetization uncertainty", at:"9d" } ]
+ Smart insights this seed produces: "Pantry idle 9 days — 3 dimensions from validation" (stalled) · "Loop is ready to move to Launch" (gate met) · "Drop +5 this week" (top mover) · suggested focus = Loop's distribution gap.
+ 13
+Build notes
+Scope and sequencing guidance for whoever builds this.
+ Desktop-first
+The 3-column shell is a desktop layout. Mobile is a later pass: sidebar → drawer, chat → bottom sheet, middle column full-screen. Don't squeeze three columns into a phone.
+ Prototype the risky core first
+The unproven part is the ideation extraction + scoring loop (messy chat → tagged memory → stable scores). Validate that headless before polishing UI — the report, board, and playbooks are downstream and comparatively easy.
+ Reuse the primitives
+Everything composes existing components from src/ui.jsx. No new color, type, or motion. If a screen seems to need a new primitive, check the inventory first.
+ Demo with the seed
+The §12 dataset is built to walk a demo through all four phases on three ideas. Load it as fixtures so every screen has real content from first paint.
+ Companion file: the Hatchly design language (tokens, typography, components, motion). This document specifies what to build; that one specifies how it should look. Hand both to Claude Design together.

@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hatchly — Product &amp; Screens Handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" />
+<style>
+:root[data-theme="light"] {
+  --background: #FAFAF8; --surface: #F5F2EC; --surface-raised: #FFFFFF;
+  --border: rgba(0,0,0,0.07); --border-strong: rgba(0,0,0,0.12);
+  --text-primary: #1A1814; --text-secondary: #6B6560; --text-muted: #A09890;
+  --accent: #DCA032; --accent-soft: rgba(220,160,50,0.12); --accent-softer: rgba(220,160,50,0.06);
+  --accent-text: #B8820A; --accent-hover: #C88B1F;
+  --success: #52C068; --success-soft: rgba(82,192,104,0.12); --success-text: #2E7D3F;
+  --danger: #E24B4A; --danger-soft: rgba(226,75,74,0.10); --danger-text: #B83533;
+  --info: #5A8CD8; --info-soft: rgba(90,140,216,0.12); --info-text: #3A6BB8;
+  --shadow-card: 0 1px 2px rgba(20,15,5,0.04), 0 1px 8px rgba(20,15,5,0.03);
+  --shadow-lift: 0 4px 16px rgba(20,15,5,0.06), 0 1px 2px rgba(20,15,5,0.04);
+  --shadow-modal: 0 24px 80px rgba(20,15,5,0.18), 0 4px 16px rgba(20,15,5,0.08);
+}
+:root[data-theme="dark"] {
+  --background: #0E0D0B; --surface: #141210; --surface-raised: #1C1A17;
+  --border: rgba(255,255,255,0.06); --border-strong: rgba(255,255,255,0.10);
+  --text-primary: #F0EAE0; --text-secondary: #7A7570; --text-muted: #4A4540;
+  --accent: #DCA032; --accent-soft: rgba(220,160,50,0.14); --accent-softer: rgba(220,160,50,0.06);
+  --accent-text: #DCA032; --accent-hover: #E8AE45;
+  --success: #52C068; --success-soft: rgba(82,192,104,0.14); --success-text: #6ED882;
+  --danger: #E24B4A; --danger-soft: rgba(226,75,74,0.14); --danger-text: #F26C6B;
+  --info: #6F9DE0; --info-soft: rgba(111,157,224,0.14); --info-text: #8AB0E8;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.40), 0 1px 8px rgba(0,0,0,0.20);
+  --shadow-lift: 0 4px 16px rgba(0,0,0,0.50), 0 1px 2px rgba(0,0,0,0.30);
+  --shadow-modal: 0 24px 80px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.40);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  background: var(--background); color: var(--text-primary);
+  font-size: 14px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  transition: background 240ms ease, color 240ms ease;
+}
+::selection { background: var(--accent-soft); color: var(--text-primary); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 40px 160px; }
+.serif { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
+.mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+
+header.hero { padding: 96px 0 56px; border-bottom: 1px solid var(--border); }
+.eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 22px; }
+h1.title { font-size: 68px; line-height: 1.02; letter-spacing: -0.01em; margin: 0 0 24px; }
+.lede { font-size: 19px; line-height: 1.6; color: var(--text-secondary); max-width: 640px; }
+
+section { padding: 72px 0 0; scroll-margin-top: 24px; }
+.sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 30px; }
+.sec-num { font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--accent-text); font-weight: 500; padding-top: 10px; }
+h2 { font-size: 34px; letter-spacing: -0.02em; margin: 0; line-height: 1.1; }
+.sec-sub { color: var(--text-secondary); font-size: 15px; margin: 10px 0 0; max-width: 680px; }
+h3 { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 38px 0 16px; }
+
+.grid { display: grid; gap: 14px; }
+.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-card); }
+.note { font-size: 13px; color: var(--text-secondary); margin-top: 12px; }
+.note b { color: var(--text-primary); font-weight: 600; }
+.demo { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+
+pre { margin: 12px 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-family: 'Geist Mono', monospace; font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
+pre .k { color: var(--accent-text); }
+pre .c { color: var(--text-muted); }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.b-idea { background: var(--accent-soft); color: var(--accent-text); }
+.b-val { background: var(--info-soft); color: var(--info-text); }
+.b-launch { background: var(--success-soft); color: var(--success-text); }
+.b-op { background: var(--surface); color: var(--text-secondary); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; background: var(--surface); color: var(--text-secondary); }
+
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.toc a { font-size: 12.5px; color: var(--text-secondary); text-decoration: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); transition: all 160ms cubic-bezier(.22,1,.36,1); }
+.toc a:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+.screen { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow-card); margin-bottom: 14px; }
+.screen-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.screen-h .nm { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.screen-h .rt { font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--text-muted); }
+.screen .lead { color: var(--text-secondary); font-size: 13.5px; margin: 4px 0 14px; }
+.spec { display: grid; grid-template-columns: 116px 1fr; gap: 7px 16px; font-size: 13px; align-items: start; }
+.spec dt { color: var(--text-muted); font-weight: 500; }
+.spec dd { margin: 0; color: var(--text-primary); line-height: 1.5; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-t { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
+
+.ent { margin: 26px 0 0; }
+.ent h4 { font-size: 15px; font-weight: 600; margin: 0 0 4px; display: flex; gap: 9px; align-items: center; letter-spacing: -0.01em; }
+.ent h4 .mono { font-size: 12px; color: var(--accent-text); font-weight: 400; }
+.ent .desc2 { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; max-width: 720px; }
+.dtable { width: 100%; border-collapse: collapse; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.dtable th { text-align: left; font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.dtable td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12.5px; vertical-align: top; }
+.dtable tr:last-child td { border-bottom: none; }
+.dtable td.f { font-family: 'Geist Mono', monospace; color: var(--accent-text); white-space: nowrap; }
+.dtable td.ty { font-family: 'Geist Mono', monospace; color: var(--text-muted); font-size: 11.5px; white-space: nowrap; }
+
+.tree { font-size: 13.5px; line-height: 1.4; }
+.tree > div { padding: 7px 0; border-bottom: 1px dashed var(--border); display: flex; align-items: baseline; gap: 10px; }
+.tree .nm { font-weight: 500; }
+.tree .lv2 { padding-left: 22px; }
+.tree .lv3 { padding-left: 44px; }
+.tree .lv3 .nm { font-weight: 400; color: var(--text-secondary); }
+.tree .rt { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+.phasebar { display: flex; gap: 0; align-items: stretch; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.phasebar .ph { flex: 1; padding: 16px 18px; border-right: 1px solid var(--border); }
+.phasebar .ph:last-child { border-right: none; }
+.phasebar .ph .nm { font-size: 14px; font-weight: 600; margin: 8px 0 2px; }
+.phasebar .ph .ds { font-size: 12px; color: var(--text-secondary); }
+
+.toggle { position: fixed; top: 20px; right: 20px; z-index: 20; display: inline-flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--surface-raised); border: 1px solid var(--border); box-shadow: var(--shadow-card); }
+.toggle button { padding: 6px 12px; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 500; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-text); }
+
+@media (max-width: 720px) { .wrap { padding: 0 20px 100px; } h1.title { font-size: 44px; } .cols-2,.cols-3,.cols-4 { grid-template-columns: 1fr; } .spec { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+</head>
+<body>
+
+<div class="toggle">
+  <button data-set="light" aria-pressed="true">Light</button>
+  <button data-set="dark" aria-pressed="false">Dark</button>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Product &amp; Screens Handoff · v1</div>
+    <h1 class="title">Hatchly<br><span class="serif" style="font-style:italic;">screen specifications</span></h1>
+    <p class="lede">The companion to the Hatchly design language. This document maps every screen — marketing through post-launch — the data each surface holds, the full data model, and a seeded mock dataset for the demo. Built to be handed directly to Claude Design and built against the existing tokens and primitives.</p>
+    <div class="toc">
+      <a href="#s00">00 · Read me</a>
+      <a href="#s01">01 · Concept</a>
+      <a href="#s02">02 · Architecture</a>
+      <a href="#s03">03 · Workspace shell</a>
+      <a href="#s04">04 · Marketing</a>
+      <a href="#s05">05 · Auth</a>
+      <a href="#s06">06 · All ideas</a>
+      <a href="#s07">07 · Idea tabs</a>
+      <a href="#s08">08 · Overlays</a>
+      <a href="#s09">09 · Account</a>
+      <a href="#s10">10 · The chat</a>
+      <a href="#s11">11 · Data models</a>
+      <a href="#s12">12 · Mock data</a>
+      <a href="#s13">13 · Build notes</a>
+    </div>
+  </header>
+
+  <!-- ============ 00 READ ME ============ -->
+  <section id="s00">
+    <div class="sec-head"><div class="sec-num">00</div><div><h2>How to read this</h2><p class="sec-sub">This is a specification, not a pixel comp. It tells you what each screen is for, what data it shows, and how it behaves — then leaves the visual execution to the design language.</p></div></div>
+    <div class="grid cols-2">
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Inherits the design language</div><div style="color:var(--text-secondary);font-size:13.5px;">Every token, font, and primitive comes from the Hatchly design-language file. Nothing here redefines color, type, or motion — it composes the existing <span class="mono">Button</span>, <span class="mono">Card</span>, <span class="mono">PhaseBadge</span>, <span class="mono">ScoreRing</span>, etc.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">One object, one agent</div><div style="color:var(--text-secondary);font-size:13.5px;">The whole app is one <span class="mono">Idea</span> record that accumulates state, and one phase-aware chat agent that reads it. Phases are <i>views</i> over that growing state — not separate apps. Keep this in mind on every screen.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Locked &amp; empty states matter</div><div style="color:var(--text-secondary);font-size:13.5px;">Most tabs exist in every phase but unlock progressively. Each screen spec calls out its locked state (gate not yet met) and empty state (unlocked, no data) — these are first-class, not afterthoughts.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Scope locked for v1</div><div style="color:var(--text-secondary);font-size:13.5px;">Desktop-first. Marketing = landing + how-it-works. New ideas open straight into the chat (no form). The all-ideas board carries a smart insights strip. Connections are account-level. Mobile is a later pass.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 01 CONCEPT ============ -->
+  <section id="s01">
+    <div class="sec-head"><div class="sec-num">01</div><div><h2>The lifecycle</h2><p class="sec-sub">Hatchly carries an idea from a sentence to a running business across four phases. The first three are the design-language spine; the fourth is an operating mode after launch.</p></div></div>
+
+    <div class="phasebar">
+      <div class="ph"><span class="badge b-idea">Ideation</span><div class="nm">Shape it</div><div class="ds">Chat captures the idea, builds tagged memory, fills the rubric.</div></div>
+      <div class="ph"><span class="badge b-val">Validation</span><div class="nm">Pressure-test it</div><div class="ds">Score the 13 dimensions, generate the report, run action items.</div></div>
+      <div class="ph"><span class="badge b-launch">Launch</span><div class="nm">Ship it</div><div class="ds">Archetype playbook becomes a real task board: legal, payments, ops.</div></div>
+      <div class="ph"><span class="badge b-op">Post-launch</span><div class="nm">Run it</div><div class="ds">Chat becomes the standing advisor and source of truth.</div></div>
+    </div>
+    <p class="note"><b>Phase color contract.</b> Ideation = amber (<span class="mono">--accent-soft</span>), Validation = info, Launch = success, Post-launch = neutral surface. This preserves "one accent" — post-launch deliberately gets no brand color because the work there is steady operation, not a milestone.</p>
+
+    <h3>Gates between phases</h3>
+    <div class="grid cols-3">
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;font-size:13.5px;">Ideation → Validation</div><div style="color:var(--text-secondary);font-size:13px;">Opens when the rubric reaches a completeness threshold — N of 13 dimensions have enough signal in memory.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;font-size:13.5px;">Validation → Launch</div><div style="color:var(--text-secondary);font-size:13px;">Opens when validation action items are complete and the business archetype is confirmed.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;font-size:13.5px;">Launch → Post-launch</div><div style="color:var(--text-secondary);font-size:13px;">Opens when the launch board's blocking tasks are done (or the user marks "we're live").</div></div>
+    </div>
+
+    <h3>BrandBucket — earned, never pushed</h3>
+    <p class="note">Hatchly is a standalone product; BrandBucket is <b>inventory injected at the right moment</b>, not a storefront. Domain suggestions surface only on the <b>Brand tab</b>, only once the idea has a clear shape (positioning + ICP scored), framed as "names that fit what you're building." The agent already knows the phase and signal, so it knows when a suggestion is help versus an ad. Two earned moments: late validation (naming becomes relevant) and the launch unlock (a name is required to proceed).</p>
+  </section>
+
+  <!-- ============ 02 ARCHITECTURE ============ -->
+  <section id="s02">
+    <div class="sec-head"><div class="sec-num">02</div><div><h2>Information architecture</h2><p class="sec-sub">Six silos. A flat, extensible nav inside the workspace — phase is status, tabs are destinations. New tabs slot in without restructuring.</p></div></div>
+    <div class="card" style="padding:18px 22px;">
+      <div class="tree">
+        <div class="lv1"><span class="nm">Marketing · public</span><span class="rt">/</span></div>
+        <div class="lv2"><span class="nm">Landing</span><span class="rt">/</span></div>
+        <div class="lv2"><span class="nm">How it works</span><span class="rt">/how-it-works</span></div>
+        <div class="lv1"><span class="nm">Auth</span><span class="rt">/auth</span></div>
+        <div class="lv2"><span class="nm">Sign up · Log in</span><span class="rt">/signup · /login</span></div>
+        <div class="lv2"><span class="nm">Verify · Reset password</span><span class="rt">/verify · /reset</span></div>
+        <div class="lv1"><span class="nm">All ideas · dashboard</span><span class="rt">/ideas</span></div>
+        <div class="lv2"><span class="nm">Smart insights strip</span><span class="rt">— component</span></div>
+        <div class="lv2"><span class="nm">Idea grid · New idea · Empty · Archived</span><span class="rt">/ideas?view=…</span></div>
+        <div class="lv1"><span class="nm">Idea workspace · 3-column shell</span><span class="rt">/ideas/:id</span></div>
+        <div class="lv2"><span class="nm">Overview</span><span class="rt">/ideas/:id/overview</span></div>
+        <div class="lv2"><span class="nm">Memory</span><span class="rt">/ideas/:id/memory</span></div>
+        <div class="lv2"><span class="nm">Scorecard</span><span class="rt">/ideas/:id/scorecard</span></div>
+        <div class="lv2"><span class="nm">Plan · board</span><span class="rt">/ideas/:id/plan</span></div>
+        <div class="lv2"><span class="nm">Brand · BrandBucket</span><span class="rt">/ideas/:id/brand</span></div>
+        <div class="lv2"><span class="nm">Persistent chat · right rail</span><span class="rt">— always present</span></div>
+        <div class="lv3"><span class="nm">Overlays: task detail · memory source · report generation · launch unlock · domain detail · idea settings</span></div>
+        <div class="lv1"><span class="nm">Account &amp; settings</span><span class="rt">/settings</span></div>
+        <div class="lv2"><span class="nm">Profile · Billing · Connections · Notifications · Security</span><span class="rt">/settings/…</span></div>
+        <div class="lv1"><span class="nm">System · cross-cutting</span><span class="rt">—</span></div>
+        <div class="lv2"><span class="nm">Onboarding · loading · error · 404 · empty patterns</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 WORKSPACE SHELL ============ -->
+  <section id="s03">
+    <div class="sec-head"><div class="sec-num">03</div><div><h2>The workspace shell</h2><p class="sec-sub">Every idea screen lives in one three-column frame. The shell is constant; only the middle column changes with the active tab.</p></div></div>
+
+    <div class="grid cols-3">
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Left · sidebar</div><div style="color:var(--text-secondary);font-size:13px;">Back-to-ideas, idea name + score, the <b>phase tracker</b> (Ideation ✓ → Validation ● → Launch 🔒 → Post-launch 🔒), then the flat nav. Settings pinned bottom. Width ~200px. Extensible — new destinations append to the nav list.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Middle · tab view</div><div style="color:var(--text-secondary);font-size:13px;">The active tab's content. Fills remaining width, scrolls independently. This is the only column that changes between Overview / Memory / Scorecard / Plan / Brand.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Right · chat (collapsible)</div><div style="color:var(--text-secondary);font-size:13px;">The persistent phase-aware agent. Multimodal input (text · link · voice). Width ~320px, collapses to a 44px rail. <b>Default open</b> in Ideation/Validation, <b>default collapsed</b> in Launch/Post-launch.</div></div>
+    </div>
+
+    <h3>Shell behavior</h3>
+    <div class="screen">
+      <dl class="spec">
+        <dt>Phase tracker</dt><dd>Doubles as the gating UI. Completed phases show a check, current is filled, future phases show a lock. It is read-only — phase only advances when a gate is met.</dd>
+        <dt>Nav lock states</dt><dd>Tabs mirror the phase. In Ideation, Scorecard and Brand are greyed/locked; they light up as their gates clear. Lock icon + tooltip explaining what unlocks them.</dd>
+        <dt>Chat default</dt><dd>The agent sets the sensible open/collapsed default per phase; the user can override and the choice persists per idea.</dd>
+        <dt>Header context</dt><dd>Idea one-liner sits at the top of the middle column; name + score live in the sidebar so they persist across tabs.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">PhaseBadge</span><span class="chip-t">ScoreRing</span><span class="chip-t">IconBtn</span><span class="chip-t">Avatar</span><span class="chip-t">LiveDot</span><span class="chip-t">Typewriter</span></span></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 04 MARKETING ============ -->
+  <section id="s04">
+    <div class="sec-head"><div class="sec-num">04</div><div><h2>Marketing screens</h2><p class="sec-sub">Public, logged-out. Two screens for v1. Editorial Hatchly voice — Instrument Serif for the hero line, paper surfaces, one amber CTA.</p></div></div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Landing</span><span class="rt">/</span></div>
+      <p class="lead">The pitch: take an idea from a sentence to a launched business with an AI that remembers everything along the way.</p>
+      <dl class="spec">
+        <dt>Sections</dt><dd>Hero (serif headline + sub + amber "Start an idea" CTA) · the four-phase lifecycle strip · "a chat that remembers" feature moment · sample scorecard preview · social proof / outcomes · footer CTA.</dd>
+        <dt>Data shown</dt><dd>Static marketing copy. Optional live counters (ideas shaped, businesses launched) pulled from aggregate stats if available — otherwise hard-coded.</dd>
+        <dt>Primary action</dt><dd>"Start an idea" → signup → drops straight into a new idea chat.</dd>
+        <dt>States</dt><dd>Logged-in visitors see "Open Hatchly" instead of signup CTAs.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">serif display</span><span class="chip-t">Button primary</span><span class="chip-t">PhaseBadge ×4</span><span class="chip-t">ScoreRing (preview)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">How it works</span><span class="rt">/how-it-works</span></div>
+      <p class="lead">Walks the four phases in depth so a visitor understands the arc before signing up.</p>
+      <dl class="spec">
+        <dt>Sections</dt><dd>One block per phase (Ideation, Validation, Launch, Post-launch), each with a short narrative, a representative screenshot/mock, and what the AI does. Closes with the gate logic and a CTA.</dd>
+        <dt>Data shown</dt><dd>Static. Screenshots can reuse the seeded demo idea ("Loop") so marketing and product stay visually consistent.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card</span><span class="chip-t">PhaseBadge</span><span class="chip-t">serif sub-heads</span></span></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 05 AUTH ============ -->
+  <section id="s05">
+    <div class="sec-head"><div class="sec-num">05</div><div><h2>Auth screens</h2><p class="sec-sub">Minimal, centered card on the paper background. Email + OAuth. No marketing chrome.</p></div></div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Sign up &amp; Log in</span><span class="rt">/signup · /login</span></div>
+      <p class="lead">A single centered card. The two screens share a layout and toggle between each other.</p>
+      <dl class="spec">
+        <dt>Fields</dt><dd>Email, password (signup adds name). OAuth buttons: Google, GitHub. "Continue" primary amber button.</dd>
+        <dt>Data written</dt><dd>Creates / authenticates a <span class="mono">User</span>. On first signup, routes to onboarding (new idea chat).</dd>
+        <dt>States</dt><dd>Loading (button spinner), invalid credentials (danger inline), OAuth redirect, rate-limited.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card raised</span><span class="chip-t">Button primary</span><span class="chip-t">Button secondary</span><span class="chip-t">Logo</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Verify email · Reset password</span><span class="rt">/verify · /reset</span></div>
+      <p class="lead">Same centered-card pattern for transactional auth states.</p>
+      <dl class="spec">
+        <dt>Verify</dt><dd>"Check your inbox" confirmation, resend link, success state on click-through.</dd>
+        <dt>Reset</dt><dd>Request (email) → email sent → set new password → success → redirect to login.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card raised</span><span class="chip-t">Button primary</span></span></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 06 ALL IDEAS ============ -->
+  <section id="s06">
+    <div class="sec-head"><div class="sec-num">06</div><div><h2>All ideas · main dashboard</h2><p class="sec-sub">The portfolio home. A smart insights strip on top, then the idea grid. New ideas drop straight into a chat — no form.</p></div></div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Ideas board</span><span class="rt">/ideas</span></div>
+      <p class="lead">Grid of idea cards. Each card is a glanceable summary of one <span class="mono">Idea</span> and its current phase.</p>
+      <dl class="spec">
+        <dt>Card data</dt><dd>Name · one-liner · <span class="mono">PhaseBadge</span> · score or completeness ring · last-activity timestamp · a 1-line "next move" from the agent · archetype tag.</dd>
+        <dt>Sort / filter</dt><dd>By phase, score, recency. Filter chips across the top.</dd>
+        <dt>Actions</dt><dd>Card → opens workspace (last-viewed tab). "+ New idea" → creates an <span class="mono">Idea</span> and opens its chat focused. Overflow menu: rename, archive.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card hover</span><span class="chip-t">PhaseBadge</span><span class="chip-t">ScoreRing</span><span class="chip-t">ProgressBar</span><span class="chip-t">Pill (archetype)</span><span class="chip-t">Stagger (entrance)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Smart insights strip</span><span class="rt">— component on /ideas</span></div>
+      <p class="lead">The portfolio-level intelligence: what needs the founder's attention across all ideas. This is the "smart" layer, on by default.</p>
+      <dl class="spec">
+        <dt>Insight cards</dt><dd>Stalled ("Pantry idle 9 days — 2 dimensions from validation") · Ready to advance ("Loop can move to Launch") · Top mover ("Drop +12 this week") · Suggested focus. Each links to the relevant idea/tab.</dd>
+        <dt>Data source</dt><dd>Derived from <span class="mono">Idea.phase</span>, <span class="mono">completeness</span>, gate status, recent <span class="mono">ActivityEvent</span>s, and score deltas across snapshots.</dd>
+        <dt>Empty</dt><dd>With one idea, collapses to a single "keep going" nudge. Hidden entirely on the first-run empty state.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card</span><span class="chip-t">LiveDot</span><span class="chip-t">Pill</span><span class="chip-t">amber-pulse (new)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">New idea entry</span><span class="rt">/ideas/:id (fresh)</span></div>
+      <p class="lead">No modal, no form. "+ New idea" creates the record and lands the user in the workspace with the chat open and focused, sidebar in Ideation.</p>
+      <dl class="spec">
+        <dt>First interaction</dt><dd>Agent opens with a warm prompt ("What's the idea? A sentence is enough — or paste a link, or just talk."). The first user message becomes the idea's seed; the agent proposes a working name + one-liner the user can accept or edit.</dd>
+        <dt>Data written</dt><dd>Creates <span class="mono">Idea</span> (phase=ideation, completeness=0), an empty <span class="mono">ChatThread</span>, and the first <span class="mono">Source</span> + <span class="mono">Memory</span> from the seed message.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">chat composer</span><span class="chip-t">Typewriter</span><span class="chip-t">serif framing line</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Empty (first-run) &amp; Archived</span><span class="rt">/ideas (empty) · /ideas?view=archived</span></div>
+      <dl class="spec">
+        <dt>First-run</dt><dd>Single centered prompt: serif line + one amber "Start your first idea" button. No grid, no insights strip.</dd>
+        <dt>Archived</dt><dd>Greyed cards, restore action, kept out of the main grid and insights.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 07 IDEA TABS ============ -->
+  <section id="s07">
+    <div class="sec-head"><div class="sec-num">07</div><div><h2>Idea workspace · the tabs</h2><p class="sec-sub">Five destinations plus the persistent chat. Each exists across phases but unlocks progressively and changes content with phase.</p></div></div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Overview</span><span class="rt">/ideas/:id/overview</span></div>
+      <p class="lead">The command center for one idea. Reads the idea's state and surfaces the single most useful next move — the dashboard being smart, not just a readout.</p>
+      <dl class="spec">
+        <dt>Data shown</dt><dd>Phase · score or completeness (ring) · <b>"What's next"</b> card (agent's top recommendation, with a one-tap action that routes through chat) · 3 key metrics (score, strongest dimension, weakest dimension) · recent activity feed.</dd>
+        <dt>By phase</dt><dd>Ideation: completeness ring + "what I still need to know." Validation: score + strongest/weakest. Launch: task progress + blockers. Post-launch: business pulse (open items, recent decisions).</dd>
+        <dt>Sources</dt><dd><span class="mono">Idea</span>, latest <span class="mono">ScorecardSnapshot</span>, <span class="mono">DimensionScore[]</span>, <span class="mono">ActivityEvent[]</span>, top open <span class="mono">Task</span>.</dd>
+        <dt>Empty</dt><dd>Fresh idea: ring at 0, "what's next" = "tell me about the idea in the chat."</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">ScoreRing</span><span class="chip-t">CountUp</span><span class="chip-t">Card (amber border = what's next)</span><span class="chip-t">StatusDot</span><span class="chip-t">Stagger</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Memory</span><span class="rt">/ideas/:id/memory</span></div>
+      <p class="lead">The AI's knowledge of the idea, browsable and correctable. The trust surface — and the raw material every other tab is computed from.</p>
+      <dl class="spec">
+        <dt>Data shown</dt><dd>List of <span class="mono">Memory</span> items: the extracted fact/insight, its auto-tags, source link (the chat turn, pasted link, or voice note it came from), and confidence. Grouped or filterable by tag.</dd>
+        <dt>Filters</dt><dd>By tag (the 13 dimensions + cross-cutting: problem, customer, competitor, risk, decision, founder, feature). Search.</dd>
+        <dt>Actions</dt><dd>Edit a memory, correct/remove it, re-tag, jump to source. Edits trigger re-scoring.</dd>
+        <dt>Sources</dt><dd><span class="mono">Memory[]</span> joined to <span class="mono">Source</span>.</dd>
+        <dt>Empty</dt><dd>"Nothing captured yet — start talking in the chat and memories appear here."</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card</span><span class="chip-t">Pill (tags)</span><span class="chip-t">Avatar (source type icon)</span><span class="chip-t">Stagger</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Scorecard</span><span class="rt">/ideas/:id/scorecard · LOCKED pre-validation</span></div>
+      <p class="lead">The validation report. The full 13-dimension assessment, versioned so it shows movement over time.</p>
+      <dl class="spec">
+        <dt>Data shown</dt><dd>Headline score + verdict · strongest / weakest / most-improved · scoreboard (4 categories) · all 13 metrics ranked · per-dimension detail (score, evidence, risks, "improve this") · SWOT · competitive landscape · top-5 action plan.</dd>
+        <dt>Versioning</dt><dd>Each regeneration is a <span class="mono">ScorecardSnapshot</span>; the UI shows deltas vs the previous version ("+8 since v1"). Live score is always computed from current memories.</dd>
+        <dt>Actions</dt><dd>"Add to plan" on any action item → creates a <span class="mono">Task</span>. "Regenerate" after new memories.</dd>
+        <dt>Locked state</dt><dd>Greyed with a lock: "Unlocks when your idea is clear enough to assess — N of 13 dimensions to go." Progress shown.</dd>
+        <dt>Sources</dt><dd>Latest <span class="mono">ScorecardSnapshot</span> + <span class="mono">DimensionScore[]</span> + diff vs prior snapshot.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">ScoreRing</span><span class="chip-t">CountUp</span><span class="chip-t">ProgressBar</span><span class="chip-t">StatusDot (strong/mod/weak)</span><span class="chip-t">Card</span><span class="chip-t">Pill (delta)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Plan · board</span><span class="rt">/ideas/:id/plan</span></div>
+      <p class="lead">The Asana-like task surface. One evolving board with three jobs across phases — validation action items, then the launch playbook, then ongoing ops.</p>
+      <dl class="spec">
+        <dt>Layout</dt><dd>Columns by <span class="mono">Task.status</span> (To do · In progress · Done), or grouped by category in launch (Legal · Payments · Ops · Marketing). Cards are draggable.</dd>
+        <dt>Card data</dt><dd>Title · description (agent-authored) · status · category · subtasks (count/progress) · vendor suggestions · linked resources · source (which dimension/playbook it came from).</dd>
+        <dt>By phase</dt><dd>Validation: action items from the scorecard. Launch: instantiated from the archetype <span class="mono">PlaybookTemplate</span>, customized to the idea. Post-launch: ongoing operational tasks.</dd>
+        <dt>Chat-driven</dt><dd>The agent creates, splits, edits, and completes tasks. Completion can be detected from conversation ("got 12 pre-orders") which also writes a memory and re-scores.</dd>
+        <dt>Sources</dt><dd><span class="mono">Task[]</span>, <span class="mono">Subtask[]</span>, <span class="mono">PlaybookTemplate</span> (launch), <span class="mono">DomainSuggestion</span>/vendor refs.</dd>
+        <dt>Empty</dt><dd>Validation with no items: "Generate your validation plan" CTA. Launch pre-instantiation: "Confirm your business type to build the launch board."</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card (task)</span><span class="chip-t">Pill (category)</span><span class="chip-t">ProgressBar (subtasks)</span><span class="chip-t">StatusDot</span><span class="chip-t">slide-in (drawer)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Brand</span><span class="rt">/ideas/:id/brand · LOCKED until naming relevant</span></div>
+      <p class="lead">Where the idea becomes a brand — and the native, earned home for BrandBucket domain suggestions.</p>
+      <dl class="spec">
+        <dt>Data shown</dt><dd>Name candidates (agent + user) · tagline / positioning (pulled from scorecard positioning dimension) · <b>domain suggestions</b> from BrandBucket that fit the idea's positioning + ICP, with price and a "view / acquire" handoff.</dd>
+        <dt>Injection rule</dt><dd>Suggestions appear only here, only once positioning + ICP are scored. Framed as "names that fit what you're building," never an interrupting ad. The sidebar Brand item shows a dot when fresh suggestions are ready.</dd>
+        <dt>Actions</dt><dd>Save a name candidate, set the chosen name (updates <span class="mono">Idea.name</span>), open a <span class="mono">DomainSuggestion</span> detail / handoff.</dd>
+        <dt>Locked state</dt><dd>"Unlocks once your positioning is clear — keep shaping the idea."</dd>
+        <dt>Sources</dt><dd><span class="mono">BrandCandidate[]</span>, <span class="mono">DomainSuggestion[]</span>, positioning <span class="mono">DimensionScore</span>.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card</span><span class="chip-t">Pill (price)</span><span class="chip-t">Button soft (acquire)</span><span class="chip-t">serif (tagline)</span></span></dd>
+      </dl>
+    </div>
+
+    <div class="screen">
+      <div class="screen-h"><span class="nm">Persistent chat</span><span class="rt">— right rail, all phases</span></div>
+      <p class="lead">The spine. One thread per idea; the agent's tools and framing swap by phase. It writes into every tab.</p>
+      <dl class="spec">
+        <dt>Input modes</dt><dd>Text · paste link (fetched + summarized) · voice (transcribed). Composer placeholder: "Type, paste a link, or record…"</dd>
+        <dt>Behavior</dt><dd>Reads the idea's full structured state each turn, so it resolves references ("the distribution problem", "that task") against real objects. Phase-aware system prompt + tool set (see §10).</dd>
+        <dt>Data</dt><dd><span class="mono">ChatMessage[]</span> in one <span class="mono">ChatThread</span>; produces <span class="mono">Source</span>, <span class="mono">Memory</span>, <span class="mono">Task</span>, <span class="mono">ScorecardSnapshot</span>, <span class="mono">ActivityEvent</span> as side effects.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Avatar (AI amber / user surface)</span><span class="chip-t">Typewriter</span><span class="chip-t">typing dots</span><span class="chip-t">LiveDot</span><span class="chip-t">IconBtn (mic)</span></span></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 08 OVERLAYS ============ -->
+  <section id="s08">
+    <div class="sec-head"><div class="sec-num">08</div><div><h2>Overlays &amp; detail screens</h2><p class="sec-sub">Open within the workspace as drawers or modals — they never navigate away from the idea.</p></div></div>
+
+    <div class="grid cols-2">
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Task detail · drawer</div><div style="color:var(--text-secondary);font-size:13px;">Slides in from right. Full description, subtask checklist, status, category, vendor suggestions, linked resources, comments/agent notes. <span class="mono">slide-in</span> motion.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Memory source · viewer</div><div style="color:var(--text-secondary);font-size:13px;">The original input behind a memory — chat turn, fetched link content, or voice transcript — with the extracted memory highlighted.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Validation report generation</div><div style="color:var(--text-secondary);font-size:13px;">The Ideation→Validation moment. Agent scores all 13 dimensions with a staged reveal (rings filling, count-ups). Creates the first <span class="mono">ScorecardSnapshot</span>.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Launch unlock</div><div style="color:var(--text-secondary);font-size:13px;">Validation→Launch transition. Confirms business archetype, then instantiates the playbook into the Plan board. Celebratory but calm.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Domain detail · handoff</div><div style="color:var(--text-secondary);font-size:13px;">A <span class="mono">DomainSuggestion</span> expanded: name, price, why it fits, and the BrandBucket acquire handoff. The one place money changes hands with the partner.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:4px;">Idea settings · modal</div><div style="color:var(--text-secondary);font-size:13px;">Rename, edit one-liner, set/change business archetype, archive, delete. Archetype change can re-derive launch tasks.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 09 ACCOUNT ============ -->
+  <section id="s09">
+    <div class="sec-head"><div class="sec-num">09</div><div><h2>Account &amp; settings</h2><p class="sec-sub">Account-level, shared across all ideas. Standard settings layout — left nav, right panel.</p></div></div>
+
+    <div class="screen">
+      <dl class="spec">
+        <dt>Profile</dt><dd>Founder info — name, avatar, bio, background. Doubles as input to founder-market-fit scoring, so prompts here feed the rubric.</dd>
+        <dt>Billing</dt><dd>Subscription tier, payment method, invoices, plan change. (Maps to <span class="mono">User.plan</span>.)</dd>
+        <dt>Connections</dt><dd>Account-level integrations reused across ideas: Stripe, email (Elastic Email), Shopify, bank, BrandBucket/domain. Surfaced contextually during launch but managed here. Each is a <span class="mono">Connection</span> with status.</dd>
+        <dt>Notifications</dt><dd>Email/in-app preferences — stalled ideas, gate unlocked, score moved, weekly digest.</dd>
+        <dt>Security</dt><dd>Password, active sessions, sign out everywhere.</dd>
+        <dt>Primitives</dt><dd><span class="chips"><span class="chip-t">Card</span><span class="chip-t">Button</span><span class="chip-t">StatusDot (connection)</span><span class="chip-t">Pill</span></span></dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ============ 10 THE CHAT ============ -->
+  <section id="s10">
+    <div class="sec-head"><div class="sec-num">10</div><div><h2>The phase-aware chat</h2><p class="sec-sub">One thread, but the agent's system prompt and tools change with the idea's phase. This is what makes the product feel like a partner rather than a tracker.</p></div></div>
+
+    <h3>Tool set by phase</h3>
+    <table class="dtable">
+      <tr><th>Phase</th><th>Agent's job</th><th>Tools (write side effects)</th></tr>
+      <tr><td><span class="badge b-idea">Ideation</span></td><td class="ty">Interview-as-conversation; fill the rubric</td><td>save_memory · tag_memory · fetch_link · transcribe_voice · update_idea_field · assess_completeness</td></tr>
+      <tr><td><span class="badge b-val">Validation</span></td><td class="ty">Honest assessment</td><td>score_dimension · generate_snapshot · create_action_item · adjust_task · complete_task</td></tr>
+      <tr><td><span class="badge b-launch">Launch</span></td><td class="ty">Operational guidance</td><td>confirm_archetype · instantiate_playbook · create_task · split_task · suggest_vendor · suggest_domain</td></tr>
+      <tr><td><span class="badge b-op">Post-launch</span></td><td class="ty">Standing advisor / source of truth</td><td>retrieve_context · save_memory · create_task · advise</td></tr>
+    </table>
+
+    <div class="grid cols-2" style="margin-top:18px;">
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Completion detection</div><div style="color:var(--text-secondary);font-size:13px;">The agent can mark a task done from conversation ("the landing page is live, got 12 pre-orders"), complete the <span class="mono">Task</span>, write a <span class="mono">Memory</span>, and re-score — not just react to checkbox clicks. This is the magic moment; it is also the riskiest loop to get right and should be prototyped first.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Honest scoring</div><div style="color:var(--text-secondary);font-size:13px;">The scoring agent's contract is "assessment, not encouragement." It must be willing to score a dimension at 58. Test against deliberately weak ideas — a flatterer makes the whole product worthless.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Reference resolution</div><div style="color:var(--text-secondary);font-size:13px;">Because the idea's structured state is in context every turn, "the distribution problem" resolves to dimension 13 and "that task" to a real <span class="mono">Task</span> id — no transcript re-reading.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Launch = playbook, not freeform</div><div style="color:var(--text-secondary);font-size:13px;">Launch tasks are instantiated from an archetype <span class="mono">PlaybookTemplate</span> and customized — never invented from scratch each time. This is the difference between reliable and hallucinated.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 11 DATA MODELS ============ -->
+  <section id="s11">
+    <div class="sec-head"><div class="sec-num">11</div><div><h2>Data models</h2><p class="sec-sub">The persistent shape behind every screen. Three state layers: raw <span class="mono">Source</span> inputs → derived <span class="mono">Memory</span> → rolled-up scores &amp; tasks. Keep them separate; the agent reads the middle and top layers.</p></div></div>
+
+    <h3>Enums</h3>
+    <table class="dtable">
+      <tr><th>Enum</th><th>Values</th></tr>
+      <tr><td class="f">Phase</td><td>ideation · validation · launch · operating</td></tr>
+      <tr><td class="f">BusinessArchetype</td><td>physical_ecom · dropship · saas · marketplace · service · content · mobile_app · other</td></tr>
+      <tr><td class="f">SourceType</td><td>chat_text · link · voice · file</td></tr>
+      <tr><td class="f">MemoryTag</td><td>13 dimensions (problem_clarity, market_demand, icp_clarity, founder_market_fit, differentiation, competitive_moat, positioning, monetization, revenue_model, distribution, gtm_readiness, feasibility, risk_level) + cross-cutting (problem, customer, competitor, risk, decision, founder, feature, todo_seed)</td></tr>
+      <tr><td class="f">DimensionCategory</td><td>foundation · position · business · execution</td></tr>
+      <tr><td class="f">TaskStatus</td><td>todo · in_progress · blocked · done</td></tr>
+      <tr><td class="f">TaskCategory</td><td>validation · legal · payments · ops · marketing · product · ongoing</td></tr>
+      <tr><td class="f">Confidence</td><td>low · medium · high</td></tr>
+      <tr><td class="f">ConnectionKind</td><td>stripe · email · shopify · bank · domain · analytics</td></tr>
+      <tr><td class="f">ConnectionStatus</td><td>not_connected · connected · error</td></tr>
+    </table>
+
+    <div class="ent">
+      <h4>User <span class="mono">users</span></h4>
+      <p class="desc2">The founder. One-to-many with ideas. Profile fields feed founder-market-fit scoring.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">email</td><td class="ty">string · unique</td><td></td></tr>
+        <tr><td class="f">name</td><td class="ty">string</td><td></td></tr>
+        <tr><td class="f">avatar_url</td><td class="ty">string?</td><td></td></tr>
+        <tr><td class="f">bio</td><td class="ty">text?</td><td>Founder background — also a scoring input</td></tr>
+        <tr><td class="f">plan</td><td class="ty">enum</td><td>free · founder · pro</td></tr>
+        <tr><td class="f">created_at</td><td class="ty">timestamp</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>Idea <span class="mono">ideas</span></h4>
+      <p class="desc2">The central object. Accumulates state across all phases. Everything else hangs off this.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">user_id</td><td class="ty">uuid · fk</td><td>→ users</td></tr>
+        <tr><td class="f">name</td><td class="ty">string</td><td>Working or chosen name</td></tr>
+        <tr><td class="f">one_liner</td><td class="ty">string</td><td>The pitch in a sentence</td></tr>
+        <tr><td class="f">phase</td><td class="ty">enum Phase</td><td>Drives the whole UI</td></tr>
+        <tr><td class="f">archetype</td><td class="ty">enum BusinessArchetype?</td><td>Set in ideation/validation; drives launch playbook</td></tr>
+        <tr><td class="f">completeness</td><td class="ty">int 0–100</td><td>Rubric fill % — the ideation gate</td></tr>
+        <tr><td class="f">current_score</td><td class="ty">int 0–100?</td><td>Latest snapshot headline; null pre-validation</td></tr>
+        <tr><td class="f">archived</td><td class="ty">bool</td><td></td></tr>
+        <tr><td class="f">last_activity_at</td><td class="ty">timestamp</td><td>Powers stalled detection</td></tr>
+        <tr><td class="f">created_at</td><td class="ty">timestamp</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>Source <span class="mono">sources</span></h4>
+      <p class="desc2">Raw, immutable inputs. Memories are derived from these and link back. Never edited.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">idea_id</td><td class="ty">uuid · fk</td><td>→ ideas</td></tr>
+        <tr><td class="f">type</td><td class="ty">enum SourceType</td><td></td></tr>
+        <tr><td class="f">content</td><td class="ty">text</td><td>Raw text, transcript, or fetched link body</td></tr>
+        <tr><td class="f">url</td><td class="ty">string?</td><td>For link sources</td></tr>
+        <tr><td class="f">message_id</td><td class="ty">uuid?</td><td>→ chat_messages if from chat</td></tr>
+        <tr><td class="f">created_at</td><td class="ty">timestamp</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>Memory <span class="mono">memories</span></h4>
+      <p class="desc2">Atomic facts/insights the agent extracts, auto-tagged. The knowledge graph and the trust surface. Scores are computed over these.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">idea_id</td><td class="ty">uuid · fk</td><td>→ ideas</td></tr>
+        <tr><td class="f">source_id</td><td class="ty">uuid · fk</td><td>→ sources (traceability)</td></tr>
+        <tr><td class="f">content</td><td class="ty">text</td><td>The extracted fact/insight</td></tr>
+        <tr><td class="f">tags</td><td class="ty">enum MemoryTag[]</td><td>Auto-assigned; user-editable</td></tr>
+        <tr><td class="f">confidence</td><td class="ty">enum Confidence</td><td></td></tr>
+        <tr><td class="f">user_edited</td><td class="ty">bool</td><td>Was corrected by the founder</td></tr>
+        <tr><td class="f">created_at</td><td class="ty">timestamp</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>Dimension <span class="mono">dimensions</span> · DimensionScore <span class="mono">dimension_scores</span></h4>
+      <p class="desc2">The 13 rubric dimensions are config (reference data). DimensionScore is the per-idea live state — the rolled-up layer computed from memories.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">dimension.key</td><td class="ty">enum</td><td>icp_clarity, distribution, …</td></tr>
+        <tr><td class="f">dimension.label</td><td class="ty">string</td><td>"ICP Clarity"</td></tr>
+        <tr><td class="f">dimension.category</td><td class="ty">enum DimensionCategory</td><td></td></tr>
+        <tr><td class="f">dimension.weight</td><td class="ty">float</td><td>For weighted overall score</td></tr>
+        <tr><td class="f">score.idea_id</td><td class="ty">uuid · fk</td><td>→ ideas</td></tr>
+        <tr><td class="f">score.dimension_key</td><td class="ty">enum</td><td></td></tr>
+        <tr><td class="f">score.value</td><td class="ty">int 0–100</td><td></td></tr>
+        <tr><td class="f">score.band</td><td class="ty">enum</td><td>strong · moderate · weak</td></tr>
+        <tr><td class="f">score.evidence</td><td class="ty">text[]</td><td>"Why this score" bullets, from memories</td></tr>
+        <tr><td class="f">score.risks</td><td class="ty">text[]</td><td></td></tr>
+        <tr><td class="f">score.improvements</td><td class="ty">text[]</td><td>"Improve this" — seeds for action items</td></tr>
+        <tr><td class="f">score.delta</td><td class="ty">int?</td><td>Change vs previous snapshot</td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>ScorecardSnapshot <span class="mono">scorecard_snapshots</span></h4>
+      <p class="desc2">A versioned freeze of the full report. Live score is recomputed from memories; snapshots exist to show deltas over time.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">idea_id</td><td class="ty">uuid · fk</td><td>→ ideas</td></tr>
+        <tr><td class="f">version</td><td class="ty">int</td><td>v1, v2, …</td></tr>
+        <tr><td class="f">overall</td><td class="ty">int 0–100</td><td></td></tr>
+        <tr><td class="f">verdict</td><td class="ty">text</td><td>"Promising — a defensible bet…"</td></tr>
+        <tr><td class="f">confidence</td><td class="ty">enum Confidence</td><td>"12 inputs · 4 sources"</td></tr>
+        <tr><td class="f">category_scores</td><td class="ty">json</td><td>{foundation, position, business, execution}</td></tr>
+        <tr><td class="f">dimension_scores</td><td class="ty">json</td><td>Snapshot of all 13 at this version</td></tr>
+        <tr><td class="f">swot</td><td class="ty">json</td><td>{strengths[], weaknesses[], opportunities[], threats[]}</td></tr>
+        <tr><td class="f">competitors</td><td class="ty">json[]</td><td>{name, position, strength, gap, stance}</td></tr>
+        <tr><td class="f">action_plan</td><td class="ty">json[]</td><td>Top 5 ranked {text, closes_dimension, current}</td></tr>
+        <tr><td class="f">created_at</td><td class="ty">timestamp</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>Task <span class="mono">tasks</span> · Subtask <span class="mono">subtasks</span></h4>
+      <p class="desc2">The Plan board across all phases — validation items, launch playbook tasks, ongoing ops. Agent-created and editable.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">id</td><td class="ty">uuid · pk</td><td></td></tr>
+        <tr><td class="f">idea_id</td><td class="ty">uuid · fk</td><td>→ ideas</td></tr>
+        <tr><td class="f">title</td><td class="ty">string</td><td></td></tr>
+        <tr><td class="f">description</td><td class="ty">text</td><td>Agent-authored, idea-specific</td></tr>
+        <tr><td class="f">status</td><td class="ty">enum TaskStatus</td><td></td></tr>
+        <tr><td class="f">category</td><td class="ty">enum TaskCategory</td><td></td></tr>
+        <tr><td class="f">order</td><td class="ty">int</td><td>Board ordering</td></tr>
+        <tr><td class="f">origin</td><td class="ty">enum</td><td>scorecard · playbook · chat · user</td></tr>
+        <tr><td class="f">origin_ref</td><td class="ty">string?</td><td>dimension key or playbook_item id</td></tr>
+        <tr><td class="f">vendor_suggestions</td><td class="ty">json[]?</td><td>{name, note, url} — e.g. bank/Stripe options</td></tr>
+        <tr><td class="f">resources</td><td class="ty">json[]?</td><td>Linked refs</td></tr>
+        <tr><td class="f">completed_via</td><td class="ty">enum?</td><td>manual · chat_detected</td></tr>
+        <tr><td class="f">subtask.title / done</td><td class="ty">string / bool</td><td>→ tasks</td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>PlaybookTemplate <span class="mono">playbook_templates</span> · PlaybookItem <span class="mono">playbook_items</span></h4>
+      <p class="desc2">Per-archetype launch checklists. The agent instantiates a template into <span class="mono">Task</span>s and customizes them — it does not free-generate.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">template.archetype</td><td class="ty">enum BusinessArchetype</td><td>One template per archetype</td></tr>
+        <tr><td class="f">item.title</td><td class="ty">string</td><td>"Form an LLC", "Set up Stripe"</td></tr>
+        <tr><td class="f">item.category</td><td class="ty">enum TaskCategory</td><td>legal · payments · ops · marketing</td></tr>
+        <tr><td class="f">item.description_template</td><td class="ty">text</td><td>Customized per idea at instantiation</td></tr>
+        <tr><td class="f">item.blocking</td><td class="ty">bool</td><td>Must be done to reach post-launch</td></tr>
+        <tr><td class="f">item.vendor_options</td><td class="ty">json[]?</td><td>Default vendor suggestions</td></tr>
+        <tr><td class="f">item.order</td><td class="ty">int</td><td></td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>BrandCandidate <span class="mono">brand_candidates</span> · DomainSuggestion <span class="mono">domain_suggestions</span></h4>
+      <p class="desc2">Naming and the BrandBucket injection. Suggestions are scoped to the Brand tab and gated on positioning/ICP signal.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">candidate.name</td><td class="ty">string</td><td></td></tr>
+        <tr><td class="f">candidate.source</td><td class="ty">enum</td><td>agent · user</td></tr>
+        <tr><td class="f">candidate.chosen</td><td class="ty">bool</td><td>Setting it updates idea.name</td></tr>
+        <tr><td class="f">domain.name</td><td class="ty">string</td><td>"tryloop.com"</td></tr>
+        <tr><td class="f">domain.price</td><td class="ty">int</td><td>USD</td></tr>
+        <tr><td class="f">domain.fit_reason</td><td class="ty">text</td><td>Why it fits positioning + ICP</td></tr>
+        <tr><td class="f">domain.bb_listing_id</td><td class="ty">string</td><td>BrandBucket handoff ref</td></tr>
+        <tr><td class="f">domain.status</td><td class="ty">enum</td><td>suggested · viewed · acquired</td></tr>
+      </table>
+    </div>
+
+    <div class="ent">
+      <h4>ChatMessage <span class="mono">chat_messages</span> · Connection <span class="mono">connections</span> · ActivityEvent <span class="mono">activity_events</span></h4>
+      <p class="desc2">The thread, account-level integrations, and the activity feed that powers Overview + the smart insights strip.</p>
+      <table class="dtable">
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td class="f">message.idea_id / role</td><td class="ty">uuid / enum</td><td>user · assistant</td></tr>
+        <tr><td class="f">message.content</td><td class="ty">text</td><td></td></tr>
+        <tr><td class="f">message.attachments</td><td class="ty">json[]?</td><td>link/voice/file refs → sources</td></tr>
+        <tr><td class="f">message.tool_calls</td><td class="ty">json[]?</td><td>Side effects fired this turn</td></tr>
+        <tr><td class="f">connection.user_id</td><td class="ty">uuid · fk</td><td>Account-level, reused across ideas</td></tr>
+        <tr><td class="f">connection.kind / status</td><td class="ty">enum / enum</td><td>stripe, email, shopify, bank, domain</td></tr>
+        <tr><td class="f">event.idea_id / type</td><td class="ty">uuid / enum</td><td>memory_added · score_changed · link_captured · voice_added · task_done · gate_unlocked · phase_advanced</td></tr>
+        <tr><td class="f">event.summary / created_at</td><td class="ty">string / timestamp</td><td>"GTM readiness rose +8 to 64"</td></tr>
+      </table>
+    </div>
+
+    <h3>Relationships</h3>
+    <pre><span class="k">User</span> 1─∞ <span class="k">Idea</span> 1─∞ <span class="k">Source</span> 1─∞ <span class="k">Memory</span>     <span class="c">// raw → derived</span>
+<span class="k">Idea</span> 1─∞ <span class="k">DimensionScore</span>  (13, computed from Memory)   <span class="c">// rolled-up</span>
+<span class="k">Idea</span> 1─∞ <span class="k">ScorecardSnapshot</span> (versioned, deltas)
+<span class="k">Idea</span> 1─∞ <span class="k">Task</span> 1─∞ <span class="k">Subtask</span>       <span class="c">// origin: scorecard | playbook | chat</span>
+<span class="k">BusinessArchetype</span> 1─1 <span class="k">PlaybookTemplate</span> 1─∞ <span class="k">PlaybookItem</span> ──▶ <span class="k">Task</span>  <span class="c">// instantiate + customize</span>
+<span class="k">Idea</span> 1─∞ <span class="k">BrandCandidate</span> · <span class="k">DomainSuggestion</span>   <span class="c">// Brand tab, gated</span>
+<span class="k">Idea</span> 1─∞ <span class="k">ChatMessage</span> · <span class="k">ActivityEvent</span>
+<span class="k">User</span> 1─∞ <span class="k">Connection</span>   <span class="c">// account-level, not per-idea</span></pre>
+  </section>
+
+  <!-- ============ 12 MOCK DATA ============ -->
+  <section id="s12">
+    <div class="sec-head"><div class="sec-num">12</div><div><h2>Mock data · demo seed</h2><p class="sec-sub">A cohesive dataset spanning the lifecycle: one founder, three ideas — one in each of the early three phases — so the demo shows every screen with real-feeling content.</p></div></div>
+
+    <h3>Founder &amp; connections</h3>
+    <pre><span class="k">user</span> = {
+  id: "u_01", name: "Alex Rivera", email: "alex@rivera.co",
+  bio: "Ex-PM, left full-time in 2024 to build solo. Has shipped two small SaaS tools.",
+  plan: "founder"
+}
+<span class="k">connections</span> = [
+  { kind: "stripe",  status: "connected" },
+  { kind: "email",   status: "connected" },   <span class="c">// Elastic Email</span>
+  { kind: "shopify", status: "not_connected" },
+  { kind: "bank",    status: "error" },
+  { kind: "domain",  status: "connected" }     <span class="c">// BrandBucket</span>
+]</pre>
+
+    <h3>Idea A — "Loop" · <span class="badge b-val">Validation</span></h3>
+    <pre><span class="k">idea</span> = {
+  id: "i_loop", name: "Loop", phase: "validation", archetype: "saas",
+  one_liner: "A planner that remembers. — AI habit coaching for solo founders.",
+  completeness: 100, current_score: 84, last_activity_at: "2h ago"
+}
+<span class="k">scorecard_snapshot</span> = {
+  version: 2, overall: 84, confidence: "high",   <span class="c">// 12 inputs · 4 sources</span>
+  verdict: "Promising. A defensible bet with a clear ICP and a soft GTM.",
+  category_scores: { foundation: 84, position: 68, business: 67, execution: 74 },
+  dimension_scores: [
+    { key:"icp_clarity", value:91, band:"strong", delta:+12 },
+    { key:"problem_clarity", value:88, band:"strong", delta:+6 },
+    { key:"feasibility", value:86, band:"strong" },
+    { key:"founder_market_fit", value:82, band:"strong" },
+    { key:"market_demand", value:76, band:"strong", delta:+3 },
+    { key:"monetization", value:74, band:"strong", delta:+8 },
+    { key:"risk_level", value:72, band:"moderate", delta:-3 },
+    { key:"differentiation", value:71, band:"moderate", delta:+4 },
+    { key:"positioning", value:69, band:"moderate", delta:+5 },
+    { key:"revenue_model", value:68, band:"moderate", delta:+2 },
+    { key:"gtm_readiness", value:64, band:"moderate", delta:+9 },
+    { key:"competitive_moat", value:63, band:"moderate", delta:-2 },
+    { key:"distribution", value:58, band:"moderate", delta:+1 }
+  ],
+  swot: {
+    strengths: ["ICP Clarity 91","Problem Clarity 88","Feasibility 86"],
+    weaknesses: ["Distribution 58","Competitive Moat 63","GTM Readiness 64"],
+    opportunities: ["Land via IH/MicroConf","Ship a 7-day landing"],
+    threats: ["Founder-tool channel saturation","Day-zero cold start"]
+  },
+  competitors: [
+    { name:"Notion+AI", stance:"indirect", gap:"not voice-first, no memory" },
+    { name:"Sunsama",  stance:"adjacent", gap:"manual, forms-heavy" },
+    { name:"Reclaim",  stance:"adjacent", gap:"no reflection loop" }
+  ],
+  action_plan: [
+    { text:"Import calendar + journal at onboarding to bootstrap the moat", closes:"competitive_moat", current:63 },
+    { text:"Publish weekly 'founder rhythm' essays as the wedge", closes:"distribution", current:58 },
+    { text:"Partner with 3 indie founder podcasts", closes:"distribution", current:58 },
+    { text:"Ship a one-page before/after landing in 7 days", closes:"gtm_readiness", current:64 }
+  ]
+}
+<span class="k">memories</span> = [
+  { content:"Solo founders, 0–12 months, post-corporate transition", tags:["icp_clarity"], confidence:"high" },
+  { content:"Pain peaks ~3pm: lost rhythm, no one to push back", tags:["problem_clarity","customer"] },
+  { content:"Competitor Sunsama is forms-heavy and manual", tags:["competitor","differentiation"] },
+  { content:"Founder built v0 for self, 47-day streak", tags:["founder_market_fit","founder"] },
+  { content:"Distribution channel (IH/Twitter) is crowded", tags:["distribution","risk"] }
+]
+<span class="k">tasks</span> = [   <span class="c">// validation action items</span>
+  { title:"Ship a before/after landing page", status:"in_progress", category:"validation", origin:"scorecard", origin_ref:"gtm_readiness" },
+  { title:"Run a 100-founder waitlist sprint", status:"todo", category:"validation", origin:"scorecard" },
+  { title:"Interview 5 founders at the 12-month edge", status:"done", category:"validation", origin:"chat", completed_via:"chat_detected" }
+]
+<span class="k">brand_candidates</span> = [ {name:"Loop", chosen:true}, {name:"Cadence"}, {name:"Rhythm"} ]
+<span class="k">domain_suggestions</span> = [
+  { name:"tryloop.com", price:2495, fit_reason:"Short, verb-y, matches the habit loop positioning", status:"suggested" },
+  { name:"loophq.com",  price:1850, fit_reason:"HQ pattern reads as a founder tool", status:"viewed" }
+]
+<span class="k">activity_events</span> = [
+  { type:"score_changed", summary:"GTM readiness rose +8 to 64", at:"2h" },
+  { type:"memory_added",  summary:"New memory: 12-month churn risk", at:"5h" },
+  { type:"link_captured", summary:"Captured: IndieHackers thread", at:"1d" }
+]</pre>
+
+    <h3>Idea B — "Drop" · <span class="badge b-launch">Launch</span></h3>
+    <pre><span class="k">idea</span> = {
+  id: "i_drop", name: "Drop", phase: "launch", archetype: "physical_ecom",
+  one_liner: "Funko Pop mystery boxes — a curated drop every month.",
+  completeness: 100, current_score: 79, last_activity_at: "1d ago"
+}
+<span class="k">tasks</span> = [   <span class="c">// instantiated from physical_ecom playbook, customized to Drop</span>
+  { title:"Form an LLC", category:"legal", status:"done", blocking:true,
+    vendor_suggestions:[{name:"Stripe Atlas"},{name:"LegalZoom"},{name:"Firstbase"}] },
+  { title:"Open a business bank account", category:"legal", status:"in_progress", blocking:true,
+    vendor_suggestions:[{name:"Mercury"},{name:"Relay"},{name:"Novo"}] },
+  { title:"Set up Stripe payments", category:"payments", status:"done", blocking:true },
+  { title:"Pick a platform — Shopify vs custom", category:"product", status:"done",
+    description:"Recommend Shopify for a single-SKU mystery-box drop; Atlas/Stripe already connected." },
+  { title:"Source boxes & decide sizes", category:"ops", status:"in_progress",
+    description:"Funkos are fragile and odd-sized — spec a rigid 6x6x6 mailer with insert." },
+  { title:"Design shipping labels & inserts", category:"ops", status:"todo" },
+  { title:"Set per-box pricing & margin", category:"ops", status:"todo",
+    description:"Target $40/box; verify margin after Funko cost + box + shipping." },
+  { title:"Set up Elastic Email for the launch list", category:"marketing", status:"todo" },
+  { title:"Build the drop landing + waitlist", category:"marketing", status:"in_progress" }
+]</pre>
+
+    <h3>Idea C — "Pantry" · <span class="badge b-idea">Ideation</span></h3>
+    <pre><span class="k">idea</span> = {
+  id: "i_pantry", name: "Pantry", phase: "ideation", archetype: null,
+  one_liner: "Tell it what's in your fridge; it plans dinner.",
+  completeness: 38, current_score: null, last_activity_at: "9d ago"   <span class="c">// stalled → smart insight</span>
+}
+<span class="k">memories</span> = [
+  { content:"Target: busy parents who hate the 6pm 'what's for dinner' decision", tags:["icp_clarity","customer"], confidence:"medium" },
+  { content:"Pain is decision fatigue, not lack of recipes", tags:["problem_clarity"] },
+  { content:"Unsure on monetization — subscription vs grocery affiliate", tags:["monetization","risk"], confidence:"low" }
+]
+<span class="c">// Gate: 5 of 13 dimensions have signal — needs ~3 more to unlock validation.</span>
+<span class="c">// Scorecard + Brand tabs LOCKED.</span>
+<span class="k">activity_events</span> = [ { type:"memory_added", summary:"Captured monetization uncertainty", at:"9d" } ]</pre>
+
+    <p class="note"><b>Smart insights this seed produces:</b> "Pantry idle 9 days — 3 dimensions from validation" (stalled) · "Loop is ready to move to Launch" (gate met) · "Drop +5 this week" (top mover) · suggested focus = Loop's distribution gap.</p>
+  </section>
+
+  <!-- ============ 13 BUILD NOTES ============ -->
+  <section id="s13">
+    <div class="sec-head"><div class="sec-num">13</div><div><h2>Build notes</h2><p class="sec-sub">Scope and sequencing guidance for whoever builds this.</p></div></div>
+    <div class="grid cols-2">
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Desktop-first</div><div style="color:var(--text-secondary);font-size:13px;">The 3-column shell is a desktop layout. Mobile is a later pass: sidebar → drawer, chat → bottom sheet, middle column full-screen. Don't squeeze three columns into a phone.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Prototype the risky core first</div><div style="color:var(--text-secondary);font-size:13px;">The unproven part is the ideation extraction + scoring loop (messy chat → tagged memory → stable scores). Validate that headless before polishing UI — the report, board, and playbooks are downstream and comparatively easy.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Reuse the primitives</div><div style="color:var(--text-secondary);font-size:13px;">Everything composes existing components from <span class="mono">src/ui.jsx</span>. No new color, type, or motion. If a screen seems to need a new primitive, check the inventory first.</div></div>
+      <div class="card"><div style="font-weight:600;margin-bottom:6px;">Demo with the seed</div><div style="color:var(--text-secondary);font-size:13px;">The §12 dataset is built to walk a demo through all four phases on three ideas. Load it as fixtures so every screen has real content from first paint.</div></div>
+    </div>
+    <p class="note" style="margin-top:24px;"><b>Companion file:</b> the Hatchly design language (tokens, typography, components, motion). This document specifies <i>what</i> to build; that one specifies <i>how it should look</i>. Hand both to Claude Design together.</p>
+  </section>
+
+</div>
+
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll('.toggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      const t = b.dataset.set;
+      root.setAttribute('data-theme', t);
+      document.querySelectorAll('.toggle button').forEach(x => x.setAttribute('aria-pressed', x.dataset.set === t));
+    });
+  });
+</script>
+</body>
+</html>
