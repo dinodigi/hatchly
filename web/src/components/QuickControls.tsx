@@ -100,12 +100,123 @@ export function BuildButton({ quickId }: { quickId: string }) {
   );
 }
 
+type Comment = { id: string; text: string; author: string; created_at?: string };
+
+/** The thread is collapsed by default and fetched on first open — the board
+    renders 50 cards, and eager-loading every thread would be 50 queries. */
+export function CommentThread({ quickId, count }: { quickId: string; count: number }) {
+  const { isSignedIn } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[] | null>(null);
+  const [total, setTotal] = useState(count);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && comments === null) {
+      try {
+        const res = await fetch(`/api/quick/comment?quickId=${encodeURIComponent(quickId)}`);
+        const json = await res.json();
+        if (res.ok) setComments(json.comments);
+      } catch {
+        setComments([]);
+      }
+    }
+  };
+
+  const post = async () => {
+    const t = text.trim();
+    if (!t || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/quick/comment", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ quickId, text: t }),
+      });
+      if (res.ok) {
+        setText("");
+        setTotal((n) => n + 1);
+        const refreshed = await fetch(`/api/quick/comment?quickId=${encodeURIComponent(quickId)}`);
+        const json = await refreshed.json();
+        if (refreshed.ok) setComments(json.comments);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <span
+        className="faint"
+        onClick={toggle}
+        style={{ fontSize: 12, cursor: "pointer" }}
+        title={open ? "Hide comments" : "Show comments"}
+      >
+        · {total} {total === 1 ? "comment" : "comments"}
+      </span>
+      {open && (
+        <div style={{ flexBasis: "100%", marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          {comments === null ? (
+            <span className="faint" style={{ fontSize: 12.5 }}>Loading…</span>
+          ) : comments.length === 0 ? (
+            <span className="faint" style={{ fontSize: 12.5 }}>No comments yet.</span>
+          ) : (
+            comments.map((c) => (
+              <div key={c.id} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="faint" style={{ fontSize: 11.5 }}>{c.author}</span>
+                <span style={{ fontSize: 13.5, lineHeight: 1.5 }}>{c.text}</span>
+              </div>
+            ))
+          )}
+
+          {isSignedIn ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                className="field"
+                placeholder="Add a comment"
+                value={text}
+                disabled={busy}
+                maxLength={1000}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") post();
+                }}
+                style={{ flex: 1, fontSize: 13.5 }}
+              />
+              <button className="btn btn-soft btn-sm" disabled={busy || !text.trim()} onClick={post}>
+                {busy ? "Posting…" : "Post"}
+              </button>
+            </div>
+          ) : (
+            <SignInButton mode="modal">
+              <button className="btn btn-soft btn-sm" style={{ alignSelf: "flex-start" }}>Sign in to comment</button>
+            </SignInButton>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 const QI_TAGS = ["AI", "SaaS", "Consumer", "Marketplace", "Productivity", "Fintech", "Creator", "Education"];
+
+// v4's "need a start?" prompts — each pre-fills the title so a blank box is
+// never the first thing you face. (Design/app/quick.jsx)
+const QI_TEMPLATES: { label: string; fill: string }[] = [
+  { label: "___ for ___", fill: "Netflix for " },
+  { label: "___ but ___", fill: "Airbnb but " },
+  { label: "An app that ___", fill: "An app that " },
+];
 
 export function QuickComposer() {
   const { isSignedIn } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [tag, setTag] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,11 +230,13 @@ export function QuickComposer() {
       const res = await fetch("/api/quick", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: t, tag }),
+        body: JSON.stringify({ title: t, description: description.trim(), tag }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "failed");
       setTitle("");
+      setDescription("");
+      setTag("");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
@@ -148,7 +261,7 @@ export function QuickComposer() {
     <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
       <input
         className="field"
-        placeholder='"___ for ___" · "___ but ___" · "An app that ___"'
+        placeholder="e.g. Uber for cats"
         value={title}
         disabled={busy}
         onChange={(e) => setTitle(e.target.value)}
@@ -156,6 +269,24 @@ export function QuickComposer() {
           if (e.key === "Enter") post();
         }}
         style={{ border: "none", background: "transparent", padding: "2px 2px", fontSize: 14.5 }}
+      />
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        <span className="faint" style={{ fontSize: 12 }}>Need a start?</span>
+        {QI_TEMPLATES.map((t) => (
+          <button key={t.label} type="button" className="tag-pick" disabled={busy} onClick={() => setTitle(t.fill)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <textarea
+        className="edit-area"
+        placeholder="A sentence on why it should exist… (optional)"
+        value={description}
+        disabled={busy}
+        rows={2}
+        maxLength={1000}
+        onChange={(e) => setDescription(e.target.value)}
+        style={{ fontSize: 13.5, lineHeight: 1.55 }}
       />
       {error && <p style={{ color: "var(--danger-text)", fontSize: 12.5, margin: 0 }}>{error}</p>}
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>

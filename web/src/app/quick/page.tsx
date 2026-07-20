@@ -1,4 +1,4 @@
-import { BuildButton, QuickComposer, VoteButton } from "@/components/QuickControls";
+import { BuildButton, CommentThread, QuickComposer, VoteButton } from "@/components/QuickControls";
 import { Card, Pill } from "@/components/ui";
 import { getAgentX } from "@/lib/server";
 
@@ -18,20 +18,35 @@ function ago(iso?: string) {
   return `${Math.round(h / 24)}d`;
 }
 
+const QI_TAGS = ["AI", "SaaS", "Consumer", "Marketplace", "Productivity", "Fintech", "Creator", "Education"];
+
 export default async function QuickIdeasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string; tag?: string }>;
 }) {
   const sp = await searchParams;
   const sort = sp.sort === "new" ? "new" : "top";
+  const activeTag = sp.tag && QI_TAGS.includes(sp.tag) ? sp.tag : undefined;
   const ax = getAgentX();
   const ideas = ax
     ? await ax.quick_ideas.list({
         sort: sort === "new" ? { field: "created_at", dir: "desc" } : { field: "upvotes", dir: "desc" },
+        filter: activeTag ? { tag: activeTag } : undefined,
         limit: 50,
       })
     : [];
+
+  // Preserve the active tag when switching sort, and vice-versa.
+  const withParams = (next: { sort?: string; tag?: string }) => {
+    const params = new URLSearchParams();
+    const s = next.sort ?? sort;
+    const t = "tag" in next ? next.tag : activeTag;
+    if (s === "new") params.set("sort", "new");
+    if (t) params.set("tag", t);
+    const qs = params.toString();
+    return qs ? `/quick?${qs}` : "/quick";
+  };
 
   return (
     <div className="scrollarea">
@@ -52,13 +67,30 @@ export default async function QuickIdeasPage({
               ["new", "New"],
             ] as const
           ).map(([k, l]) => (
-            <a key={k} href={k === "top" ? "/quick" : "/quick?sort=new"}>
+            <a key={k} href={withParams({ sort: k })}>
               <Pill accent={sort === k} style={{ cursor: "pointer" }}>{l}</Pill>
             </a>
           ))}
           <span className="spacer" />
           <span className="faint" style={{ fontSize: 12.5 }}>{ideas.length} ideas</span>
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", margin: "0 0 18px" }}>
+          <a href={withParams({ tag: undefined })}>
+            <Pill accent={!activeTag} style={{ cursor: "pointer" }}>All</Pill>
+          </a>
+          {QI_TAGS.map((t) => (
+            <a key={t} href={withParams({ tag: activeTag === t ? undefined : t })}>
+              <Pill accent={activeTag === t} style={{ cursor: "pointer" }}>{t}</Pill>
+            </a>
+          ))}
+        </div>
+
+        {ideas.length === 0 && (
+          <p className="faint" style={{ fontSize: 13.5, fontStyle: "italic", padding: "8px 2px" }}>
+            {activeTag ? `No ${activeTag} ideas yet — be the first.` : "No ideas yet — post the first one."}
+          </p>
+        )}
 
         <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {ideas.map((q) => (
@@ -72,10 +104,10 @@ export default async function QuickIdeasPage({
                 {q.description && (
                   <p className="muted" style={{ fontSize: 13.5, margin: "5px 0 0", lineHeight: 1.5 }}>{q.description}</p>
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
                   <span className="faint" style={{ fontSize: 12 }}>{q.author.label}</span>
                   <span className="faint" style={{ fontSize: 12 }}>· {ago(q.created_at)}</span>
-                  <span className="faint" style={{ fontSize: 12 }}>· {q.comment_count} comments</span>
+                  <CommentThread quickId={q.id} count={q.comment_count} />
                   {q.cloned_count > 0 && (
                     <span className="faint" style={{ fontSize: 12 }}>· {q.cloned_count} building</span>
                   )}
