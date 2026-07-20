@@ -4,16 +4,18 @@ import { notFound, redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import ArtifactActions from "@/components/ArtifactActions";
 import ArtifactPicker from "@/components/ArtifactPicker";
+import BriefReadiness from "@/components/BriefReadiness";
 import ChatPanel from "@/components/ChatPanel";
 import Composer from "@/components/Composer";
 import CoverEditor from "@/components/CoverEditor";
 import GateChecklist from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
 import SignalMap from "@/components/SignalMap";
+import SignalPanel from "@/components/SignalPanel";
 import VisibilityMenu from "@/components/VisibilityMenu";
 import WalletChip from "@/components/WalletChip";
 import { Icons } from "@/components/icons";
-import { Avatar, Card, Pill, SectionLabel, StageBadge, Bucks, Empty } from "@/components/ui";
+import { Card, Pill, SectionLabel, StageBadge, Bucks, Empty } from "@/components/ui";
 import { briefGate, topicCounts, type Brief } from "@/lib/agent";
 import { clerkEnabled } from "@/lib/clerk";
 import { callTool } from "@/lib/mcp";
@@ -185,6 +187,8 @@ export default async function IdeaHub({
   const brief = idea.data.brief ?? {};
   const gate = briefGate(brief);
   const counts = topicCounts(memories.entries.map((m) => ({ topic: m.data.topic })));
+  // The brief is live state shown separately; the panel lists the real generated docs.
+  const generatedArtifacts = artifacts.entries.filter((a) => !a.data.is_brief && a.data.type !== "brief");
   const listing = listings.entries[0] ?? null;
   const isLive = listing?.data.status === "live";
   const chatList = [...chats.entries].sort((a, b) =>
@@ -338,9 +342,11 @@ export default async function IdeaHub({
                 )}
               </div>
 
-              {/* knowledge panel */}
+              {/* knowledge panel — B3: readiness leads, real artifacts, collapsible signal */}
               <aside style={{ position: "sticky", top: 24 }}>
                 <Card style={{ padding: 0, overflow: "hidden" }}>
+                  <BriefReadiness gate={gate} href={href({ tab: "artifacts", doc: "brief" })} />
+                  <div style={{ height: 1, background: "var(--border)" }} />
                   <div style={{ padding: "16px 18px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                       <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
@@ -364,32 +370,37 @@ export default async function IdeaHub({
                       <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
                         <Icons.doc size={15} /> Artifacts
                       </span>
-                      <Link href={href({ tab: "artifacts" })} className="link-btn">{Math.max(artifacts.entries.length, 1)}</Link>
+                      <Link href={href({ tab: "artifacts" })} className="link-btn">{generatedArtifacts.length + 1}</Link>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <Link href={href({ tab: "artifacts" })} className="file-row">
+                      {/* The brief is live state — it always leads. Then the real generated docs. */}
+                      <Link href={href({ tab: "artifacts", doc: "brief" })} className="file-row">
                         <span className="file-glyph glyph-page"><Icons.doc size={14} /></span>
                         <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                           <div style={{ fontWeight: 500, fontSize: 13 }}>Product brief</div>
                         </div>
+                        <span className="badge b-idea" style={{ fontSize: 9, flex: "none" }}>Live</span>
                       </Link>
+                      {generatedArtifacts.map((a) => (
+                        <Link key={a.id} href={href({ tab: "artifacts", doc: a.id })} className="file-row">
+                          <span className="file-glyph glyph-page"><Icons.doc size={14} /></span>
+                          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                            <div style={{ fontWeight: 500, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.data.title}</div>
+                          </div>
+                          {a.data.on_public_page && (
+                            <span className="badge b-launch" style={{ fontSize: 9, flex: "none" }}>
+                              <Icons.globe size={9} /> Public
+                            </span>
+                          )}
+                        </Link>
+                      ))}
                     </div>
                   </div>
                   <div style={{ height: 1, background: "var(--border)" }} />
                   <div style={{ padding: "16px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontWeight: 600, fontSize: 13.5 }}>Brief</span>
-                      {gate.open && <span className="badge b-launch">Build-ready</span>}
-                    </div>
-                    <GateChecklist gate={gate} />
-                    <Link href={href({ tab: "artifacts" })} className="btn btn-secondary btn-sm" style={{ width: "100%", marginTop: 12 }}>
-                      Open the brief
-                    </Link>
-                  </div>
-                  <div style={{ height: 1, background: "var(--border)" }} />
-                  <div style={{ padding: "16px 18px" }}>
-                    <SectionLabel style={{ marginBottom: 10 }}>Signal map</SectionLabel>
-                    <SignalMap counts={counts} />
+                    <SignalPanel hasSignal={Object.values(counts).some((n) => n > 0)}>
+                      <SignalMap counts={counts} />
+                    </SignalPanel>
                   </div>
                 </Card>
               </aside>
