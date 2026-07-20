@@ -1,9 +1,10 @@
 "use client";
 
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icons } from "./icons";
+import { Avatar, SectionLabel } from "./ui";
 
 /* Quick Ideas interactions — vote column, "I'll build this", and the composer. */
 
@@ -212,14 +213,26 @@ const QI_TEMPLATES: { label: string; fill: string }[] = [
   { label: "An app that ___", fill: "An app that " },
 ];
 
-export function QuickComposer() {
+export function QuickComposer({ postedToday = false }: { postedToday?: boolean }) {
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [tag, setTag] = useState("");
+  const [tag, setTag] = useState("Consumer");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const initial = (user?.firstName?.[0] ?? user?.username?.[0] ?? user?.primaryEmailAddress?.emailAddress?.[0] ?? "?").toUpperCase();
+
+  const reset = () => {
+    setOpen(false);
+    setTitle("");
+    setDescription("");
+    setTag("Consumer");
+    setError(null);
+  };
 
   const post = async () => {
     const t = title.trim();
@@ -234,9 +247,7 @@ export function QuickComposer() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "failed");
-      setTitle("");
-      setDescription("");
-      setTag("");
+      reset();
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
@@ -245,11 +256,12 @@ export function QuickComposer() {
     }
   };
 
+  // Signed out — the collapsed row, but the CTA opens sign-in.
   if (!isSignedIn)
     return (
-      <div className="card" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <span className="muted" style={{ fontSize: 13.5, flex: 1 }}>
-          Got one? A sentence is enough — someone here might just build it.
+      <div className="card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 18px", marginBottom: 20 }}>
+        <span className="muted" style={{ flex: 1, fontSize: 15 }}>
+          Got a &ldquo;someone should build this&rdquo;? Drop it — one a day.
         </span>
         <SignInButton mode="modal">
           <button className="btn btn-primary btn-sm">Sign in to post</button>
@@ -257,20 +269,55 @@ export function QuickComposer() {
       </div>
     );
 
+  // Already posted today — v4's confirmation card, no composer.
+  if (postedToday)
+    return (
+      <div className="card" style={{ padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ width: 36, height: 36, borderRadius: 999, background: "var(--success-soft)", color: "var(--success-text)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+          <Icons.check size={18} />
+        </span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>That&apos;s your idea for today</div>
+          <div className="faint" style={{ fontSize: 12.5 }}>One a day keeps the board fresh. Come back tomorrow.</div>
+        </div>
+      </div>
+    );
+
+  // Collapsed — a single click-to-open row.
+  if (!open)
+    return (
+      <div
+        onClick={() => setOpen(true)}
+        className="card card-hover"
+        style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 18px", cursor: "text", marginBottom: 20 }}
+      >
+        <Avatar label={initial} kind="user" size={34} />
+        <span className="muted" style={{ flex: 1, fontSize: 15 }}>
+          Got a &ldquo;someone should build this&rdquo;? Drop it — one a day.
+        </span>
+        <button className="btn btn-primary btn-sm"><Icons.sparkle size={15} /> Post idea</button>
+      </div>
+    );
+
+  // Expanded — the full composer (Design/app/quick.jsx QuickComposer).
   return (
-    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="card" style={{ padding: 20, marginBottom: 20, border: "1px solid var(--accent)", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+        <SectionLabel>Your one-liner</SectionLabel>
+        <span className="faint" style={{ fontSize: 11.5 }}>one idea per day</span>
+      </div>
       <input
-        className="field"
-        placeholder="e.g. Uber for cats"
+        autoFocus
         value={title}
         disabled={busy}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") post();
         }}
-        style={{ border: "none", background: "transparent", padding: "2px 2px", fontSize: 14.5 }}
+        placeholder="e.g. Uber for cats"
+        style={{ width: "100%", border: "none", borderBottom: "2px solid var(--border-strong)", background: "none", outline: "none", fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", padding: "8px 0", marginBottom: 10 }}
       />
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <span className="faint" style={{ fontSize: 12 }}>Need a start?</span>
         {QI_TEMPLATES.map((t) => (
           <button key={t.label} type="button" className="tag-pick" disabled={busy} onClick={() => setTitle(t.fill)}>
@@ -278,34 +325,33 @@ export function QuickComposer() {
           </button>
         ))}
       </div>
+      <div className="faint" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+        Add detail (optional)
+      </div>
       <textarea
         className="edit-area"
-        placeholder="A sentence on why it should exist… (optional)"
         value={description}
         disabled={busy}
         rows={2}
         maxLength={1000}
         onChange={(e) => setDescription(e.target.value)}
-        style={{ fontSize: 13.5, lineHeight: 1.55 }}
+        placeholder="A sentence on why it should exist…"
+        style={{ width: "100%", fontSize: 14, lineHeight: 1.55, marginBottom: 14 }}
       />
-      {error && <p style={{ color: "var(--danger-text)", fontSize: 12.5, margin: 0 }}>{error}</p>}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-        {QI_TAGS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTag(tag === t ? "" : t)}
-            className={tag === t ? "pill pill-accent" : "pill"}
-            style={{ fontSize: 11, border: "none", cursor: "pointer" }}
-          >
-            {t}
-          </button>
-        ))}
-        <span className="spacer" />
+      {error && <p style={{ color: "var(--danger-text)", fontSize: 12.5, margin: "0 0 12px" }}>{error}</p>}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span className="faint" style={{ fontSize: 12.5 }}>Tag</span>
+        <select value={tag} disabled={busy} onChange={(e) => setTag(e.target.value)} className="mini-select">
+          {QI_TAGS.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-secondary btn-sm" disabled={busy} onClick={reset}>Cancel</button>
         <button className="btn btn-primary btn-sm" disabled={busy || !title.trim()} onClick={post}>
-          {busy ? "Posting…" : "Post it"}
+          <Icons.sparkle size={14} /> {busy ? "Posting…" : "Post idea"}
         </button>
       </div>
-      <span className="faint" style={{ fontSize: 11.5 }}>One idea per day — make it count.</span>
     </div>
   );
 }

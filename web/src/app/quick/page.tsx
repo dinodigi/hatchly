@@ -1,6 +1,8 @@
+import { auth } from "@clerk/nextjs/server";
 import { BuildButton, CommentThread, QuickComposer, VoteButton } from "@/components/QuickControls";
 import { Card, Pill } from "@/components/ui";
 import { getAgentX } from "@/lib/server";
+import { callTool } from "@/lib/mcp";
 
 /* Quick Ideas — v4's Reddit-style "someone should build this" board
    (Design/app/quick.jsx), with voting, posting, and cloning wired. */
@@ -37,6 +39,23 @@ export default async function QuickIdeasPage({
       })
     : [];
 
+  // One post per day (UTC) — mirror /api/quick so the composer can show the
+  // "that's your idea for today" state instead of letting the user hit a 429.
+  const { userId } = await auth();
+  let postedToday = false;
+  if (userId) {
+    const dayStart = new Date().toISOString().slice(0, 10) + "T00:00:00Z";
+    const mine = await callTool<{ entries: { id: string }[] }>("query_entries", {
+      collection: "quick_ideas",
+      where: [
+        { field: "author_id", op: "eq", value: userId },
+        { field: "created_at", op: "gt", value: dayStart },
+      ],
+      limit: 1,
+    });
+    postedToday = mine.entries.length > 0;
+  }
+
   // Preserve the active tag when switching sort, and vice-versa.
   const withParams = (next: { sort?: string; tag?: string }) => {
     const params = new URLSearchParams();
@@ -58,7 +77,7 @@ export default async function QuickIdeasPage({
           One line is enough. Someone here might just build it.
         </p>
 
-        <QuickComposer />
+        <QuickComposer postedToday={postedToday} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "24px 0 14px" }}>
           {(
