@@ -3,6 +3,7 @@
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icons } from "./icons";
 import { Coin } from "./ui";
 
@@ -93,7 +94,10 @@ export default function InvestControl({
         setOpen(true);
       })}
 
-      {open && (
+      {/* Portal to <body>: a hovered feed card has a CSS transform, which becomes
+          the containing block for position:fixed and would trap the modal inside
+          the row. `open` is only ever true after a client click, so document exists. */}
+      {open && createPortal(
         <>
           <div className="scrim" onClick={() => setOpen(false)} />
           <div className="modal" style={{ width: 440, overflow: "visible" }}>
@@ -179,7 +183,8 @@ export default function InvestControl({
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </>
   );
