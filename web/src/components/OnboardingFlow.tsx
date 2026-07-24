@@ -46,12 +46,12 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ raw: String(finalAnswers.raw ?? ""), answers: finalAnswers }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}) as { id?: string; code?: string; error?: string });
       if (res.status === 422 && json.code === "E_NO_KEY") {
         router.push("/settings?reason=key");
         return;
       }
-      if (!res.ok) throw new Error(json.error ?? "failed");
+      if (!res.ok || !json.id) throw new Error(json.error ?? "Couldn't create the idea. Please try again.");
       router.push(`/ideas/${json.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");

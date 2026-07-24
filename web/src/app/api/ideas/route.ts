@@ -37,36 +37,36 @@ export async function POST(req: Request) {
   const answers = body.answers ?? {};
   const broken = typeof answers.broken === "string" ? (answers.broken as string).trim() : "";
 
-  const name = raw ? await generateIdeaTitle(apiKey, raw) : "Untitled idea";
+  try {
+    const name = raw ? await generateIdeaTitle(apiKey, raw) : "Untitled idea";
 
-  const created = await callTool<{ id: string }>("create_entry", {
-    collection: "ideas",
-    data: {
-      owner_id: userId,
-      author: user.id,
-      name,
-      one_liner: raw ? raw.slice(0, 300) : "A new idea, still taking shape.",
-      stage: "ideation",
-      visibility: "private",
-      // The founder's "what's broken" line is the first draft of the problem —
-      // the problem chat refines it from here.
-      brief: { problem: broken || undefined, features: [], open_questions: [] },
-      archived: false,
-      last_activity_at: new Date().toISOString(),
-    },
-  });
+    const created = await callTool<{ id: string }>("create_entry", {
+      collection: "ideas",
+      data: {
+        owner_id: userId,
+        author: user.id,
+        name,
+        one_liner: raw ? raw.slice(0, 300) : "A new idea, still taking shape.",
+        stage: "ideation",
+        visibility: "private",
+        // The founder's "what's broken" line is the first draft of the problem —
+        // the problem chat refines it from here.
+        brief: broken ? { problem: broken, features: [], open_questions: [] } : { features: [], open_questions: [] },
+        archived: false,
+        last_activity_at: new Date().toISOString(),
+      },
+    });
 
-  // Pre-made placeholder chats — created empty; each renders its opening and
-  // curated questions lazily when the founder opens it (no model call now).
-  if (raw) {
-    const templates = await loadChatTemplates();
-    const picked = templatesForAnswers(templates, answers);
-    if (picked.length) {
-      const now = new Date().toISOString();
-      await callTool("transact", {
-        idempotencyKey: `onboard_chats_${created.id}`,
-        ops: [
-          ...picked.map((t) => ({
+    // Pre-made placeholder chats — created empty; each renders its opening and
+    // curated questions lazily when the founder opens it (no model call now).
+    if (raw) {
+      const templates = await loadChatTemplates();
+      const picked = templatesForAnswers(templates, answers);
+      if (picked.length) {
+        const now = new Date().toISOString();
+        await callTool("transact", {
+          idempotencyKey: `onboard_chats_${created.id}`,
+          ops: picked.map((t) => ({
             op: "create",
             collection: "chats",
             data: {
@@ -77,15 +77,16 @@ export async function POST(req: Request) {
               last_message_at: now,
             },
           })),
-          {
-            op: "create",
-            collection: "activity",
-            data: { owner_id: userId, idea: created.id, type: "sparkle", text: "Idea created from onboarding" },
-          },
-        ],
-      });
+        });
+      }
     }
-  }
 
-  return NextResponse.json({ id: created.id });
+    return NextResponse.json({ id: created.id });
+  } catch (e) {
+    // Never fall through to a bodyless 500 — the client parses this as JSON.
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "couldn't create the idea" },
+      { status: 502 },
+    );
+  }
 }
