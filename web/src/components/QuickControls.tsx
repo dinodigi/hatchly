@@ -226,8 +226,7 @@ const QI_TEMPLATES: { label: string; fill: string }[] = [
   { label: "An app that ___", fill: "An app that " },
 ];
 
-export function QuickComposer({ postedToday = false }: { postedToday?: boolean }) {
-  const { isSignedIn } = useAuth();
+export function QuickComposer({ postedToday = false, signedIn = false }: { postedToday?: boolean; signedIn?: boolean }) {
   const { user } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -258,6 +257,13 @@ export function QuickComposer({ postedToday = false }: { postedToday?: boolean }
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ title: t, description: description.trim(), tag }),
       });
+      // Daily limit already hit — reflect the real server state (the "posted
+      // today" card) instead of a generic error or a false success.
+      if (res.status === 429) {
+        reset();
+        router.refresh();
+        return;
+      }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "failed");
       reset();
@@ -269,8 +275,11 @@ export function QuickComposer({ postedToday = false }: { postedToday?: boolean }
     }
   };
 
-  // Signed out — the collapsed row, but the CTA opens sign-in.
-  if (!isSignedIn)
+  // Signed out — the collapsed row, but the CTA opens sign-in. Uses the
+  // server-derived `signedIn` (not client Clerk state) so a signed-in user
+  // never gets flashed the "Sign in to post" label before hydration
+  // (feedback 9f63c5d4).
+  if (!signedIn)
     return (
       <div className="card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 18px", marginBottom: 20 }}>
         <span className="muted" style={{ flex: 1, fontSize: 15 }}>

@@ -123,6 +123,9 @@ export default async function WalletPage() {
             const meta = TXN_META[t.data.type] ?? TXN_META.invest_out;
             const I = meta.I;
             const pos = t.data.amount > 0;
+            // The tax row is an informational breakdown of the invest_out debit
+            // (amount 0, not a second charge) — show a muted burn marker, not "−0".
+            const isBurn = t.data.type === "invest_tax" || t.data.type === "self_invest_tax";
             return (
               <div
                 key={t.id}
@@ -135,11 +138,17 @@ export default async function WalletPage() {
                   <div style={{ fontWeight: 500, fontSize: 14 }}>{t.data.label}</div>
                   <div className="faint" style={{ fontSize: 12 }}>{when(t.data.created_at)}</div>
                 </div>
-                <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 14.5, fontVariantNumeric: "tabular-nums", color: pos ? "var(--success-text)" : "var(--text-primary)" }}>
-                  {pos ? "+" : "−"}
-                  <Coin size={15} />
-                  {Math.abs(t.data.amount).toLocaleString()}
-                </span>
+                {isBurn ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 13, fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>
+                    <Icons.flame size={14} /> burned
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 14.5, fontVariantNumeric: "tabular-nums", color: pos ? "var(--success-text)" : "var(--text-primary)" }}>
+                    {pos ? "+" : "−"}
+                    <Coin size={15} />
+                    {Math.abs(t.data.amount).toLocaleString()}
+                  </span>
+                )}
               </div>
             );
           })}

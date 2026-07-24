@@ -442,9 +442,10 @@ export async function invest(params: {
                 owner_id: backerOwnerId,
                 user: bw.user.id,
                 type: isSelf ? "self_invest_tax" : "invest_tax",
-                amount: 0, // informational row — the burn is the out/in delta
+                amount: 0, // informational row — the burn is the out/in delta, so
+                           // the magnitude lives in the label, not a second debit
                 balance_after: sameWallet ? bw.balance - amount + net : backerAfter,
-                label: `Tax burned (${Math.round(taxRate * 100)}%) · ${listing.data.name}`,
+                label: `Tax burned · ${tax} (${Math.round(taxRate * 100)}%) · ${listing.data.name}`,
                 listing: listingId,
                 idempotency_key: `tax_${requestKey}`,
               },

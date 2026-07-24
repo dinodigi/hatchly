@@ -183,7 +183,7 @@ function StreamRail({
   backers,
 }: {
   movers: Listings[];
-  backers: { label: string; total: number }[];
+  backers: { id: string; label: string; total: number }[];
 }) {
   return (
     <div style={{ position: "sticky", top: 86, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -219,7 +219,7 @@ function StreamRail({
         <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
           {backers.length === 0 && <span className="faint" style={{ fontSize: 12.5, fontStyle: "italic" }}>No backers yet — be the first.</span>}
           {backers.map((p, i) => (
-            <div key={p.label} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 9 }}>
               <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-text)", width: 14 }}>{i + 1}</span>
               <Avatar label={initials(p.label)} kind="user" size={24} />
               <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{p.label}</span>
@@ -283,9 +283,9 @@ export default async function StreamPage({
   const movers = [...listings].sort((a, b) => b.bucks_today / (b.bucks_total || 1) - a.bucks_today / (a.bucks_total || 1)).slice(0, 4);
 
   // Top backers — aggregate public stakes by backer.
-  const byBacker = new Map<string, { label: string; total: number }>();
+  const byBacker = new Map<string, { id: string; label: string; total: number }>();
   for (const s of stakes) {
-    const cur = byBacker.get(s.backer.id) ?? { label: s.backer.label, total: 0 };
+    const cur = byBacker.get(s.backer.id) ?? { id: s.backer.id, label: s.backer.label, total: 0 };
     cur.total += s.amount;
     byBacker.set(s.backer.id, cur);
   }

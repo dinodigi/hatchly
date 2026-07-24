@@ -1,8 +1,18 @@
 import { auth } from "@clerk/nextjs/server";
 import { BuildButton, CommentThread, QuickComposer, VoteButton } from "@/components/QuickControls";
 import { Card, Pill } from "@/components/ui";
-import { getAgentX } from "@/lib/server";
 import { callTool } from "@/lib/mcp";
+
+interface QuickIdea {
+  title: string;
+  description?: string;
+  tag?: string;
+  upvotes: number;
+  comment_count: number;
+  cloned_count: number;
+  author: { id: string; label: string };
+  created_at?: string;
+}
 
 /* Quick Ideas — v4's Reddit-style "someone should build this" board
    (Design/app/quick.jsx), with voting, posting, and cloning wired. */
@@ -30,14 +40,22 @@ export default async function QuickIdeasPage({
   const sp = await searchParams;
   const sort = sp.sort === "new" ? "new" : "top";
   const activeTag = sp.tag && QI_TAGS.includes(sp.tag) ? sp.tag : undefined;
-  const ax = getAgentX();
-  const ideas = ax
-    ? await ax.quick_ideas.list({
-        sort: sort === "new" ? { field: "created_at", dir: "desc" } : { field: "upvotes", dir: "desc" },
-        filter: activeTag ? { tag: activeTag } : undefined,
-        limit: 50,
-      })
-    : [];
+  // Read the board over the MCP plane — the SAME plane as the per-day quota
+  // check below — so a just-posted idea shows up immediately. The delivery API
+  // read lags the write by ~15s, which made a fresh post look "silently
+  // discarded" while the quota was already consumed (feedback 9f63c5d4).
+  const where: { field: string; op: string; value: string }[] = [
+    { field: "status", op: "eq", value: "live" },
+  ];
+  if (activeTag) where.push({ field: "tag", op: "eq", value: activeTag });
+  const board = await callTool<{ entries: { id: string; data: QuickIdea }[] }>("query_entries", {
+    collection: "quick_ideas",
+    where,
+    orderBy: sort === "new" ? { field: "created_at", dir: "desc" } : { field: "upvotes", dir: "desc" },
+    select: ["title", "description", "tag", "upvotes", "comment_count", "cloned_count", "author", "created_at"],
+    limit: 50,
+  });
+  const ideas = board.entries.map((e) => ({ id: e.id, ...e.data }));
 
   // One post per day (UTC) — mirror /api/quick so the composer can show the
   // "that's your idea for today" state instead of letting the user hit a 429.
@@ -77,7 +95,7 @@ export default async function QuickIdeasPage({
           One line is enough. Someone here might just build it.
         </p>
 
-        <QuickComposer postedToday={postedToday} />
+        <QuickComposer postedToday={postedToday} signedIn={!!userId} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "24px 0 14px" }}>
           {(
