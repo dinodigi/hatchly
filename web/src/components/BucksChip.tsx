@@ -50,8 +50,17 @@ export default function BucksChip({
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [shown, setShown] = useState(balance);
+  const [lastBalance, setLastBalance] = useState(balance);
   const [burst, setBurst] = useState(0);
   const [busy, setBusy] = useState(false);
+
+  // WalletChip (server) re-fetches and passes a fresh `balance` after any
+  // router.refresh() — e.g. an invest elsewhere. Sync during render (React's
+  // recommended pattern) so the chip never freezes on its mount-time value.
+  if (balance !== lastBalance) {
+    setLastBalance(balance);
+    setShown(balance);
+  }
 
   const claim = async () => {
     if (busy) return;

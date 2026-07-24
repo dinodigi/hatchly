@@ -14,6 +14,10 @@ import { getAgentX } from "@/lib/server";
 
 export const metadata = { title: "Wallet — Hatchly" };
 
+// Balance and ledger must always reflect the latest invest/claim — never a
+// client-router-cached snapshot from an earlier visit.
+export const dynamic = "force-dynamic";
+
 type IconFn = (p: { size?: number }) => React.ReactNode;
 const TXN_META: Record<string, { I: IconFn; color: string; glyph: string }> = {
   signup_grant: { I: Icons.sparkle, color: "var(--success-text)", glyph: "var(--success-soft)" },
