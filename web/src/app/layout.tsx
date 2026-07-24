@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import Bootstrapper from "@/components/Bootstrapper";
+import FeedbackWidget from "@/components/FeedbackWidget";
 import NavGate from "@/components/NavGate";
 import TopNav from "@/components/TopNav";
 import { clerkEnabled } from "@/lib/clerk";
@@ -62,6 +63,7 @@ export default function RootLayout({
           <TopNav />
         </NavGate>
         {children}
+        <FeedbackWidget />
       </body>
     </html>
   );
