@@ -4,7 +4,6 @@ import { notFound, redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import ArtifactActions from "@/components/ArtifactActions";
 import ArtifactPicker from "@/components/ArtifactPicker";
-import BriefReadiness from "@/components/BriefReadiness";
 import ChatPanel from "@/components/ChatPanel";
 import Composer from "@/components/Composer";
 import CoverEditor from "@/components/CoverEditor";
@@ -243,13 +242,13 @@ export default async function IdeaHub({
     }
   }
 
-  // Templates map — labels the deck cards (icon + what the chat is for). Loaded
-  // only when the deck is on screen (Chats tab or an open chat).
-  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string }>();
-  if (tab === "chats" || activeChat) {
-    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string } }[] }>(
+  // Templates map — labels the deck cards, and links each empty brief line to the
+  // chat that fills it. Loaded whenever the deck or the brief panel is on screen.
+  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string }>();
+  if (tab === "chats" || tab === "overview" || activeChat) {
+    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string } }[] }>(
       "query_entries",
-      { collection: "chat_templates", select: ["key", "icon", "role", "produces"], limit: 50 },
+      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief"], limit: 50 },
     ).catch(() => null);
     for (const e of all?.entries ?? []) deckTemplates.set(e.data.key, e.data);
   }
@@ -259,6 +258,15 @@ export default async function IdeaHub({
     if (t.role === "foundation") return "Writes your brief";
     if (t.role === "free") return "Free-form";
     return t.produces ? `→ ${t.produces}` : "Sharpen";
+  };
+  // brief field → the chat (title + id) that fills it, via the template's feeds_brief.
+  const chatByTemplateKey = new Map(chatList.map((c) => [c.data.template_key, c]));
+  const briefChat = (field: string) => {
+    const feeds = field === "features" ? "value" : field; // features come from the "what it does" chat
+    for (const [key, tpl] of deckTemplates) {
+      if (tpl.feeds_brief === feeds) return chatByTemplateKey.get(key);
+    }
+    return undefined;
   };
 
   const href = (q: Record<string, string | undefined>) => {
@@ -434,7 +442,42 @@ export default async function IdeaHub({
               {/* knowledge panel — B3: readiness leads, real artifacts, collapsible signal */}
               <aside style={{ position: "sticky", top: 24 }}>
                 <Card style={{ padding: 0, overflow: "hidden" }}>
-                  <BriefReadiness gate={gate} href={href({ tab: "artifacts", doc: "brief" })} />
+                  {/* Your brief — the real captured content, with each blank line
+                      pointing at the chat that fills it. No progress meters. */}
+                  <div style={{ padding: "16px 18px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13.5 }}>Your brief</span>
+                      <Link href={href({ tab: "artifacts", doc: "brief" })} className="link-btn">Open →</Link>
+                    </div>
+                    {(
+                      [
+                        ["problem", "Problem"],
+                        ["who", "Audience"],
+                        ["value", "Core value"],
+                        ["features", "First feature"],
+                      ] as const
+                    ).map(([field, label], i) => {
+                      const val = field === "features" ? brief.features?.[0] : (brief as Record<string, string | undefined>)[field];
+                      const chat = val ? undefined : briefChat(field);
+                      return (
+                        <div key={field} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--border)" : "none" }}>
+                          <div style={{ fontSize: 9.5, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 3 }}>{label}</div>
+                          {val ? (
+                            <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>{val}</div>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Not captured yet</div>
+                              {chat && (
+                                <Link href={href({ tab: "chats", chat: chat.id })} className="link-btn" style={{ fontSize: 11.5, display: "inline-block", marginTop: 2 }}>
+                                  → {chat.data.title}
+                                </Link>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                   <div style={{ height: 1, background: "var(--border)" }} />
                   <div style={{ padding: "16px 18px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
