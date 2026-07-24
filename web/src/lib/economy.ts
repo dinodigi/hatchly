@@ -92,6 +92,13 @@ export async function getUserByClerkId(clerkUserId: string) {
   );
 }
 
+export async function getUserByEmail(email: string) {
+  return queryOne<{ clerk_user_id: string; handle: string; name: string; role: string; email: string }>(
+    "users",
+    [{ field: "email", op: "eq", value: email }],
+  );
+}
+
 /* ---- provisioning: first sign-in → users row + wallet + signup grant ---- */
 
 export async function ensureProvisioned(profile: {
@@ -106,6 +113,31 @@ export async function ensureProvisioned(profile: {
     const wallet = await getWallet(profile.clerkUserId);
     if (wallet) return { created: false };
     await createWalletWithGrant(profile.clerkUserId, existing.id);
+    return { created: false };
+  }
+
+  // Same human, new Clerk identity? One account per email — reuse the existing
+  // user instead of minting a second row + wallet + signup grant (the bug that
+  // produced two accounts for one email). Repoint the user and its wallet to
+  // this Clerk id so the session resolves to the one canonical account.
+  const byEmail = await getUserByEmail(profile.email);
+  if (byEmail) {
+    const oldClerkId = byEmail.data.clerk_user_id;
+    await callTool("update_entry", {
+      collection: "users",
+      id: byEmail.id,
+      data: { clerk_user_id: profile.clerkUserId },
+    });
+    const oldWallet = await getWallet(oldClerkId);
+    if (oldWallet) {
+      await callTool("update_entry", {
+        collection: "wallets",
+        id: oldWallet.id,
+        data: { owner_id: profile.clerkUserId },
+      });
+    } else {
+      await createWalletWithGrant(profile.clerkUserId, byEmail.id);
+    }
     return { created: false };
   }
 
