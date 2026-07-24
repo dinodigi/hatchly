@@ -115,6 +115,18 @@ input, textarea { font: inherit; color: inherit; }
 
 .scrollarea { overflow-y: auto; }
 
+/* Flex layout primitives (v4). These were referenced across the chat, idea
+   workspace, and dropdowns but never defined — so .col never made a flex
+   column, which left the chat composer unpinned and the thread unscrollable
+   (avatars stacked above their bubbles). */
+.row { display: flex; flex-direction: row; }
+.col { display: flex; flex-direction: column; }
+.gap2 { gap: 2px; }
+.gap4 { gap: 4px; }
+.gap6 { gap: 6px; }
+.gap8 { gap: 8px; }
+.gap14 { gap: 14px; }
+
 /* coin = Hatchly Bucks */
 .coin {
   display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; flex: none;

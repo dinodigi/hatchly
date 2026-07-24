@@ -370,7 +370,7 @@ export default async function IdeaHub({
           // Cap the chat column to the viewport (minus the 57px hub header) so the
           // message list is the only thing that scrolls and the composer stays pinned
           // — feedback d3a64e2e (input pushed off-screen, no auto-scroll).
-          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "calc(100vh - 57px)", overflow: "hidden" }}>
+          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "calc(100vh - 62px)", overflow: "hidden" }}>
             {chatDeck}
             <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "18px 22px" }}>
               <div style={{ flex: 1, minHeight: 0, width: "100%", maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column" }}>
