@@ -176,8 +176,11 @@ export async function runAgentTurn(params: {
   memories: { content: string; topic?: string }[];
   history: { role: "user" | "assistant"; content: string }[];
   userMessage: string;
+  /** This chat's focus from its template — steers the agent to one job
+   *  (the problem, the customer, competition…) instead of the whole idea. */
+  chatFocus?: string;
 }): Promise<AgentTurnResult> {
-  const { apiKey, ideaName, oneLiner, brief, memories, history, userMessage } = params;
+  const { apiKey, ideaName, oneLiner, brief, memories, history, userMessage, chatFocus } = params;
   const client = new Anthropic({ apiKey });
 
   const gate = briefGate(brief);
@@ -185,6 +188,9 @@ export async function runAgentTurn(params: {
   const signal = SIGNAL_TOPICS.map((t) => `${t}: ${counts[t] ?? 0}`).join(" · ");
 
   const context = [
+    ...(chatFocus
+      ? [`THIS CHAT'S FOCUS — stay on it; the founder opened this specific chat:`, chatFocus, ``]
+      : []),
     `IDEA: ${ideaName}${oneLiner ? ` — ${oneLiner}` : ""}`,
     ``,
     `CURRENT BRIEF:`,

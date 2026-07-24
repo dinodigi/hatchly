@@ -41,7 +41,7 @@ interface IdeaData {
 }
 interface ChatRow {
   id: string;
-  data: { title: string; last_message_at?: string };
+  data: { title: string; last_message_at?: string; template_key?: string };
 }
 interface MessageRow {
   id: string;
@@ -150,7 +150,7 @@ export default async function IdeaHub({
     callTool<{ entries: ChatRow[] }>("query_entries", {
       collection: "chats",
       where: [{ field: "idea", op: "eq", value: id }],
-      select: ["title", "last_message_at"],
+      select: ["title", "last_message_at", "template_key"],
       limit: 30,
     }),
     callTool<{ entries: MemoryRow[] }>("query_entries", {
@@ -213,6 +213,34 @@ export default async function IdeaHub({
         limit: 200,
       })
     : { entries: [] as MessageRow[] };
+
+  // A pre-made chat renders its template opening + curated questions until the
+  // founder answers. Load it only for the open chat.
+  interface QOpt { label: string; expands_to?: string }
+  interface TplQuestion { text: string; options?: QOpt[]; allow_help?: boolean }
+  let chatTemplate: { opening: string; questions: { text: string; options: QOpt[]; allow_help?: boolean }[] } | undefined;
+  if (activeChat?.data.template_key) {
+    const tplRes = await callTool<{ entries: { data: { opening: string; questions?: string } }[] }>("query_entries", {
+      collection: "chat_templates",
+      where: [{ field: "key", op: "eq", value: activeChat.data.template_key }],
+      select: ["opening", "questions"],
+      limit: 1,
+    }).catch(() => null);
+    const t = tplRes?.entries[0]?.data;
+    if (t) {
+      let questions: { text: string; options: QOpt[]; allow_help?: boolean }[] = [];
+      try {
+        questions = (JSON.parse(t.questions || "[]") as TplQuestion[]).map((q) => ({
+          text: q.text,
+          options: q.options ?? [],
+          allow_help: q.allow_help,
+        }));
+      } catch {
+        questions = [];
+      }
+      chatTemplate = { opening: t.opening, questions };
+    }
+  }
 
   const href = (q: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -290,6 +318,7 @@ export default async function IdeaHub({
                 <ChatPanel
                   ideaId={id}
                   chatId={activeChat.id}
+                  template={chatTemplate}
                   initialMessages={messages.entries.map((m) => ({
                     role: m.data.role,
                     content: m.data.content,

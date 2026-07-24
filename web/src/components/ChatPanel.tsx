@@ -12,14 +12,22 @@ interface Msg {
   traces: string[];
 }
 
+interface Template {
+  opening: string;
+  questions: { text: string; options: { label: string; expands_to?: string }[]; allow_help?: boolean }[];
+}
+
 export default function ChatPanel({
   ideaId,
   chatId: initialChatId,
   initialMessages,
+  template,
 }: {
   ideaId: string;
   chatId: string | null;
   initialMessages: Msg[];
+  /** A pre-made chat's template — its opening line and curated first questions. */
+  template?: Template;
 }) {
   const router = useRouter();
   const [chatId, setChatId] = useState(initialChatId);
@@ -33,10 +41,14 @@ export default function ChatPanel({
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [messages, busy]);
 
-  const send = async () => {
-    const message = input.trim();
+  // The curated pills for the opening — shown until the founder answers, then the
+  // agent takes over the conversation.
+  const primer = template && messages.length === 0 ? template.questions[0] : undefined;
+
+  const send = async (override?: string) => {
+    const message = (override ?? input).trim();
     if (!message || busy) return;
-    setInput("");
+    if (!override) setInput("");
     setError(null);
     setMessages((m) => [...m, { role: "user", content: message, traces: [] }]);
     setBusy(true);
@@ -72,9 +84,14 @@ export default function ChatPanel({
             <div className="row gap8" style={{ alignItems: "flex-start" }}>
               <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
               <div className="card" style={{ padding: "10px 14px", fontSize: 14, lineHeight: 1.55, maxWidth: 520 }}>
-                What&apos;s the idea? A sentence is enough — or just talk.
+                {template?.opening ?? "What's the idea? A sentence is enough — or just talk."}
               </div>
             </div>
+            {template && (
+              <span className="faint" style={{ fontSize: 11.5, marginLeft: 34 }}>
+                Curated from your onboarding · tap an answer or just type.
+              </span>
+            )}
           </div>
         )}
         {messages.map((m, i) =>
@@ -126,6 +143,29 @@ export default function ChatPanel({
 
       {error && <p style={{ color: "var(--danger-text)", fontSize: 13, margin: "8px 0 0" }}>{error}</p>}
 
+      {primer && (
+        <div className="col gap6" style={{ marginTop: 14 }}>
+          <span className="faint" style={{ fontSize: 12, fontWeight: 500 }}>{primer.text}</span>
+          <div className="row gap6" style={{ flexWrap: "wrap" }}>
+            {primer.options.map((o) => (
+              <button
+                key={o.label}
+                className="tag-pick"
+                disabled={busy}
+                onClick={() => send(o.expands_to?.trim() || o.label)}
+              >
+                {o.label}
+              </button>
+            ))}
+            {primer.allow_help && (
+              <button className="tag-pick" disabled={busy} onClick={() => send("Help me decide — propose an answer from what you already know.")}>
+                Help me decide
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="row gap8" style={{ marginTop: 14 }}>
         <input
           className="field"
@@ -141,7 +181,7 @@ export default function ChatPanel({
           }}
           style={{ flex: 1 }}
         />
-        <button className="btn btn-primary" disabled={busy || !input.trim()} onClick={send}>
+        <button className="btn btn-primary" disabled={busy || !input.trim()} onClick={() => send()}>
           Send
         </button>
       </div>

@@ -59,13 +59,25 @@ export async function POST(req: Request) {
 
   // Resolve or create the chat.
   let chatId = body.chatId ?? null;
+  let chatFocus: string | undefined;
   if (chatId) {
-    const chat = await callTool<Entry<{ owner_id: string }>>("get_entry", {
+    const chat = await callTool<Entry<{ owner_id: string; template_key?: string }>>("get_entry", {
       collection: "chats",
       id: chatId,
     });
     if (chat.data.owner_id !== userId)
       return NextResponse.json({ error: "not your chat" }, { status: 403 });
+    // A pre-made chat carries a template — its system prompt focuses the agent.
+    if (chat.data.template_key) {
+      const tpl = await callTool<{ entries: Entry<{ name: string; system_prompt: string }>[] }>("query_entries", {
+        collection: "chat_templates",
+        where: [{ field: "key", op: "eq", value: chat.data.template_key }],
+        select: ["name", "system_prompt"],
+        limit: 1,
+      }).catch(() => null);
+      const t = tpl?.entries[0]?.data;
+      if (t) chatFocus = `${t.name} — ${t.system_prompt}`;
+    }
   } else {
     const created = await callTool<{ id: string }>("create_entry", {
       collection: "chats",
@@ -113,6 +125,7 @@ export async function POST(req: Request) {
       memories: memoriesRes.entries.map((e) => ({ content: e.data.content, topic: e.data.topic })),
       history,
       userMessage: message,
+      chatFocus,
     });
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError)
