@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
-  let body: { quickId?: string; text?: string };
+  let body: { quickId?: string; text?: string; requestKey?: string };
   try {
     body = await req.json();
   } catch {
@@ -56,7 +56,10 @@ export async function POST(req: Request) {
   const user = await getUserByClerkId(userId);
   if (!user) return NextResponse.json({ error: "no profile" }, { status: 409 });
 
+  // Idempotent per client requestKey so a retried submit doesn't double-post.
+  const key = /^[A-Za-z0-9-]{8,64}$/.test(body.requestKey ?? "") ? body.requestKey : undefined;
   await callTool("transact", {
+    ...(key ? { idempotencyKey: `comment_${userId}_${key}` } : {}),
     ops: [
       {
         op: "create",

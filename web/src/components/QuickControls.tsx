@@ -146,7 +146,7 @@ export function CommentThread({ quickId, count }: { quickId: string; count: numb
       const res = await fetch("/api/quick/comment", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ quickId, text: t }),
+        body: JSON.stringify({ quickId, text: t, requestKey: crypto.randomUUID() }),
       });
       const json = await res.json();
       if (res.ok && json.comment) {

@@ -35,8 +35,14 @@ export async function POST(req: Request) {
   if (quick.data.status !== "live") return NextResponse.json({ error: "not available" }, { status: 422 });
 
   const name = quick.data.title.length > 40 ? quick.data.title.slice(0, 37) + "…" : quick.data.title;
+  // Idempotent per (user, quick idea): the idea create returns the SAME row on a
+  // retry, and the seed transact is keyed to match — so a retry after a partial
+  // failure completes the seeding instead of orphaning a chat-less idea, and a
+  // double-fire can't create two workspaces for one quick idea.
+  const cloneKey = `clone_${userId}_${body.quickId}`;
   const idea = await callTool<{ id: string }>("create_entry", {
     collection: "ideas",
+    idempotencyKey: cloneKey,
     data: {
       owner_id: userId,
       author: user.id,
@@ -54,6 +60,7 @@ export async function POST(req: Request) {
   });
 
   await callTool("transact", {
+    idempotencyKey: `${cloneKey}_seed`,
     ops: [
       { op: "update_if", collection: "quick_ideas", id: body.quickId, increment: { field: "cloned_count", by: 1 } },
       {
