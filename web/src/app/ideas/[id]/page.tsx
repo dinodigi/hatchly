@@ -91,6 +91,7 @@ interface FeedbackRow {
 
 const HUB_TABS = [
   { key: "overview", label: "Overview", icon: Icons.grid },
+  { key: "chats", label: "Chats", icon: Icons.chat },
   { key: "memory", label: "Memory", icon: Icons.brain },
   { key: "artifacts", label: "Artifacts", icon: Icons.doc },
   { key: "community", label: "Community", icon: Icons.users },
@@ -242,12 +243,59 @@ export default async function IdeaHub({
     }
   }
 
+  // Templates map — labels the deck cards (icon + what the chat is for). Loaded
+  // only when the deck is on screen (Chats tab or an open chat).
+  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string }>();
+  if (tab === "chats" || activeChat) {
+    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string } }[] }>(
+      "query_entries",
+      { collection: "chat_templates", select: ["key", "icon", "role", "produces"], limit: 50 },
+    ).catch(() => null);
+    for (const e of all?.entries ?? []) deckTemplates.set(e.data.key, e.data);
+  }
+  const deckSub = (tk?: string) => {
+    const t = tk ? deckTemplates.get(tk) : undefined;
+    if (!t) return "Chat";
+    if (t.role === "foundation") return "Writes your brief";
+    if (t.role === "free") return "Free-form";
+    return t.produces ? `→ ${t.produces}` : "Sharpen";
+  };
+
   const href = (q: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries(q)) if (v) p.set(k, v);
     const s = p.toString();
     return `/ideas/${id}${s ? `?${s}` : ""}`;
   };
+
+  // The chat card deck — the scrollable strip of chats above the conversation.
+  const chatDeck = (
+    <div style={{ flex: "none", borderBottom: "1px solid var(--border)", paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 24px 10px" }}>
+        <span style={{ fontSize: 10, letterSpacing: "0.11em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700 }}>
+          Chats · {chatList.length}
+        </span>
+        <div style={{ flex: 1 }} />
+        <Link href={href({ tab: "overview" })} className="btn btn-secondary btn-sm">
+          <Icons.plus size={13} /> New
+        </Link>
+      </div>
+      <div style={{ display: "flex", gap: 9, padding: "0 24px 15px", overflowX: "auto" }}>
+        {chatList.map((c) => (
+          <Link
+            key={c.id}
+            href={href({ tab: "chats", chat: c.id })}
+            className="chat-card"
+            data-active={activeChat?.id === c.id}
+          >
+            <span className="cc-ic">{deckTemplates.get(c.data.template_key ?? "")?.icon ?? "◆"}</span>
+            <b>{c.data.title}</b>
+            <span className="cc-sub">{deckSub(c.data.template_key)}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -288,7 +336,8 @@ export default async function IdeaHub({
           }}
         >
           {HUB_TABS.map((t) => {
-            const active = tab === t.key && !activeChat;
+            // An open chat lights the Chats tab, whichever tab it was opened from.
+            const active = activeChat ? t.key === "chats" : tab === t.key;
             const I = t.icon;
             return (
               <Link
@@ -307,20 +356,9 @@ export default async function IdeaHub({
 
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
         {/* ---- ChatView (hub.jsx) ---- */}
-        {tab === "overview" && activeChat && (
-          <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <div style={{ padding: "10px 28px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
-              <Link href={href({})} className="iconbtn" title="All chats" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                <Icons.back size={17} />
-              </Link>
-              <span style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", fontWeight: 600, fontSize: 14.5 }}>
-                <Icons.chat size={15} style={{ color: "var(--text-secondary)" }} /> {activeChat.data.title}
-              </span>
-              <div style={{ flex: 1 }} />
-              <Link href={href({})} className="btn btn-secondary btn-sm">
-                <Icons.plus size={14} /> New chat
-              </Link>
-            </div>
+        {activeChat && (
+          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
+            {chatDeck}
             <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "18px 22px" }}>
               <div style={{ flex: 1, minHeight: 0, width: "100%", maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column" }}>
                 <ChatPanel
@@ -334,6 +372,20 @@ export default async function IdeaHub({
                   }))}
                 />
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "chats" && !activeChat && (
+          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
+            {chatDeck}
+            <div style={{ padding: "50px 24px", textAlign: "center" }}>
+              <p className="muted" style={{ fontSize: 14, margin: "0 0 14px" }}>
+                {chatList.length ? "Pick a chat above to open it." : "No chats yet."}
+              </p>
+              <Link href={href({ tab: "overview" })} className="btn btn-primary btn-sm">
+                <Icons.plus size={14} /> Start a chat
+              </Link>
             </div>
           </div>
         )}
