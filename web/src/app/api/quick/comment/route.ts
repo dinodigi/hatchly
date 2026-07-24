@@ -73,5 +73,17 @@ export async function POST(req: Request) {
     ],
   });
 
-  return NextResponse.json({ ok: true });
+  // Return the comment we just wrote so the client can append it directly.
+  // The write goes through MCP but the thread reads through the delivery API —
+  // the two planes have no read-your-writes guarantee, so an immediate refetch
+  // can miss this row. Handing it back avoids that race entirely.
+  return NextResponse.json({
+    ok: true,
+    comment: {
+      id: `local_${userId}_${Date.now()}`,
+      text,
+      author: user.data.name,
+      created_at: new Date().toISOString(),
+    },
+  });
 }

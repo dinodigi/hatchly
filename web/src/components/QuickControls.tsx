@@ -10,9 +10,18 @@ import { Avatar, SectionLabel } from "./ui";
 
 export function VoteButton({ quickId, upvotes }: { quickId: string; upvotes: number }) {
   const { isSignedIn } = useAuth();
+  const router = useRouter();
   const [count, setCount] = useState(upvotes);
+  const [lastUpvotes, setLastUpvotes] = useState(upvotes);
   const [voted, setVoted] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Reconcile with the server count after a refresh (own vote or someone
+  // else's) instead of drifting from the mount-time prop. During-render sync.
+  if (upvotes !== lastUpvotes) {
+    setLastUpvotes(upvotes);
+    setCount(upvotes);
+  }
 
   const vote = async () => {
     if (voted || busy) return;
@@ -26,6 +35,7 @@ export function VoteButton({ quickId, upvotes }: { quickId: string; upvotes: num
       if (res.ok) {
         setCount((c) => c + 1);
         setVoted(true);
+        router.refresh();
       } else if (res.status === 409) {
         setVoted(true);
       }
@@ -107,6 +117,7 @@ type Comment = { id: string; text: string; author: string; created_at?: string }
     renders 50 cards, and eager-loading every thread would be 50 queries. */
 export function CommentThread({ quickId, count }: { quickId: string; count: number }) {
   const { isSignedIn } = useAuth();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [total, setTotal] = useState(count);
@@ -137,12 +148,14 @@ export function CommentThread({ quickId, count }: { quickId: string; count: numb
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ quickId, text: t }),
       });
-      if (res.ok) {
+      const json = await res.json();
+      if (res.ok && json.comment) {
         setText("");
         setTotal((n) => n + 1);
-        const refreshed = await fetch(`/api/quick/comment?quickId=${encodeURIComponent(quickId)}`);
-        const json = await refreshed.json();
-        if (refreshed.ok) setComments(json.comments);
+        // Append the comment the server just handed back — no lagging refetch.
+        setComments((cur) => [...(cur ?? []), json.comment]);
+        // Keep the card's server-rendered comment_count in sync for everyone.
+        router.refresh();
       }
     } finally {
       setBusy(false);
