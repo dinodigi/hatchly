@@ -10,6 +10,11 @@ const ITEMS: { key: keyof Omit<BriefGate, "open">; label: string }[] = [
   { key: "feature", label: "A first feature" },
 ];
 
+/** One-line explainer of what the gate is and what opening it means — surfaced
+ *  as a tooltip wherever the gate marker or checkmarks appear (feedback 80f2eb27). */
+export const GATE_HELP =
+  "The build gate opens once your brief captures all four — a problem, an audience, a core value, and a first feature. Opening it marks the idea build-ready to start building; it doesn't mean the idea is finished.";
+
 export default function GateChecklist({
   gate,
   compact = false,
@@ -20,7 +25,7 @@ export default function GateChecklist({
   if (compact) {
     // dashboard-card variant: four ticks in a row
     return (
-      <div className="row gap6" title={ITEMS.map((i) => `${gate[i.key] ? "✓" : "○"} ${i.label}`).join("  ")}>
+      <div className="row gap6" title={`${GATE_HELP}\n\n${ITEMS.map((i) => `${gate[i.key] ? "✓" : "○"} ${i.label}`).join("  ")}`}>
         {ITEMS.map((i) => (
           <span
             key={i.key}

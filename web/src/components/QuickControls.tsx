@@ -8,12 +8,13 @@ import { Avatar, SectionLabel } from "./ui";
 
 /* Quick Ideas interactions — vote column, "I'll build this", and the composer. */
 
-export function VoteButton({ quickId, upvotes }: { quickId: string; upvotes: number }) {
+export function VoteButton({ quickId, upvotes, voted: votedProp = false }: { quickId: string; upvotes: number; voted?: boolean }) {
   const { isSignedIn } = useAuth();
   const router = useRouter();
   const [count, setCount] = useState(upvotes);
   const [lastUpvotes, setLastUpvotes] = useState(upvotes);
-  const [voted, setVoted] = useState(false);
+  const [voted, setVoted] = useState(votedProp);
+  const [lastVotedProp, setLastVotedProp] = useState(votedProp);
   const [busy, setBusy] = useState(false);
 
   // Reconcile with the server count after a refresh (own vote or someone
@@ -22,23 +23,35 @@ export function VoteButton({ quickId, upvotes }: { quickId: string; upvotes: num
     setLastUpvotes(upvotes);
     setCount(upvotes);
   }
+  // Same for the voted state — so it persists across reloads and reflects the
+  // server after a refresh (feedback e3257782).
+  if (votedProp !== lastVotedProp) {
+    setLastVotedProp(votedProp);
+    setVoted(votedProp);
+  }
 
-  const vote = async () => {
-    if (voted || busy) return;
+  const toggle = async () => {
+    if (busy) return;
     setBusy(true);
+    const wasVoted = voted;
+    // Optimistic flip; revert if the request fails.
+    setVoted(!wasVoted);
+    setCount((c) => c + (wasVoted ? -1 : 1));
     try {
       const res = await fetch("/api/quick/vote", {
-        method: "POST",
+        method: wasVoted ? "DELETE" : "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ quickId }),
       });
-      if (res.ok) {
-        setCount((c) => c + 1);
-        setVoted(true);
+      if (res.ok || res.status === 409) {
         router.refresh();
-      } else if (res.status === 409) {
-        setVoted(true);
+      } else {
+        setVoted(wasVoted);
+        setCount((c) => c + (wasVoted ? 1 : -1));
       }
+    } catch {
+      setVoted(wasVoted);
+      setCount((c) => c + (wasVoted ? 1 : -1));
     } finally {
       setBusy(false);
     }
@@ -56,8 +69,8 @@ export function VoteButton({ quickId, upvotes }: { quickId: string; upvotes: num
         color: voted ? "var(--accent-text)" : "var(--text-secondary)",
         cursor: "pointer",
       }}
-      onClick={isSignedIn ? vote : undefined}
-      title={voted ? "Voted" : "Upvote"}
+      onClick={isSignedIn ? toggle : undefined}
+      title={voted ? "Remove vote" : "Upvote"}
     >
       <Icons.chevUp size={18} />
       <span className="mono" style={{ fontSize: 14, fontWeight: 600 }}>{count}</span>

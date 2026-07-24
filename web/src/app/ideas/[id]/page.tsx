@@ -7,7 +7,7 @@ import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
 import Composer from "@/components/Composer";
 import CoverEditor from "@/components/CoverEditor";
-import GateChecklist from "@/components/GateChecklist";
+import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
 import SignalMap from "@/components/SignalMap";
 import SignalPanel from "@/components/SignalPanel";
@@ -692,9 +692,11 @@ export default async function IdeaHub({
                     <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>Product brief</div>
                     <div className="faint" style={{ fontSize: 12.5 }}>
                       Written in chat ·{" "}
-                      {gate.open
-                        ? "build-ready"
-                        : `${[gate.problem, gate.who, gate.value, gate.feature].filter(Boolean).length}/4 to open the gate`}
+                      <span title={GATE_HELP} style={{ borderBottom: "1px dotted var(--text-muted)", cursor: "help" }}>
+                        {gate.open
+                          ? "build-ready"
+                          : `${[gate.problem, gate.who, gate.value, gate.feature].filter(Boolean).length}/4 to open the gate`}
+                      </span>
                     </div>
                   </Card>
                 </Link>

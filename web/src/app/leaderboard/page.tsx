@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { Icons } from "@/components/icons";
 import { Avatar, Bucks, Card, SectionLabel, Spark } from "@/components/ui";
 import { clerkEnabled } from "@/lib/clerk";
-import { getUserByClerkId } from "@/lib/economy";
+import { getUserByClerkId, suspendedUserIds } from "@/lib/economy";
 import { getAgentX } from "@/lib/server";
 
 /* Leaderboard — v4's "Hall of backers" (stream.jsx): podium 2-1-3, the full
@@ -24,15 +24,18 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 export default async function LeaderboardPage() {
   const ax = getAgentX();
   const { userId } = clerkEnabled ? await auth() : { userId: null };
-  const [listings, stakes, me] = await Promise.all([
+  const [listings, stakes, me, suspended] = await Promise.all([
     ax ? ax.listings.list({ sort: { field: "rank_score", dir: "desc" }, limit: 50 }) : [],
     ax ? ax.stakes.list({ limit: 500 }) : [],
     userId ? getUserByClerkId(userId).catch(() => null) : null,
+    suspendedUserIds().catch(() => new Set<string>()),
   ]);
 
   // Aggregate public stakes by backer: total invested + distinct ideas backed.
+  // Suspended accounts (e.g. a de-duplicated old profile) are kept off the board.
   const agg = new Map<string, { id: string; name: string; invested: number; ideas: Set<string> }>();
   for (const s of stakes) {
+    if (suspended.has(s.backer.id)) continue;
     const cur = agg.get(s.backer.id) ?? { id: s.backer.id, name: s.backer.label, invested: 0, ideas: new Set<string>() };
     cur.invested += s.amount;
     cur.ideas.add(s.listing.id);

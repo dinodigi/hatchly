@@ -99,6 +99,19 @@ export async function getUserByEmail(email: string) {
   );
 }
 
+/** User ids that must be kept out of public rankings — suspended accounts, e.g.
+ *  a de-duplicated old profile that still holds historical stakes. Callers fetch
+ *  this once per request and filter their stakes aggregate through it. */
+export async function suspendedUserIds(): Promise<Set<string>> {
+  const res = await callTool<{ entries: { id: string }[] }>("query_entries", {
+    collection: "users",
+    where: [{ field: "suspended", op: "eq", value: true }],
+    select: ["name"],
+    limit: 500,
+  });
+  return new Set(res.entries.map((e) => e.id));
+}
+
 /* ---- provisioning: first sign-in → users row + wallet + signup grant ---- */
 
 export async function ensureProvisioned(profile: {

@@ -4,7 +4,7 @@ import WalletClaimButton from "@/components/WalletClaimButton";
 import { Icons } from "@/components/icons";
 import { Bucks, Card, Coin, SectionLabel } from "@/components/ui";
 import { clerkEnabled } from "@/lib/clerk";
-import { DAILY_CLAIM, getUserByClerkId, getWallet } from "@/lib/economy";
+import { DAILY_CLAIM, getUserByClerkId, getWallet, suspendedUserIds } from "@/lib/economy";
 import { callTool } from "@/lib/mcp";
 import { getAgentX } from "@/lib/server";
 
@@ -53,7 +53,7 @@ export default async function WalletPage() {
   if (!userId) redirect("/");
 
   const ax = getAgentX();
-  const [wallet, me, txns, stakes] = await Promise.all([
+  const [wallet, me, txns, stakes, suspended] = await Promise.all([
     getWallet(userId),
     getUserByClerkId(userId).catch(() => null),
     callTool<{ entries: { id: string; data: TxnData }[] }>("query_entries", {
@@ -64,6 +64,7 @@ export default async function WalletPage() {
       limit: 50,
     }),
     ax ? ax.stakes.list({ limit: 200 }) : [],
+    suspendedUserIds().catch(() => new Set<string>()),
   ]);
   if (!wallet) redirect("/");
   const w = wallet.data;
@@ -73,7 +74,10 @@ export default async function WalletPage() {
 
   // Leaderboard rank among backers, from public stakes.
   const byBacker = new Map<string, number>();
-  for (const s of stakes) byBacker.set(s.backer.id, (byBacker.get(s.backer.id) ?? 0) + s.amount);
+  for (const s of stakes) {
+    if (suspended.has(s.backer.id)) continue;
+    byBacker.set(s.backer.id, (byBacker.get(s.backer.id) ?? 0) + s.amount);
+  }
   const ranked = [...byBacker.entries()].sort((a, b) => b[1] - a[1]);
   const myRank = me ? ranked.findIndex(([id]) => id === me.id) + 1 : 0;
 

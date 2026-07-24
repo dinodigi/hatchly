@@ -35,3 +35,34 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ ok: true });
 }
+
+/** DELETE /api/quick/vote { quickId } — remove your upvote (feedback e3257782). */
+export async function DELETE(req: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+
+  let body: { quickId?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "bad json" }, { status: 400 });
+  }
+  if (!body.quickId) return NextResponse.json({ error: "quickId required" }, { status: 400 });
+
+  const existing = await callTool<{ entries: { id: string }[] }>("query_entries", {
+    collection: "quick_votes",
+    where: [{ field: "vote_key", op: "eq", value: `${userId}_${body.quickId}` }],
+    select: ["vote_key"],
+    limit: 1,
+  });
+  // Idempotent: nothing to remove is still a success.
+  if (!existing.entries.length) return NextResponse.json({ ok: true });
+
+  // Drop the vote row first, then walk the counter back one — mirrors the POST's
+  // proven increment path so the counter can never drift below the row count.
+  await callTool("delete_entry", { collection: "quick_votes", id: existing.entries[0].id });
+  await callTool("transact", {
+    ops: [{ op: "update_if", collection: "quick_ideas", id: body.quickId, increment: { field: "upvotes", by: -1 } }],
+  });
+  return NextResponse.json({ ok: true });
+}

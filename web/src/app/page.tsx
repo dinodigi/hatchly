@@ -6,7 +6,7 @@ import SpotlightControl, { SpotlightTimer } from "@/components/SpotlightControl"
 import { Icons } from "@/components/icons";
 import { Avatar, Bucks, Card, Coin, Pill, Spark } from "@/components/ui";
 import { clerkEnabled } from "@/lib/clerk";
-import { SPOTLIGHT_MIN_BID, getSpotlight, getUserByClerkId } from "@/lib/economy";
+import { SPOTLIGHT_MIN_BID, getSpotlight, getUserByClerkId, suspendedUserIds } from "@/lib/economy";
 import { getAgentX } from "@/lib/server";
 import type { Listings } from "@/lib/agentx";
 
@@ -249,12 +249,13 @@ export default async function StreamPage({
   const { userId } = clerkEnabled ? await auth() : { userId: null };
   // getSpotlight() also settles an expired auction — the stream is the busiest
   // read in the app, so it's the natural place for lazy settlement to happen.
-  const [listings, spotlight, stakes, me, user] = await Promise.all([
+  const [listings, spotlight, stakes, me, user, suspended] = await Promise.all([
     ax.listings.list({ sort: { field: "bucks_today", dir: "desc" }, limit: 50 }),
     getSpotlight().catch(() => null),
     ax.stakes.list({ sort: { field: "amount", dir: "desc" }, limit: 200 }),
     userId ? getUserByClerkId(userId).catch(() => null) : null,
     userId ? currentUser() : null,
+    suspendedUserIds().catch(() => new Set<string>()),
   ]);
 
   const loggedIn = !!userId;
@@ -282,9 +283,10 @@ export default async function StreamPage({
 
   const movers = [...listings].sort((a, b) => b.bucks_today / (b.bucks_total || 1) - a.bucks_today / (a.bucks_total || 1)).slice(0, 4);
 
-  // Top backers — aggregate public stakes by backer.
+  // Top backers — aggregate public stakes by backer, minus suspended accounts.
   const byBacker = new Map<string, { id: string; label: string; total: number }>();
   for (const s of stakes) {
+    if (suspended.has(s.backer.id)) continue;
     const cur = byBacker.get(s.backer.id) ?? { id: s.backer.id, label: s.backer.label, total: 0 };
     cur.total += s.amount;
     byBacker.set(s.backer.id, cur);

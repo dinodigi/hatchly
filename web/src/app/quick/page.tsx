@@ -61,17 +61,29 @@ export default async function QuickIdeasPage({
   // "that's your idea for today" state instead of letting the user hit a 429.
   const { userId } = await auth();
   let postedToday = false;
+  let votedIds = new Set<string>();
   if (userId) {
     const dayStart = new Date().toISOString().slice(0, 10) + "T00:00:00Z";
-    const mine = await callTool<{ entries: { id: string }[] }>("query_entries", {
-      collection: "quick_ideas",
-      where: [
-        { field: "author_id", op: "eq", value: userId },
-        { field: "created_at", op: "gt", value: dayStart },
-      ],
-      limit: 1,
-    });
+    const [mine, votes] = await Promise.all([
+      callTool<{ entries: { id: string }[] }>("query_entries", {
+        collection: "quick_ideas",
+        where: [
+          { field: "author_id", op: "eq", value: userId },
+          { field: "created_at", op: "gt", value: dayStart },
+        ],
+        limit: 1,
+      }),
+      // Which ideas this user has already upvoted — lets each vote button show
+      // the voted state on load and offer un-voting (feedback e3257782).
+      callTool<{ entries: { data: { quick_idea: { id: string } } }[] }>("query_entries", {
+        collection: "quick_votes",
+        where: [{ field: "voter_id", op: "eq", value: userId }],
+        select: ["quick_idea"],
+        limit: 300,
+      }),
+    ]);
     postedToday = mine.entries.length > 0;
+    votedIds = new Set(votes.entries.map((e) => e.data.quick_idea?.id).filter(Boolean));
   }
 
   // Preserve the active tag when switching sort, and vice-versa.
@@ -132,7 +144,7 @@ export default async function QuickIdeasPage({
         <div className="stagger" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {ideas.map((q) => (
             <Card key={q.id} style={{ display: "flex", gap: 16, padding: 16 }}>
-              <VoteButton quickId={q.id} upvotes={q.upvotes} />
+              <VoteButton quickId={q.id} upvotes={q.upvotes} voted={votedIds.has(q.id)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {q.tag && <span className="tag-pill">{q.tag}</span>}
