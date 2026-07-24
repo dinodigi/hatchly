@@ -6,7 +6,12 @@ export async function POST(req: Request) {
   const staff = await getStaff();
   if (!staff) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const body = (await req.json()) as { listingId?: string; hidden?: boolean; reason?: string };
+  let body: { listingId?: string; hidden?: boolean; reason?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "bad json" }, { status: 400 });
+  }
   if (!body.listingId || typeof body.hidden !== "boolean") {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }

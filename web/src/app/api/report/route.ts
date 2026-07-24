@@ -10,12 +10,12 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
-  const body = (await req.json()) as {
-    targetKind?: string;
-    targetId?: string;
-    reason?: string;
-    detail?: string;
-  };
+  let body: { targetKind?: string; targetId?: string; reason?: string; detail?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "bad json" }, { status: 400 });
+  }
   if (!body.targetId || !KINDS.includes(body.targetKind ?? "") || !REASONS.includes(body.reason ?? "")) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
