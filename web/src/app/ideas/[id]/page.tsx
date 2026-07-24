@@ -251,9 +251,9 @@ export default async function IdeaHub({
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* ---- HubHeader (hub.jsx) ---- */}
-      <div style={{ borderBottom: "1px solid var(--border)", padding: "14px 28px 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 13 }}>
+      {/* ---- HubHeader (hub.jsx) — tabs now live in the left icon rail ---- */}
+      <div style={{ borderBottom: "1px solid var(--border)", padding: "14px 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <Link href="/ideas" style={{ color: "var(--text-secondary)", fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
             <Icons.back size={16} /> Ideas
           </Link>
@@ -270,7 +270,23 @@ export default async function IdeaHub({
             <UserButton />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+        {/* ---- left icon rail: the workspace tabs ---- */}
+        <nav
+          style={{
+            width: 60,
+            flex: "none",
+            borderRight: "1px solid var(--border)",
+            background: "var(--surface)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "12px 0",
+            gap: 4,
+          }}
+        >
           {HUB_TABS.map((t) => {
             const active = tab === t.key && !activeChat;
             const I = t.icon;
@@ -278,26 +294,18 @@ export default async function IdeaHub({
               <Link
                 key={t.key}
                 href={href({ tab: t.key === "overview" ? undefined : t.key })}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "9px 14px",
-                  fontSize: 13.5,
-                  fontWeight: 500,
-                  color: active ? "var(--text-primary)" : "var(--text-secondary)",
-                  borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-                  marginBottom: -1,
-                }}
+                title={t.label}
+                aria-label={t.label}
+                className="hub-rail-btn"
+                data-active={active}
               >
-                <I size={15} /> {t.label}
+                <I size={18} />
               </Link>
             );
           })}
-        </div>
-      </div>
+        </nav>
 
-      <div style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
         {/* ---- ChatView (hub.jsx) ---- */}
         {tab === "overview" && activeChat && (
           <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -834,6 +842,7 @@ export default async function IdeaHub({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
