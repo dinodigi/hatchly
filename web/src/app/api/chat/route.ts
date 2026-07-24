@@ -166,6 +166,19 @@ export async function POST(req: Request) {
       }
     }
   }
+  // Backfill: a memory that explicitly feeds "features" belongs in the brief even
+  // when the model forgot to emit a matching brief_update — the gap that left
+  // confirmed MVP features tagged in memory but absent from the brief/artifact
+  // (feedback d6c37fec).
+  for (const m of result.memories) {
+    if (m.feeds === "features" && m.content.trim()) {
+      const item = m.content.trim();
+      if (!newBrief.features!.some((x) => x.toLowerCase() === item.toLowerCase())) {
+        newBrief.features!.push(item);
+        traces.push(`updated brief · features`);
+      }
+    }
+  }
   for (const m of result.memories) traces.push(`captured memory · ${m.topic}`);
 
   // Idea naming — the agent proposes; sanity-cap lengths.

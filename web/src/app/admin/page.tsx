@@ -65,7 +65,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       orderBy: { field: "created_at", dir: "desc" },
       limit: 20,
     }),
-    callTool<{ entries: Entry<{ message: string; name?: string; screen?: string; status: string; created_at?: string }>[] }>("query_entries", {
+    callTool<{ entries: Entry<{ message: string; name?: string; screen?: string; status: string; response?: string; created_at?: string }>[] }>("query_entries", {
       collection: "shareholder_feedback",
       orderBy: { field: "created_at", dir: "desc" },
       limit: 100,
@@ -300,19 +300,30 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 const tone =
                   f.data.status === "actioned"
                     ? { bg: "var(--success-soft)", fg: "var(--success-text)" }
-                    : f.data.status === "reviewed"
-                      ? { bg: "var(--surface)", fg: "var(--text-secondary)" }
-                      : { bg: "var(--accent-soft)", fg: "var(--accent-text)" };
+                    : f.data.status === "in_progress"
+                      ? { bg: "var(--info-soft)", fg: "var(--info-text)" }
+                      : f.data.status === "reviewed"
+                        ? { bg: "var(--surface)", fg: "var(--text-secondary)" }
+                        : f.data.status === "wontfix"
+                          ? { bg: "var(--surface)", fg: "var(--text-muted)" }
+                          : { bg: "var(--accent-soft)", fg: "var(--accent-text)" };
+                const closed = f.data.status === "actioned" || f.data.status === "wontfix";
                 return (
-                  <div key={f.id} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "13px 18px", borderBottom: "1px solid var(--border)", opacity: f.data.status === "actioned" ? 0.6 : 1 }}>
-                    <span className="badge" style={{ fontSize: 9, background: tone.bg, color: tone.fg, marginTop: 2, flex: "none" }}>{f.data.status}</span>
+                  <div key={f.id} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "13px 18px", borderBottom: "1px solid var(--border)", opacity: closed ? 0.7 : 1 }}>
+                    <span className="badge" style={{ fontSize: 9, background: tone.bg, color: tone.fg, marginTop: 2, flex: "none" }}>{f.data.status.replace("_", " ")}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, lineHeight: 1.5 }}>{f.data.message}</div>
                       <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
                         {f.data.name || "Anonymous"} · <span className="mono">{f.data.screen || "—"}</span> · {when(f.data.created_at)}
                       </div>
+                      {f.data.response && (
+                        <div style={{ marginTop: 8, padding: "8px 11px", borderRadius: 8, background: "var(--surface)", borderLeft: "2px solid var(--accent)" }}>
+                          <div style={{ fontSize: 9, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 3 }}>Retrospect</div>
+                          <div style={{ fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{f.data.response}</div>
+                        </div>
+                      )}
                     </div>
-                    <FeedbackActions id={f.id} status={f.data.status} />
+                    <FeedbackActions id={f.id} status={f.data.status} response={f.data.response ?? ""} />
                   </div>
                 );
               })}

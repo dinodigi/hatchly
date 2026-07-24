@@ -80,7 +80,10 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
   }
 
   const num = String(i + 1).padStart(2, "0");
-  const total = steps.length;
+  // Denominator = the full question pool, not the currently-visible steps: a
+  // conditional question (e.g. "platform") must not make the total tick 05 → 06
+  // mid-flow. A short path just finishes a step early. (feedback d4e9aa34)
+  const total = Math.max(questions.length, steps.length);
 
   return (
     <div>

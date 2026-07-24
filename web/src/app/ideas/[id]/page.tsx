@@ -293,6 +293,7 @@ export default async function IdeaHub({
           <Link
             key={c.id}
             href={href({ tab: "chats", chat: c.id })}
+            prefetch={false}
             className="chat-card"
             data-active={activeChat?.id === c.id}
           >
@@ -351,6 +352,7 @@ export default async function IdeaHub({
               <Link
                 key={t.key}
                 href={href({ tab: t.key === "overview" ? undefined : t.key })}
+                prefetch={false}
                 title={t.label}
                 aria-label={t.label}
                 className="hub-rail-btn"
@@ -365,11 +367,17 @@ export default async function IdeaHub({
         <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
         {/* ---- ChatView (hub.jsx) ---- */}
         {activeChat && (
-          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "100%" }}>
+          // Cap the chat column to the viewport (minus the 57px hub header) so the
+          // message list is the only thing that scrolls and the composer stays pinned
+          // — feedback d3a64e2e (input pushed off-screen, no auto-scroll).
+          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "calc(100vh - 57px)", overflow: "hidden" }}>
             {chatDeck}
             <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "18px 22px" }}>
               <div style={{ flex: 1, minHeight: 0, width: "100%", maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column" }}>
                 <ChatPanel
+                  // Remount on chat switch so the thread reflects the open chat — a
+                  // shared instance kept stale messages (feedback 4c4cf668).
+                  key={activeChat.id}
                   ideaId={id}
                   chatId={activeChat.id}
                   template={chatTemplate}
@@ -416,7 +424,7 @@ export default async function IdeaHub({
                 {chatList.length ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {chatList.map((c) => (
-                      <Link key={c.id} href={href({ chat: c.id })}>
+                      <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
                         <Card hover style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px" }}>
                           <span style={{ width: 36, height: 36, borderRadius: 9, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
                             <Icons.chat size={17} />

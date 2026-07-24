@@ -52,11 +52,16 @@ export default function ChatPanel({
     setError(null);
     setMessages((m) => [...m, { role: "user", content: message, traces: [] }]);
     setBusy(true);
+    // Don't let a stuck turn spin the typing dots forever — surface a retry after
+    // 60s instead of a silent hang (feedback 6079a8de).
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 60_000);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ ideaId, chatId, message }),
+        signal: ctrl.signal,
       });
       const json = await res.json();
       if (!res.ok) {
@@ -70,14 +75,21 @@ export default function ChatPanel({
       setMessages((m) => [...m, { role: "assistant", content: json.reply, traces: json.traces ?? [] }]);
       router.refresh(); // memory rail + brief panel re-render server-side
     } catch (e) {
-      setError(e instanceof Error ? e.message : "something went wrong");
+      setError(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "That took too long — your reply may still be saving. Give it a moment and try again."
+          : e instanceof Error
+            ? e.message
+            : "something went wrong",
+      );
     } finally {
+      clearTimeout(timer);
       setBusy(false);
     }
   };
 
   return (
-    <section className="col" style={{ minHeight: 560, maxHeight: "calc(100vh - 140px)" }}>
+    <section className="col" style={{ height: "100%", minHeight: 0 }}>
       <div ref={scroller} className="scrollarea col gap14" style={{ flex: 1, paddingRight: 6 }}>
         {messages.length === 0 && (
           <div className="col gap8" style={{ alignItems: "flex-start" }}>
