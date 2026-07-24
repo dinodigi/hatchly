@@ -99,6 +99,9 @@ export async function POST(req: Request) {
     const created = await callTool<{ id: string }>("create_entry", {
       collection: "artifacts",
       data: {
+        // Without this, PATCH/DELETE ownership checks (owner_id === userId)
+        // always 404, so edit/delete/publish-toggle are dead.
+        owner_id: userId,
         idea: body.ideaId,
         type: type.key,
         title: type.title,
