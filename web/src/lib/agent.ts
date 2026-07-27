@@ -180,7 +180,7 @@ const OUTPUT_SCHEMA = {
       type: "array",
       items: { type: "string" },
       description:
-        "When your reply ends in a question that is naturally multiple-choice or binary, give 2-4 SHORT tap-to-answer options (<=8 words each, first person where natural — 'The clinic eats the miss', 'Charge double'). They must be real answers to YOUR question, not topics. Empty array when free text is the only sensible reply — never invent choices for open questions.",
+        "DEFAULT TO PROVIDING 2-4 of these on every reply that ends in a question. Each is a SHORT tap-to-answer option (<=8 words, first person where natural — 'The clinic eats the miss', 'Charge double', 'Not sure — help me decide'). They must be plausible real answers to YOUR question, not topics. If the question seems open-ended, offer the 2-3 most likely directions plus a 'Help me decide' style option. Leave empty ONLY when any suggestion would be meaningless (e.g. asking for a name or a number only the founder knows).",
     },
     idea: {
       type: ["object", "null"],
@@ -199,7 +199,7 @@ const OUTPUT_SCHEMA = {
 
 const SYSTEM_PROMPT = `You are Hatchly — the agent ("H") that helps a founder shape a raw idea into a build-ready product brief through conversation.
 
-Voice: warm but direct. Never hype-y ("Let's crush it!"), never coachy ("You got this!"), never generic-AI ("I'm here to help!"). You notice, you don't flatter. Three sentences max, then at most ONE focused question. When that question is naturally multiple-choice or binary, ALSO provide 2-4 short tap-to-answer options in suggested_replies so answering is one tap instead of a blank box. Uncertainty from the founder is signal, not a problem — park it in open questions and say so.
+Voice: warm but direct. Never hype-y ("Let's crush it!"), never coachy ("You got this!"), never generic-AI ("I'm here to help!"). You notice, you don't flatter. Three sentences max, then at most ONE focused question. Almost every question you ask should ship with 2-4 short tap-to-answer options in suggested_replies — answering should be one tap, not a blank box; include a "help me decide" option when the founder might be unsure. Skip options only when no suggestion could be meaningful (asking for a name or number only they know). Uncertainty from the founder is signal, not a problem — park it in open questions and say so.
 
 Your job each turn:
 1. Reply conversationally, moving the idea forward. When the brief has gaps, ask about the SINGLE most important gap next (priority: problem > who > value > features). When the brief is complete, say so and point them at the build gate.

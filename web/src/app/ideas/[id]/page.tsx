@@ -56,6 +56,8 @@ interface MemoryRow {
     source_label?: string;
     chat?: { id: string; label: string };
     intent_key?: string;
+    kind?: string;
+    entities?: string[];
   };
 }
 interface ActivityRow {
@@ -91,6 +93,7 @@ interface FeedbackRow {
 const HUB_TABS = [
   { key: "overview", label: "Overview", icon: Icons.grid },
   { key: "chats", label: "Chats", icon: Icons.chat },
+  { key: "memory", label: "Memory", icon: Icons.brain },
   { key: "artifacts", label: "Artifacts", icon: Icons.doc },
   { key: "community", label: "Community", icon: Icons.users },
   { key: "public", label: "Public page", icon: Icons.globe },
@@ -158,7 +161,7 @@ export default async function IdeaHub({
         { field: "idea", op: "eq", value: id },
         { field: "superseded", op: "ne", value: true },
       ],
-      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat", "intent_key"],
+      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat", "intent_key", "kind", "entities"],
       limit: 200,
     }),
     callTool<{ entries: ActivityRow[] }>("query_entries", {
@@ -496,7 +499,7 @@ export default async function IdeaHub({
                       <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
                         <Icons.brain size={15} /> Memory
                       </span>
-                      <span className="faint mono" style={{ fontSize: 12 }}>{memories.entries.length}</span>
+                      <Link href={href({ tab: "memory" })} className="link-btn">{memories.entries.length}</Link>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                       {memories.entries.slice(-3).reverse().map((m) => (
@@ -667,12 +670,23 @@ export default async function IdeaHub({
                           <Icons.chevR size={14} style={{ color: "var(--text-muted)", flex: "none", marginTop: 3 }} />
                         </div>
                         <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                          {m.data.kind && (
+                            <Pill style={{ fontSize: 10, background: m.data.kind === "evidence" ? "var(--success-soft)" : m.data.kind === "decision" ? "var(--accent-soft)" : undefined, color: m.data.kind === "evidence" ? "var(--success-text)" : m.data.kind === "decision" ? "var(--accent-text)" : undefined }}>
+                              {m.data.kind}
+                            </Pill>
+                          )}
                           {m.data.topic && <Pill accent style={{ fontSize: 10 }}>{m.data.topic}</Pill>}
+                          {m.data.intent_key && (
+                            <Pill style={{ fontSize: 10 }}>answers · {m.data.intent_key.replace(/_/g, " ")}</Pill>
+                          )}
                           {m.data.feeds && (
                             <Pill style={{ fontSize: 10 }}>
                               <Icons.doc size={11} /> feeds · {FEEDS_LABEL[m.data.feeds] ?? m.data.feeds}
                             </Pill>
                           )}
+                          {(m.data.entities ?? []).slice(0, 4).map((e) => (
+                            <Pill key={e} style={{ fontSize: 10, fontStyle: "italic" }}>{e}</Pill>
+                          ))}
                         </div>
                         {m.data.verbatim && (
                           <p className="faint" style={{ fontSize: 11.5, fontStyle: "italic", margin: 0, lineHeight: 1.45 }}>

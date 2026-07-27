@@ -88,10 +88,11 @@ decisions below.
 
 21. **Hide work-in-progress machinery; show finished outputs.** The rule is not
     "hide all documents."
-22. **Raw memory browser → hidden.** 27 cards of extracted facts is a debugging
-    view. This is what actually resolves the smoke-test "three overlapping views"
-    complaint. Founders still see capture working via the trace lines under chat
-    messages — the right dose of "I got that."
+22. **Raw memory browser → REVERSED (Jul 27).** It was hidden for one deploy;
+    Jonathan called it back — memory is the product's core and, in prototyping,
+    seeing it is how we trust the pipeline. The Memory tab stays in the rail and
+    now shows the richer tags (kind, answered intent, entities). Revisit
+    hiding/simplifying it only after the pipeline is proven.
 23. **Brief / single pager → visible, always there.** This is the thing Firas
     wants to "always go to."
 24. **Generated artifacts → visible.** They do not exist until generated and are

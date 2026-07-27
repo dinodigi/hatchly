@@ -173,16 +173,35 @@ export default function ChatPanel({
           ),
         )}
         {busy && (
-          <div className="row gap8">
-            <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
-            <span className="typing-dots" style={{ padding: "12px 0" }}>
-              <i /><i /><i />
-            </span>
+          <div className="col gap4">
+            <div className="row gap8">
+              <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
+              <span className="typing-dots" style={{ padding: "12px 0" }}>
+                <i /><i /><i />
+              </span>
+            </div>
+            {/* First-open initiation runs a full first take — without this line an
+                empty thread with bare dots reads as frozen. */}
+            {visible.length === 0 && initPrompt && (
+              <span className="faint" style={{ fontSize: 12.5, marginLeft: 34 }}>
+                Taking a first pass at this for you — a few seconds…
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      {error && <p style={{ color: "var(--danger-text)", fontSize: 13, margin: "8px 0 0" }}>{error}</p>}
+      {error && (
+        <div className="row gap8" style={{ alignItems: "center", marginTop: 8 }}>
+          <p style={{ color: "var(--danger-text)", fontSize: 13, margin: 0, flex: 1 }}>{error}</p>
+          {/* A failed initiation would otherwise strand an empty chat. */}
+          {visible.length === 0 && initPrompt && !busy && (
+            <button className="btn btn-secondary btn-sm" onClick={() => void send(initPrompt)}>
+              Try again
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Agent-suggested quick replies — one tap answers the question it just
           asked (feedback 6837d987: chips on dynamic follow-ups, not just seeds). */}
