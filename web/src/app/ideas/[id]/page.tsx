@@ -246,11 +246,11 @@ export default async function IdeaHub({
 
   // Templates map — labels the deck cards, and links each empty brief line to the
   // chat that fills it. Loaded whenever the deck or the brief panel is on screen.
-  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string }>();
+  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string; order?: number }>();
   if (tab === "chats" || tab === "overview" || activeChat) {
-    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string } }[] }>(
+    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string; order?: number } }[] }>(
       "query_entries",
-      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief", "subtitle", "question_arc"], limit: 50 },
+      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief", "subtitle", "question_arc", "order"], limit: 50 },
     ).catch(() => null);
     for (const e of all?.entries ?? []) deckTemplates.set(e.data.key, e.data);
   }
@@ -258,6 +258,14 @@ export default async function IdeaHub({
   // Coverage — how many of a chat's REQUIRED arc intents already have a memory
   // node (answered in any chat). This is the progress signal that replaced the
   // build gate: honest counts, no invented percentage.
+  // The conversations render in FIXED pitch order (template order), never
+  // recency — the sequence is the product (Firas: hardlined and rigid).
+  const orderedChats = [...chatList].sort(
+    (a, b) =>
+      (deckTemplates.get(a.data.template_key ?? "")?.order ?? 99) -
+      (deckTemplates.get(b.data.template_key ?? "")?.order ?? 99),
+  );
+
   const answeredIntents = new Set(memories.entries.map((m) => m.data.intent_key).filter(Boolean));
   const coverage = (tk?: string): { covered: number; total: number } | null => {
     const raw = tk ? deckTemplates.get(tk)?.question_arc : undefined;
@@ -307,7 +315,7 @@ export default async function IdeaHub({
         <div style={{ flex: 1 }} />
       </div>
       <div style={{ display: "flex", gap: 9, padding: "0 24px 15px", overflowX: "auto" }}>
-        {chatList.map((c) => (
+        {orderedChats.map((c) => (
           <Link
             key={c.id}
             href={href({ tab: "chats", chat: c.id })}
@@ -445,13 +453,58 @@ export default async function IdeaHub({
                     {idea.data.description}
                   </p>
                 )}
-                <Card style={{ padding: "20px 22px" }}>
-                  <SectionLabel style={{ marginBottom: 8 }}>Where you are</SectionLabel>
-                  <p className="muted" style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>
-                    Each conversation below fills one part of your idea. Open one and it starts
-                    itself — you&apos;ll land on a first take you can push back on.
-                  </p>
-                </Card>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px" }}>
+                  <SectionLabel>Your conversations · {orderedChats.length}</SectionLabel>
+                  <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
+                </div>
+                <p className="muted" style={{ fontSize: 13, lineHeight: 1.55, margin: "0 0 14px" }}>
+                  Each one fills a part of your idea. Open one and it starts itself — you land on
+                  a first take you can push back on.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {orderedChats.map((c, i) => {
+                    const cov = coverage(c.data.template_key);
+                    return (
+                      <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
+                        <Card hover style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "15px 18px" }}>
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 14 }}>
+                            {deckTemplates.get(c.data.template_key ?? "")?.icon ?? String(i + 1)}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 2 }}>{c.data.title}</div>
+                            <div className="faint" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{deckSub(c.data.template_key)}</div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, flex: "none" }}>
+                            {cov && (
+                              <span
+                                className="mono"
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 600,
+                                  padding: "2px 8px",
+                                  borderRadius: 999,
+                                  background: cov.covered >= cov.total ? "var(--success-soft)" : "var(--surface)",
+                                  color: cov.covered >= cov.total ? "var(--success-text)" : "var(--text-muted)",
+                                  border: cov.covered >= cov.total ? "none" : "1px solid var(--border)",
+                                }}
+                              >
+                                {cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`}
+                              </span>
+                            )}
+                            {c.data.last_message_at && (
+                              <span className="faint" style={{ fontSize: 11 }}>{ago(c.data.last_message_at)}</span>
+                            )}
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                  {!orderedChats.length && (
+                    <div className="card" style={{ padding: "30px 20px", textAlign: "center", borderStyle: "dashed", background: "transparent" }}>
+                      <div className="muted" style={{ fontSize: 13.5 }}>No conversations yet.</div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* knowledge panel — B3: readiness leads, real artifacts, collapsible signal */}
@@ -551,62 +604,6 @@ export default async function IdeaHub({
                   </div>
                 </Card>
               </aside>
-            </div>
-
-            {/* The chats sit BELOW the fold, in fixed pitch order — Firas asked for
-                them at the bottom, not the top, with a line explaining each one. */}
-            <div style={{ marginTop: 34 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 12px" }}>
-                <SectionLabel>Your conversations · {chatList.length}</SectionLabel>
-                <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
-              </div>
-              {chatList.length ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-                  {chatList.map((c, i) => (
-                    <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
-                      <Card hover style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "15px 16px", height: "100%" }}>
-                        <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 13 }}>
-                          {deckTemplates.get(c.data.template_key ?? "")?.icon ?? String(i + 1)}
-                        </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{c.data.title}</div>
-                          <div className="faint" style={{ fontSize: 12, lineHeight: 1.45 }}>{deckSub(c.data.template_key)}</div>
-                          {(() => {
-                            const cov = coverage(c.data.template_key);
-                            return (
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-                                {cov && (
-                                  <span
-                                    className="mono"
-                                    style={{
-                                      fontSize: 10.5,
-                                      fontWeight: 600,
-                                      padding: "2px 7px",
-                                      borderRadius: 999,
-                                      background: cov.covered >= cov.total ? "var(--success-soft)" : "var(--surface)",
-                                      color: cov.covered >= cov.total ? "var(--success-text)" : "var(--text-muted)",
-                                      border: cov.covered >= cov.total ? "none" : "1px solid var(--border)",
-                                    }}
-                                  >
-                                    {cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`}
-                                  </span>
-                                )}
-                                {c.data.last_message_at && (
-                                  <span className="faint" style={{ fontSize: 11 }}>{ago(c.data.last_message_at)}</span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="card" style={{ padding: "30px 20px", textAlign: "center", borderStyle: "dashed", background: "transparent" }}>
-                  <div className="muted" style={{ fontSize: 13.5 }}>No conversations yet.</div>
-                </div>
-              )}
             </div>
           </div>
         )}
