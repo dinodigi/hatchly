@@ -28,13 +28,37 @@ export type MemoryTopic =
   | "competition"
   | "tech"
   | "risk"
-  | "decision"
+  | "market_size"
+  | "timing"
+  | "legal"
   | "other";
 
 export const MEMORY_TOPICS: MemoryTopic[] = [
   "problem", "customer", "product", "brand", "design", "pricing",
-  "gtm", "competition", "tech", "risk", "decision", "other",
+  "gtm", "competition", "tech", "risk", "market_size", "timing", "legal", "other",
 ];
+
+/** What KIND of claim a memory is — the dimension that lets outputs tell a
+ *  validated finding from a hunch. Disambiguation rules live in the schema
+ *  description so tagging stays consistent. */
+export type MemoryKind =
+  | "decision"
+  | "evidence"
+  | "assumption"
+  | "constraint"
+  | "preference"
+  | "question"
+  | "risk";
+
+/** One intent from a chat template's question arc — the fixed list of things
+ *  that chat exists to resolve. `mode` drives the write path: singular nodes
+ *  UPDATE in place, accumulative ones append. */
+export interface ArcIntent {
+  key: string;
+  intent: string;
+  required?: boolean;
+  mode: "singular" | "accumulative";
+}
 
 export interface Brief {
   problem?: string;
@@ -48,6 +72,11 @@ export interface AgentMemory {
   content: string;
   verbatim: string;
   topic: MemoryTopic;
+  kind: MemoryKind;
+  /** named things mentioned: competitors, channels, price points, segments */
+  entities?: string[];
+  /** which arc intent this answers — only keys from THIS chat's arc */
+  intent?: string;
   /** only when the fact directly fills a brief section */
   feeds?: BriefSection;
 }
@@ -93,9 +122,26 @@ const OUTPUT_SCHEMA = {
           verbatim: { type: "string", description: "The founder's exact words this came from" },
           topic: {
             type: "string",
-            enum: ["problem", "customer", "product", "brand", "design", "pricing", "gtm", "competition", "tech", "risk", "decision", "other"],
+            enum: ["problem", "customer", "product", "brand", "design", "pricing", "gtm", "competition", "tech", "risk", "market_size", "timing", "legal", "other"],
             description:
-              "What the fact is ABOUT. problem=the pain being solved · customer=who it's for, their behavior · product=features, functionality, scope · brand=name, voice, positioning, identity · design=visual style, colors, UX feel · pricing=money, monetization, willingness to pay · gtm=distribution, launch, marketing, growth · competition=rivals, alternatives, differentiation · tech=stack, architecture, integrations, privacy · risk=what could kill it, concerns · decision=a choice the founder made or reversed · other=none of these",
+              "What the fact is ABOUT. problem=the pain being solved · customer=who it's for, their behavior · product=features, functionality, scope · brand=name, voice, positioning, identity · design=visual style, colors, UX feel · pricing=money, monetization, willingness to pay · gtm=distribution, launch, marketing, growth · competition=rivals, alternatives, differentiation · tech=stack, architecture, integrations, privacy · risk=what could kill it, concerns · market_size=how many customers exist, TAM talk · timing=why now, what changed · legal=regulatory, liability, compliance · other=none of these",
+          },
+          kind: {
+            type: "string",
+            enum: ["decision", "evidence", "assumption", "constraint", "preference", "question", "risk"],
+            description:
+              "What KIND of claim it is. decision=a choice the founder has COMMITTED to ('we're going subscription') · evidence=something actually observed or verified ('12 of 15 bakers said yes') · assumption=believed but unvalidated ('bakers will pay 10%') · constraint=a hard limit they can't change ('solo founder, no budget') · preference=taste, not commitment ('should feel premium') · question=raised and unresolved · risk=something that could kill the idea. Disambiguation: 'I think X' or 'probably X' = assumption, NOT decision. 'Let's go with X' or 'X, final answer' = decision. A decision about taste ('we chose the green logo') = decision, not preference. If it was measured, seen, or reported from the real world = evidence; if it lives in the founder's head = assumption.",
+          },
+          entities: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Named things mentioned in this fact: competitor names, channels, price points ('$29/mo'), customer segments, place names. Empty array when none. Short strings, no sentences.",
+          },
+          intent: {
+            type: "string",
+            description:
+              "OPTIONAL: the arc-intent key this fact ANSWERS, from the ARC INTENTS list in context (exact key). Omit when the fact answers none of them, or when no arc is provided.",
           },
           feeds: {
             type: "string",
@@ -104,7 +150,7 @@ const OUTPUT_SCHEMA = {
               "OPTIONAL: which brief section this fact directly fills. Omit when the fact is context (design taste, pricing thoughts, competitor mentions) that belongs in memory but not in the 5-section brief.",
           },
         },
-        required: ["content", "verbatim", "topic"],
+        required: ["content", "verbatim", "topic", "kind", "entities"],
         additionalProperties: false,
       },
     },
@@ -179,17 +225,33 @@ export async function runAgentTurn(params: {
   /** This chat's focus from its template — steers the agent to one job
    *  (the problem, the customer, competition…) instead of the whole idea. */
   chatFocus?: string;
+  /** This chat's question arc — the fixed intents it exists to resolve. The
+   *  agent works through unresolved ones and tags memories with intent keys. */
+  chatArc?: ArcIntent[];
+  /** Arc intent keys already answered (across ANY chat) — don't re-ask these. */
+  resolvedIntents?: string[];
 }): Promise<AgentTurnResult> {
-  const { apiKey, ideaName, oneLiner, brief, memories, history, userMessage, chatFocus } = params;
+  const { apiKey, ideaName, oneLiner, brief, memories, history, userMessage, chatFocus, chatArc, resolvedIntents } = params;
   const client = new Anthropic({ apiKey });
 
   const gate = briefGate(brief);
   const counts = topicCounts(memories);
   const signal = SIGNAL_TOPICS.map((t) => `${t}: ${counts[t] ?? 0}`).join(" · ");
 
+  const resolved = new Set(resolvedIntents ?? []);
   const context = [
     ...(chatFocus
       ? [`THIS CHAT'S FOCUS — stay on it; the founder opened this specific chat:`, chatFocus, ``]
+      : []),
+    ...(chatArc?.length
+      ? [
+          `ARC INTENTS — the fixed things this chat exists to resolve. Ask about the FIRST unresolved one next (one at a time, rephrased for THIS idea, with 2-4 concrete answer options when natural). When a founder's turn answers one — in any words — tag that memory with the intent key:`,
+          ...chatArc.map(
+            (a) =>
+              `- [${a.key}] ${a.intent}${a.required ? "" : " (optional)"}${resolved.has(a.key) ? " — RESOLVED, don't re-ask" : ""}`,
+          ),
+          ``,
+        ]
       : []),
     `IDEA: ${ideaName}${oneLiner ? ` — ${oneLiner}` : ""}`,
     ``,

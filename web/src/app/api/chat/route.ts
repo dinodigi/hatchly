@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { briefGate, runAgentTurn, type Brief } from "@/lib/agent";
+import { briefGate, runAgentTurn, type ArcIntent, type Brief } from "@/lib/agent";
 import { bumpUsage, resolveKey } from "@/lib/keyvault";
 import { callTool } from "@/lib/mcp";
 
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
   // Resolve or create the chat.
   let chatId = body.chatId ?? null;
   let chatFocus: string | undefined;
+  let chatArc: ArcIntent[] = [];
   if (chatId) {
     const chat = await callTool<Entry<{ owner_id: string; template_key?: string }>>("get_entry", {
       collection: "chats",
@@ -67,16 +68,24 @@ export async function POST(req: Request) {
     });
     if (chat.data.owner_id !== userId)
       return NextResponse.json({ error: "not your chat" }, { status: 403 });
-    // A pre-made chat carries a template — its system prompt focuses the agent.
+    // A pre-made chat carries a template — its system prompt focuses the agent,
+    // and its question arc is the fixed list of intents the chat must resolve.
     if (chat.data.template_key) {
-      const tpl = await callTool<{ entries: Entry<{ name: string; system_prompt: string }>[] }>("query_entries", {
+      const tpl = await callTool<{ entries: Entry<{ name: string; system_prompt: string; question_arc?: string }>[] }>("query_entries", {
         collection: "chat_templates",
         where: [{ field: "key", op: "eq", value: chat.data.template_key }],
-        select: ["name", "system_prompt"],
+        select: ["name", "system_prompt", "question_arc"],
         limit: 1,
       }).catch(() => null);
       const t = tpl?.entries[0]?.data;
-      if (t) chatFocus = `${t.name} — ${t.system_prompt}`;
+      if (t) {
+        chatFocus = `${t.name} — ${t.system_prompt}`;
+        try {
+          chatArc = (JSON.parse(t.question_arc || "[]") as ArcIntent[]).filter((a) => a?.key && a?.intent);
+        } catch {
+          chatArc = [];
+        }
+      }
     }
   } else {
     const created = await callTool<{ id: string }>("create_entry", {
@@ -100,19 +109,27 @@ export async function POST(req: Request) {
       select: ["role", "content", "turn"],
       limit: 40,
     }),
-    callTool<{ entries: Entry<{ content: string; topic?: string }>[] }>("query_entries", {
+    callTool<{ entries: Entry<{ content: string; topic?: string; intent_key?: string }>[] }>("query_entries", {
       collection: "memories",
       where: [
         { field: "idea", op: "eq", value: body.ideaId },
         { field: "superseded", op: "ne", value: true },
       ],
-      select: ["content", "topic"],
+      select: ["content", "topic", "intent_key"],
       limit: 100,
     }),
   ]);
   const history = historyRes.entries.map((e) => ({ role: e.data.role, content: e.data.content }));
   const nextTurn = (historyRes.entries.at(-1)?.data.turn ?? 0) + 1;
   const brief: Brief = idea.data.brief ?? {};
+  // Intents already answered anywhere — the agent skips them; singular ones
+  // UPDATE their existing node instead of stacking a new row.
+  const intentNodes = new Map<string, { id: string; content: string }>();
+  for (const e of memoriesRes.entries) {
+    if (e.data.intent_key && !intentNodes.has(e.data.intent_key))
+      intentNodes.set(e.data.intent_key, { id: e.id, content: e.data.content });
+  }
+  const arcMode = new Map(chatArc.map((a) => [a.key, a.mode]));
 
   // The agent turn (BYOK — errors from Anthropic surface as chat-level messages).
   let result;
@@ -126,6 +143,8 @@ export async function POST(req: Request) {
       history,
       userMessage: message,
       chatFocus,
+      chatArc,
+      resolvedIntents: [...intentNodes.keys()],
     });
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError)
@@ -179,7 +198,21 @@ export async function POST(req: Request) {
       }
     }
   }
-  for (const m of result.memories) traces.push(`captured memory · ${m.topic}`);
+  // Split memories into singular-node UPDATES (an arc intent already answered —
+  // the node mutates, history goes to activity) and plain CREATES.
+  interface MemWrite {
+    m: (typeof result.memories)[number];
+    intentKey?: string;
+    updateOf?: { id: string; content: string };
+  }
+  const memWrites: MemWrite[] = result.memories.map((m) => {
+    const intentKey = m.intent && arcMode.has(m.intent) ? m.intent : undefined;
+    const existing = intentKey ? intentNodes.get(intentKey) : undefined;
+    const singular = intentKey ? arcMode.get(intentKey) === "singular" : false;
+    return { m, intentKey, updateOf: singular && existing ? existing : undefined };
+  });
+  for (const w of memWrites)
+    traces.push(w.updateOf ? `updated memory · ${w.m.topic}` : `captured memory · ${w.m.topic}`);
 
   // Idea naming — the agent proposes; sanity-cap lengths.
   const ideaPatch: Record<string, string> = {};
@@ -212,23 +245,42 @@ export async function POST(req: Request) {
           ...(traces.length ? { tool_trace: traces.slice(0, 10) } : {}),
         },
       },
-      ...result.memories.map((m) => ({
-        op: "create",
-        collection: "memories",
-        data: {
-          owner_id: userId,
-          idea: body.ideaId,
-          chat: chatId,
+      ...memWrites.map(({ m, intentKey, updateOf }) => {
+        const data = {
           content: m.content.slice(0, 500),
           verbatim: m.verbatim.slice(0, 2000),
-          source_type: "chat",
           source_label: `turn ${nextTurn}`,
           turn: nextTurn,
           topic: m.topic,
+          kind: m.kind,
+          entities: (m.entities ?? []).slice(0, 12).map((x) => x.slice(0, 80)),
+          ...(intentKey ? { intent_key: intentKey } : {}),
           ...(m.feeds ? { feeds: m.feeds } : {}),
-          superseded: false,
-        },
-      })),
+        };
+        return updateOf
+          ? { op: "update", collection: "memories", id: updateOf.id, data: { ...data, chat: chatId } }
+          : {
+              op: "create",
+              collection: "memories",
+              data: { ...data, owner_id: userId, idea: body.ideaId, chat: chatId, source_type: "chat", superseded: false },
+            };
+      }),
+      // Singular-node updates keep their history in activity — the "changed
+      // your mind" trail — since memory only holds current state.
+      ...memWrites
+        .filter((w) => w.updateOf && w.updateOf.content !== w.m.content)
+        .map((w) => ({
+          op: "create",
+          collection: "activity",
+          data: {
+            owner_id: userId,
+            idea: body.ideaId,
+            type: "change",
+            text: `Revised — ${w.intentKey!.replace(/_/g, " ")}`,
+            old_value: w.updateOf!.content.slice(0, 200),
+            new_value: w.m.content.slice(0, 200),
+          },
+        })),
       {
         op: "update",
         collection: "ideas",
@@ -252,11 +304,13 @@ export async function POST(req: Request) {
           ]
         : []),
       { op: "update", collection: "chats", id: chatId, data: { last_message_at: now } },
-      ...result.memories.map((m) => ({
-        op: "create",
-        collection: "activity",
-        data: { owner_id: userId, idea: body.ideaId, type: "memory", text: `Captured — ${m.content.slice(0, 200)}` },
-      })),
+      ...memWrites
+        .filter((w) => !w.updateOf)
+        .map(({ m }) => ({
+          op: "create",
+          collection: "activity",
+          data: { owner_id: userId, idea: body.ideaId, type: "memory", text: `Captured — ${m.content.slice(0, 200)}` },
+        })),
     ],
   });
   void bumpUsage(userId);

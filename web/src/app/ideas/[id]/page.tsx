@@ -312,8 +312,15 @@ export default async function IdeaHub({
           <Link href="/ideas" style={{ color: "var(--text-secondary)", fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
             <Icons.back size={16} /> Ideas
           </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <h1 style={{ fontSize: 21, margin: 0, letterSpacing: "-0.01em" }}>{idea.data.name}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+            <h1 style={{ fontSize: 21, margin: 0, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>{idea.data.name}</h1>
+            {/* The quick pitch stays NEXT TO the brand name everywhere — a name
+                like "Cakefinder" doesn't say what it is; the tagline does. */}
+            {idea.data.one_liner && (
+              <span className="muted" style={{ fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                — {idea.data.one_liner}
+              </span>
+            )}
             <StageBadge stage={idea.data.stage} />
           </div>
           <div style={{ flex: 1 }} />
