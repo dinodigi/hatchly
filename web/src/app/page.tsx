@@ -7,6 +7,7 @@ import { Icons } from "@/components/icons";
 import { Avatar, Bucks, Card, Coin, Pill, Spark } from "@/components/ui";
 import { clerkEnabled } from "@/lib/clerk";
 import { SPOTLIGHT_MIN_BID, getSpotlight, getUserByClerkId, suspendedUserIds } from "@/lib/economy";
+import { callTool } from "@/lib/mcp";
 import { getAgentX } from "@/lib/server";
 import type { Listings } from "@/lib/agentx";
 
@@ -177,16 +178,42 @@ function FeedCard({ idea, rank, yours }: { idea: Listings; rank: number; yours: 
   );
 }
 
-/* right rail: movers + top backers teaser (v4 StreamRail) */
+/* right rail: quick ideas first (huddle ask), then movers, then top backers */
 function StreamRail({
+  quickIdeas,
   movers,
   backers,
 }: {
+  quickIdeas: { id: string; title: string; upvotes: number; tag?: string }[];
   movers: Listings[];
   backers: { id: string; label: string; total: number }[];
 }) {
   return (
     <div style={{ position: "sticky", top: 86, display: "flex", flexDirection: "column", gap: 16 }}>
+      {quickIdeas.length > 0 && (
+        <Card style={{ padding: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+            <Icons.sparkle size={16} style={{ color: "var(--accent-text)" }} />
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Top quick ideas</span>
+          </div>
+          <p className="muted" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.5 }}>
+            &ldquo;Someone should build this&rdquo; — the board&apos;s favorites.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            {quickIdeas.map((q) => (
+              <Link key={q.id} href="/quick" style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-text)", display: "flex", alignItems: "center", gap: 3, flex: "none", marginTop: 1 }}>
+                  <Icons.chevUp size={12} /> {q.upvotes}
+                </span>
+                <span className="clamp2" style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.4 }}>{q.title}</span>
+              </Link>
+            ))}
+          </div>
+          <Link href="/quick" style={{ color: "var(--accent-text)", fontSize: 13, fontWeight: 600, marginTop: 12, display: "flex", alignItems: "center", gap: 5 }}>
+            Browse quick ideas <Icons.arrowR size={14} />
+          </Link>
+        </Card>
+      )}
       <Card style={{ padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
           <Icons.flame size={16} style={{ color: "var(--accent-text)" }} />
@@ -249,14 +276,24 @@ export default async function StreamPage({
   const { userId } = clerkEnabled ? await auth() : { userId: null };
   // getSpotlight() also settles an expired auction — the stream is the busiest
   // read in the app, so it's the natural place for lazy settlement to happen.
-  const [listings, spotlight, stakes, me, user, suspended] = await Promise.all([
+  const [listings, spotlight, stakes, me, user, suspended, quickTop] = await Promise.all([
     ax.listings.list({ sort: { field: "bucks_today", dir: "desc" }, limit: 50 }),
     getSpotlight().catch(() => null),
     ax.stakes.list({ sort: { field: "amount", dir: "desc" }, limit: 200 }),
     userId ? getUserByClerkId(userId).catch(() => null) : null,
     userId ? currentUser() : null,
     suspendedUserIds().catch(() => new Set<string>()),
+    // Top quick ideas — the rail's first widget (huddle ask). MCP plane, same
+    // as the /quick board, so a fresh post shows here without the delivery lag.
+    callTool<{ entries: { id: string; data: { title: string; upvotes: number; tag?: string } }[] }>("query_entries", {
+      collection: "quick_ideas",
+      where: [{ field: "status", op: "eq", value: "live" }],
+      orderBy: { field: "upvotes", dir: "desc" },
+      select: ["title", "upvotes", "tag"],
+      limit: 3,
+    }).catch(() => ({ entries: [] })),
   ]);
+  const quickIdeas = quickTop.entries.map((e) => ({ id: e.id, ...e.data }));
 
   const loggedIn = !!userId;
   const myInitials = user
@@ -372,7 +409,7 @@ export default async function StreamPage({
             </div>
           </div>
 
-          <StreamRail movers={movers} backers={backers} />
+          <StreamRail quickIdeas={quickIdeas} movers={movers} backers={backers} />
         </div>
       </div>
     </div>
