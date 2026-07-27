@@ -243,6 +243,11 @@ export async function POST(req: Request) {
           content: result.reply,
           turn: nextTurn + 1,
           ...(traces.length ? { tool_trace: traces.slice(0, 10) } : {}),
+          // Persisted so a reload can re-offer the last question's tap-to-answer
+          // chips instead of silently dropping them.
+          ...(result.suggested_replies.length
+            ? { suggestions: result.suggested_replies.slice(0, 4).map((s) => s.slice(0, 120)) }
+            : {}),
         },
       },
       ...memWrites.map(({ m, intentKey, updateOf }) => {

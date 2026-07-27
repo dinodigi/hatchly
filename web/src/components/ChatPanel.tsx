@@ -24,11 +24,14 @@ export default function ChatPanel({
   ideaId,
   chatId: initialChatId,
   initialMessages,
+  initialSuggestions = [],
   template,
 }: {
   ideaId: string;
   chatId: string | null;
   initialMessages: Msg[];
+  /** The last assistant message's persisted chips — survive a reload. */
+  initialSuggestions?: string[];
   /** A pre-made chat's template — its opening line and curated first questions. */
   template?: Template;
 }) {
@@ -39,7 +42,7 @@ export default function ChatPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Tap-to-answer options for the LAST assistant question — cleared on send.
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
   const scroller = useRef<HTMLDivElement>(null);
   const initFired = useRef(false);
 
@@ -147,6 +150,7 @@ export default function ChatPanel({
                   fontSize: 14,
                   lineHeight: 1.5,
                   maxWidth: 480,
+                  whiteSpace: "pre-wrap",
                 }}
               >
                 {m.content}
@@ -156,7 +160,7 @@ export default function ChatPanel({
             <div key={i} className="col gap6" style={{ alignItems: "flex-start" }}>
               <div className="row gap8" style={{ alignItems: "flex-start" }}>
                 <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
-                <div className="card" style={{ padding: "10px 14px", fontSize: 14, lineHeight: 1.55, maxWidth: 520 }}>
+                <div className="card" style={{ padding: "10px 14px", fontSize: 14, lineHeight: 1.55, maxWidth: 520, whiteSpace: "pre-wrap" }}>
                   {m.content}
                 </div>
               </div>

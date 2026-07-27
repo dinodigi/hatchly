@@ -45,7 +45,7 @@ interface ChatRow {
 }
 interface MessageRow {
   id: string;
-  data: { role: "user" | "assistant"; content: string; turn: number; tool_trace?: string[] };
+  data: { role: "user" | "assistant"; content: string; turn: number; tool_trace?: string[]; suggestions?: string[] };
 }
 interface MemoryRow {
   id: string;
@@ -213,7 +213,7 @@ export default async function IdeaHub({
         collection: "messages",
         where: [{ field: "chat", op: "eq", value: activeChat.id }],
         orderBy: { field: "turn", dir: "asc" },
-        select: ["role", "content", "turn", "tool_trace"],
+        select: ["role", "content", "turn", "tool_trace", "suggestions"],
         limit: 200,
       })
     : { entries: [] as MessageRow[] };
@@ -427,6 +427,13 @@ export default async function IdeaHub({
                     content: m.data.content,
                     traces: m.data.tool_trace ?? [],
                   }))}
+                  // Re-offer the last question's chips after a reload — they're
+                  // persisted on the assistant message, not just client state.
+                  initialSuggestions={
+                    messages.entries.at(-1)?.data.role === "assistant"
+                      ? messages.entries.at(-1)?.data.suggestions ?? []
+                      : []
+                  }
                 />
               </div>
             </div>
