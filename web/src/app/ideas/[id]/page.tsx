@@ -6,6 +6,8 @@ import ArtifactActions from "@/components/ArtifactActions";
 import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
 import CoverEditor from "@/components/CoverEditor";
+import DeckCollapse from "@/components/DeckCollapse";
+import RailSection from "@/components/RailSection";
 import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
 import SignalMap from "@/components/SignalMap";
@@ -306,14 +308,13 @@ export default async function IdeaHub({
   };
 
   // The chat card deck — the scrollable strip of chats above the conversation.
+  // Collapsible: mid-conversation it's context, not content.
+  const arcsWithCoverage = orderedChats
+    .map((c) => coverage(c.data.template_key))
+    .filter((x): x is { covered: number; total: number } => x !== null);
+  const deckSummary = `${arcsWithCoverage.filter((x) => x.covered >= x.total).length}/${arcsWithCoverage.length} covered`;
   const chatDeck = (
-    <div style={{ flex: "none", borderBottom: "1px solid var(--border)", paddingTop: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 24px 10px" }}>
-        <span style={{ fontSize: 10, letterSpacing: "0.11em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700 }}>
-          Chats · {chatList.length}
-        </span>
-        <div style={{ flex: 1 }} />
-      </div>
+    <DeckCollapse count={chatList.length} summary={deckSummary}>
       <div style={{ display: "flex", gap: 9, padding: "0 24px 15px", overflowX: "auto" }}>
         {orderedChats.map((c) => (
           <Link
@@ -336,7 +337,7 @@ export default async function IdeaHub({
           </Link>
         ))}
       </div>
-    </div>
+    </DeckCollapse>
   );
 
   return (
@@ -507,16 +508,16 @@ export default async function IdeaHub({
                 </div>
               </div>
 
-              {/* knowledge panel — B3: readiness leads, real artifacts, collapsible signal */}
-              <aside style={{ position: "sticky", top: 24 }}>
+              {/* knowledge panel — an accordion, so the rail stays scannable as the
+                  brief and memory grow. Long values clamp; full text lives in the
+                  brief document. Rail scrolls within the viewport, never past it. */}
+              <aside style={{ position: "sticky", top: 24, maxHeight: "calc(100vh - 110px)", overflowY: "auto" }}>
                 <Card style={{ padding: 0, overflow: "hidden" }}>
-                  {/* Your brief — the real captured content, with each blank line
-                      pointing at the chat that fills it. No progress meters. */}
-                  <div style={{ padding: "16px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontWeight: 600, fontSize: 13.5 }}>Your brief</span>
-                      <Link href={href({ tab: "artifacts", doc: "brief" })} className="link-btn">Open →</Link>
-                    </div>
+                  <RailSection
+                    title="Your brief"
+                    hint={`${[brief.problem, brief.who, brief.value, brief.features?.[0]].filter(Boolean).length}/4 filled`}
+                    action={<Link href={href({ tab: "artifacts", doc: "brief" })} className="link-btn">Open →</Link>}
+                  >
                     {(
                       [
                         ["problem", "Problem"],
@@ -531,7 +532,7 @@ export default async function IdeaHub({
                         <div key={field} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--border)" : "none" }}>
                           <div style={{ fontSize: 9.5, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 3 }}>{label}</div>
                           {val ? (
-                            <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>{val}</div>
+                            <div className="clamp3" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{val}</div>
                           ) : (
                             <>
                               <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Not captured yet</div>
@@ -545,33 +546,35 @@ export default async function IdeaHub({
                         </div>
                       );
                     })}
-                  </div>
+                  </RailSection>
                   <div style={{ height: 1, background: "var(--border)" }} />
-                  <div style={{ padding: "16px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
-                        <Icons.brain size={15} /> Memory
-                      </span>
-                      <Link href={href({ tab: "memory" })} className="link-btn">{memories.entries.length}</Link>
-                    </div>
+                  <RailSection
+                    title={<><Icons.brain size={15} /> Memory</>}
+                    hint={`${memories.entries.length} captured`}
+                    action={<Link href={href({ tab: "memory" })} className="link-btn">{memories.entries.length}</Link>}
+                  >
                     <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                       {memories.entries.slice(-3).reverse().map((m) => (
                         <div key={m.id} style={{ display: "flex", gap: 8, fontSize: 12.5, lineHeight: 1.45 }}>
-                          <span className="dot" style={{ width: 6, height: 6, background: "var(--accent)", marginTop: 5 }} />
-                          <span style={{ color: "var(--text-secondary)" }}>{m.data.content}</span>
+                          <span className="dot" style={{ width: 6, height: 6, background: "var(--accent)", marginTop: 5, flex: "none" }} />
+                          <span className="clamp2" style={{ color: "var(--text-secondary)" }}>{m.data.content}</span>
                         </div>
                       ))}
+                      {memories.entries.length > 3 && (
+                        <Link href={href({ tab: "memory" })} className="link-btn" style={{ fontSize: 11.5 }}>
+                          View all {memories.entries.length} →
+                        </Link>
+                      )}
                       {!memories.entries.length && <span className="faint" style={{ fontSize: 12.5 }}>Captured as you chat.</span>}
                     </div>
-                  </div>
+                  </RailSection>
                   <div style={{ height: 1, background: "var(--border)" }} />
-                  <div style={{ padding: "16px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
-                        <Icons.doc size={15} /> Artifacts
-                      </span>
-                      <Link href={href({ tab: "artifacts" })} className="link-btn">{generatedArtifacts.length + 1}</Link>
-                    </div>
+                  <RailSection
+                    title={<><Icons.doc size={15} /> Artifacts</>}
+                    hint={`${generatedArtifacts.length + 1}`}
+                    action={<Link href={href({ tab: "artifacts" })} className="link-btn">{generatedArtifacts.length + 1}</Link>}
+                    defaultOpen={generatedArtifacts.length > 0}
+                  >
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {/* The brief is live state — it always leads. Then the real generated docs. */}
                       <Link href={href({ tab: "artifacts", doc: "brief" })} className="file-row">
@@ -595,7 +598,7 @@ export default async function IdeaHub({
                         </Link>
                       ))}
                     </div>
-                  </div>
+                  </RailSection>
                   <div style={{ height: 1, background: "var(--border)" }} />
                   <div style={{ padding: "16px 18px" }}>
                     <SignalPanel hasSignal={Object.values(counts).some((n) => n > 0)}>
