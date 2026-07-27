@@ -101,6 +101,9 @@ export interface AgentTurnResult {
   memories: AgentMemory[];
   brief_updates: AgentBriefUpdate[];
   idea: AgentIdeaUpdate | null;
+  /** 2-4 tap-to-answer options for the question just asked; empty when free
+   *  text is the only sensible reply. */
+  suggested_replies: string[];
 }
 
 const OUTPUT_SCHEMA = {
@@ -173,6 +176,12 @@ const OUTPUT_SCHEMA = {
         additionalProperties: false,
       },
     },
+    suggested_replies: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "When your reply ends in a question that is naturally multiple-choice or binary, give 2-4 SHORT tap-to-answer options (<=8 words each, first person where natural — 'The clinic eats the miss', 'Charge double'). They must be real answers to YOUR question, not topics. Empty array when free text is the only sensible reply — never invent choices for open questions.",
+    },
     idea: {
       type: ["object", "null"],
       description:
@@ -184,13 +193,13 @@ const OUTPUT_SCHEMA = {
       additionalProperties: false,
     },
   },
-  required: ["reply", "memories", "brief_updates", "idea"],
+  required: ["reply", "memories", "brief_updates", "suggested_replies", "idea"],
   additionalProperties: false,
 } as const;
 
 const SYSTEM_PROMPT = `You are Hatchly — the agent ("H") that helps a founder shape a raw idea into a build-ready product brief through conversation.
 
-Voice: warm but direct. Never hype-y ("Let's crush it!"), never coachy ("You got this!"), never generic-AI ("I'm here to help!"). You notice, you don't flatter. Three sentences max, then at most ONE focused question. Uncertainty from the founder is signal, not a problem — park it in open questions and say so.
+Voice: warm but direct. Never hype-y ("Let's crush it!"), never coachy ("You got this!"), never generic-AI ("I'm here to help!"). You notice, you don't flatter. Three sentences max, then at most ONE focused question. When that question is naturally multiple-choice or binary, ALSO provide 2-4 short tap-to-answer options in suggested_replies so answering is one tap instead of a blank box. Uncertainty from the founder is signal, not a problem — park it in open questions and say so.
 
 Your job each turn:
 1. Reply conversationally, moving the idea forward. When the brief has gaps, ask about the SINGLE most important gap next (priority: problem > who > value > features). When the brief is complete, say so and point them at the build gate.
@@ -283,7 +292,7 @@ export async function runAgentTurn(params: {
   });
 
   if (response.stop_reason === "refusal") {
-    return { reply: "I can't help with that one — want to get back to the idea?", memories: [], brief_updates: [], idea: null };
+    return { reply: "I can't help with that one — want to get back to the idea?", memories: [], brief_updates: [], idea: null, suggested_replies: [] };
   }
 
   const text = response.content.find((b) => b.type === "text")?.text ?? "";
@@ -294,10 +303,13 @@ export async function runAgentTurn(params: {
       memories: Array.isArray(parsed.memories) ? parsed.memories : [],
       brief_updates: Array.isArray(parsed.brief_updates) ? parsed.brief_updates : [],
       idea: parsed.idea && typeof parsed.idea === "object" ? parsed.idea : null,
+      suggested_replies: Array.isArray(parsed.suggested_replies)
+        ? parsed.suggested_replies.filter((s): s is string => typeof s === "string").slice(0, 4)
+        : [],
     };
   } catch {
     // Schema-constrained output should always parse; degrade gracefully if not.
-    return { reply: text || "…", memories: [], brief_updates: [], idea: null };
+    return { reply: text || "…", memories: [], brief_updates: [], idea: null, suggested_replies: [] };
   }
 }
 

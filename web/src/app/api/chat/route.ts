@@ -318,6 +318,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     chatId,
     reply: result.reply,
+    suggestions: result.suggested_replies,
     traces,
     memories: result.memories.map((m) => ({ content: m.content, topic: m.topic, feeds: m.feeds })),
     brief: newBrief,

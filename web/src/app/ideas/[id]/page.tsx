@@ -55,6 +55,7 @@ interface MemoryRow {
     source_type?: string;
     source_label?: string;
     chat?: { id: string; label: string };
+    intent_key?: string;
   };
 }
 interface ActivityRow {
@@ -157,7 +158,7 @@ export default async function IdeaHub({
         { field: "idea", op: "eq", value: id },
         { field: "superseded", op: "ne", value: true },
       ],
-      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat"],
+      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat", "intent_key"],
       limit: 200,
     }),
     callTool<{ entries: ActivityRow[] }>("query_entries", {
@@ -242,14 +243,30 @@ export default async function IdeaHub({
 
   // Templates map — labels the deck cards, and links each empty brief line to the
   // chat that fills it. Loaded whenever the deck or the brief panel is on screen.
-  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string }>();
+  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string }>();
   if (tab === "chats" || tab === "overview" || activeChat) {
-    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string } }[] }>(
+    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string; question_arc?: string } }[] }>(
       "query_entries",
-      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief", "subtitle"], limit: 50 },
+      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief", "subtitle", "question_arc"], limit: 50 },
     ).catch(() => null);
     for (const e of all?.entries ?? []) deckTemplates.set(e.data.key, e.data);
   }
+
+  // Coverage — how many of a chat's REQUIRED arc intents already have a memory
+  // node (answered in any chat). This is the progress signal that replaced the
+  // build gate: honest counts, no invented percentage.
+  const answeredIntents = new Set(memories.entries.map((m) => m.data.intent_key).filter(Boolean));
+  const coverage = (tk?: string): { covered: number; total: number } | null => {
+    const raw = tk ? deckTemplates.get(tk)?.question_arc : undefined;
+    if (!raw) return null;
+    try {
+      const req = (JSON.parse(raw) as { key: string; required?: boolean }[]).filter((a) => a.required);
+      if (!req.length) return null;
+      return { covered: req.filter((a) => answeredIntents.has(a.key)).length, total: req.length };
+    } catch {
+      return null;
+    }
+  };
   // The card's explainer line — the template's own subtitle, so a founder knows
   // what each chat is for without opening it (Firas: don't rely on the title).
   const deckSub = (tk?: string) => {
@@ -297,7 +314,14 @@ export default async function IdeaHub({
           >
             <span className="cc-ic">{deckTemplates.get(c.data.template_key ?? "")?.icon ?? "◆"}</span>
             <b>{c.data.title}</b>
-            <span className="cc-sub">{deckSub(c.data.template_key)}</span>
+            {(() => {
+              const cov = coverage(c.data.template_key);
+              return (
+                <span className="cc-sub" style={cov && cov.covered >= cov.total ? { color: "var(--success-text)" } : undefined}>
+                  {cov ? (cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`) : deckSub(c.data.template_key)}
+                </span>
+              );
+            })()}
           </Link>
         ))}
       </div>
@@ -544,9 +568,32 @@ export default async function IdeaHub({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{c.data.title}</div>
                           <div className="faint" style={{ fontSize: 12, lineHeight: 1.45 }}>{deckSub(c.data.template_key)}</div>
-                          {c.data.last_message_at && (
-                            <div className="faint" style={{ fontSize: 11, marginTop: 5 }}>{ago(c.data.last_message_at)}</div>
-                          )}
+                          {(() => {
+                            const cov = coverage(c.data.template_key);
+                            return (
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                                {cov && (
+                                  <span
+                                    className="mono"
+                                    style={{
+                                      fontSize: 10.5,
+                                      fontWeight: 600,
+                                      padding: "2px 7px",
+                                      borderRadius: 999,
+                                      background: cov.covered >= cov.total ? "var(--success-soft)" : "var(--surface)",
+                                      color: cov.covered >= cov.total ? "var(--success-text)" : "var(--text-muted)",
+                                      border: cov.covered >= cov.total ? "none" : "1px solid var(--border)",
+                                    }}
+                                  >
+                                    {cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`}
+                                  </span>
+                                )}
+                                {c.data.last_message_at && (
+                                  <span className="faint" style={{ fontSize: 11 }}>{ago(c.data.last_message_at)}</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </Card>
                     </Link>

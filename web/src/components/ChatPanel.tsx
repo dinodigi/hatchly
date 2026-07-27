@@ -38,6 +38,8 @@ export default function ChatPanel({
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tap-to-answer options for the LAST assistant question — cleared on send.
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const scroller = useRef<HTMLDivElement>(null);
   const initFired = useRef(false);
 
@@ -63,6 +65,7 @@ export default function ChatPanel({
     if (!message || busy) return;
     if (!override) setInput("");
     setError(null);
+    setSuggestions([]);
     setMessages((m) => [...m, { role: "user", content: message, traces: [] }]);
     setBusy(true);
     // Don't let a stuck turn spin the typing dots forever — surface a retry after
@@ -86,6 +89,7 @@ export default function ChatPanel({
       }
       setChatId(json.chatId);
       setMessages((m) => [...m, { role: "assistant", content: json.reply, traces: json.traces ?? [] }]);
+      setSuggestions(Array.isArray(json.suggestions) ? json.suggestions.slice(0, 4) : []);
       router.refresh(); // memory rail + brief panel re-render server-side
     } catch (e) {
       setError(
@@ -179,6 +183,18 @@ export default function ChatPanel({
       </div>
 
       {error && <p style={{ color: "var(--danger-text)", fontSize: 13, margin: "8px 0 0" }}>{error}</p>}
+
+      {/* Agent-suggested quick replies — one tap answers the question it just
+          asked (feedback 6837d987: chips on dynamic follow-ups, not just seeds). */}
+      {suggestions.length > 0 && !busy && (
+        <div className="row gap6" style={{ marginTop: 12, flexWrap: "wrap" }}>
+          {suggestions.map((s) => (
+            <button key={s} className="tag-pick" onClick={() => send(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {primer && (
         <div className="col gap6" style={{ marginTop: 14 }}>
