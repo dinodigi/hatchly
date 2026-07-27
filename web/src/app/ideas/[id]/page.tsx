@@ -5,7 +5,6 @@ import { UserButton } from "@clerk/nextjs";
 import ArtifactActions from "@/components/ArtifactActions";
 import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
-import Composer from "@/components/Composer";
 import CoverEditor from "@/components/CoverEditor";
 import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
@@ -91,7 +90,6 @@ interface FeedbackRow {
 const HUB_TABS = [
   { key: "overview", label: "Overview", icon: Icons.grid },
   { key: "chats", label: "Chats", icon: Icons.chat },
-  { key: "memory", label: "Memory", icon: Icons.brain },
   { key: "artifacts", label: "Artifacts", icon: Icons.doc },
   { key: "community", label: "Community", icon: Icons.users },
   { key: "public", label: "Public page", icon: Icons.globe },
@@ -218,12 +216,12 @@ export default async function IdeaHub({
   // founder answers. Load it only for the open chat.
   interface QOpt { label: string; expands_to?: string }
   interface TplQuestion { text: string; options?: QOpt[]; allow_help?: boolean }
-  let chatTemplate: { opening: string; questions: { text: string; options: QOpt[]; allow_help?: boolean }[] } | undefined;
+  let chatTemplate: { opening: string; initiation_prompt?: string; questions: { text: string; options: QOpt[]; allow_help?: boolean }[] } | undefined;
   if (activeChat?.data.template_key) {
-    const tplRes = await callTool<{ entries: { data: { opening: string; questions?: string } }[] }>("query_entries", {
+    const tplRes = await callTool<{ entries: { data: { opening: string; questions?: string; initiation_prompt?: string } }[] }>("query_entries", {
       collection: "chat_templates",
       where: [{ field: "key", op: "eq", value: activeChat.data.template_key }],
-      select: ["opening", "questions"],
+      select: ["opening", "questions", "initiation_prompt"],
       limit: 1,
     }).catch(() => null);
     const t = tplRes?.entries[0]?.data;
@@ -238,23 +236,26 @@ export default async function IdeaHub({
       } catch {
         questions = [];
       }
-      chatTemplate = { opening: t.opening, questions };
+      chatTemplate = { opening: t.opening, initiation_prompt: t.initiation_prompt, questions };
     }
   }
 
   // Templates map — labels the deck cards, and links each empty brief line to the
   // chat that fills it. Loaded whenever the deck or the brief panel is on screen.
-  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string }>();
+  const deckTemplates = new Map<string, { icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string }>();
   if (tab === "chats" || tab === "overview" || activeChat) {
-    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string } }[] }>(
+    const all = await callTool<{ entries: { data: { key: string; icon?: string; role?: string; produces?: string; feeds_brief?: string; subtitle?: string } }[] }>(
       "query_entries",
-      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief"], limit: 50 },
+      { collection: "chat_templates", select: ["key", "icon", "role", "produces", "feeds_brief", "subtitle"], limit: 50 },
     ).catch(() => null);
     for (const e of all?.entries ?? []) deckTemplates.set(e.data.key, e.data);
   }
+  // The card's explainer line — the template's own subtitle, so a founder knows
+  // what each chat is for without opening it (Firas: don't rely on the title).
   const deckSub = (tk?: string) => {
     const t = tk ? deckTemplates.get(tk) : undefined;
     if (!t) return "Chat";
+    if (t.subtitle) return t.subtitle;
     if (t.role === "foundation") return "Writes your brief";
     if (t.role === "free") return "Free-form";
     return t.produces ? `→ ${t.produces}` : "Sharpen";
@@ -284,9 +285,6 @@ export default async function IdeaHub({
           Chats · {chatList.length}
         </span>
         <div style={{ flex: 1 }} />
-        <Link href={href({ tab: "overview" })} className="btn btn-secondary btn-sm">
-          <Icons.plus size={13} /> New
-        </Link>
       </div>
       <div style={{ display: "flex", gap: 9, padding: "0 24px 15px", overflowX: "auto" }}>
         {chatList.map((c) => (
@@ -399,9 +397,6 @@ export default async function IdeaHub({
               <p className="muted" style={{ fontSize: 14, margin: "0 0 14px" }}>
                 {chatList.length ? "Pick a chat above to open it." : "No chats yet."}
               </p>
-              <Link href={href({ tab: "overview" })} className="btn btn-primary btn-sm">
-                <Icons.plus size={14} /> Start a chat
-              </Link>
             </div>
           </div>
         )}
@@ -416,35 +411,13 @@ export default async function IdeaHub({
                     {idea.data.description}
                   </p>
                 )}
-                <Composer ideaId={id} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "26px 0 12px" }}>
-                  <SectionLabel>Chats · {chatList.length}</SectionLabel>
-                  <span className="faint" style={{ fontSize: 12 }}>Each chat feeds your brief</span>
-                </div>
-                {chatList.length ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {chatList.map((c) => (
-                      <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
-                        <Card hover style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px" }}>
-                          <span style={{ width: 36, height: 36, borderRadius: 9, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-                            <Icons.chat size={17} />
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 2 }}>{c.data.title}</div>
-                          </div>
-                          <span className="faint" style={{ fontSize: 12, flex: "none" }}>{ago(c.data.last_message_at)}</span>
-                          <Icons.chevR size={16} style={{ color: "var(--text-muted)", flex: "none" }} />
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="card" style={{ padding: "30px 20px", textAlign: "center", borderStyle: "dashed", background: "transparent" }}>
-                    <div className="muted" style={{ fontSize: 13.5 }}>
-                      No chats yet. Start one above to keep conversations organized and reuse what the idea knows.
-                    </div>
-                  </div>
-                )}
+                <Card style={{ padding: "20px 22px" }}>
+                  <SectionLabel style={{ marginBottom: 8 }}>Where you are</SectionLabel>
+                  <p className="muted" style={{ fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                    Each conversation below fills one part of your idea. Open one and it starts
+                    itself — you&apos;ll land on a first take you can push back on.
+                  </p>
+                </Card>
               </div>
 
               {/* knowledge panel — B3: readiness leads, real artifacts, collapsible signal */}
@@ -492,7 +465,7 @@ export default async function IdeaHub({
                       <span style={{ fontWeight: 600, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7 }}>
                         <Icons.brain size={15} /> Memory
                       </span>
-                      <Link href={href({ tab: "memory" })} className="link-btn">{memories.entries.length}</Link>
+                      <span className="faint mono" style={{ fontSize: 12 }}>{memories.entries.length}</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                       {memories.entries.slice(-3).reverse().map((m) => (
@@ -544,6 +517,39 @@ export default async function IdeaHub({
                   </div>
                 </Card>
               </aside>
+            </div>
+
+            {/* The chats sit BELOW the fold, in fixed pitch order — Firas asked for
+                them at the bottom, not the top, with a line explaining each one. */}
+            <div style={{ marginTop: 34 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 12px" }}>
+                <SectionLabel>Your conversations · {chatList.length}</SectionLabel>
+                <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
+              </div>
+              {chatList.length ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+                  {chatList.map((c, i) => (
+                    <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
+                      <Card hover style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "15px 16px", height: "100%" }}>
+                        <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 13 }}>
+                          {deckTemplates.get(c.data.template_key ?? "")?.icon ?? String(i + 1)}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{c.data.title}</div>
+                          <div className="faint" style={{ fontSize: 12, lineHeight: 1.45 }}>{deckSub(c.data.template_key)}</div>
+                          {c.data.last_message_at && (
+                            <div className="faint" style={{ fontSize: 11, marginTop: 5 }}>{ago(c.data.last_message_at)}</div>
+                          )}
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="card" style={{ padding: "30px 20px", textAlign: "center", borderStyle: "dashed", background: "transparent" }}>
+                  <div className="muted" style={{ fontSize: 13.5 }}>No conversations yet.</div>
+                </div>
+              )}
             </div>
           </div>
         )}

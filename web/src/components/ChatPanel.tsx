@@ -14,6 +14,9 @@ interface Msg {
 
 interface Template {
   opening: string;
+  /** Fired automatically the first time this chat is opened, as if the founder
+   *  asked it — so they land on real content instead of a blank box. */
+  initiation_prompt?: string;
   questions: { text: string; options: { label: string; expands_to?: string }[]; allow_help?: boolean }[];
 }
 
@@ -36,14 +39,24 @@ export default function ChatPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const initFired = useRef(false);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [messages, busy]);
 
+  const initPrompt = template?.initiation_prompt?.trim();
+
   // The curated pills for the opening — shown until the founder answers, then the
-  // agent takes over the conversation.
-  const primer = template && messages.length === 0 ? template.questions[0] : undefined;
+  // agent takes over. Suppressed when the chat self-initiates, since the agent
+  // asks its own follow-up in that case.
+  const primer = template && !initPrompt && messages.length === 0 ? template.questions[0] : undefined;
+
+  // The initiation prompt was sent on the founder's behalf — don't echo it back
+  // as though they typed it.
+  const visible = initPrompt
+    ? messages.filter((m) => !(m.role === "user" && m.content === initPrompt))
+    : messages;
 
   const send = async (override?: string) => {
     const message = (override ?? input).trim();
@@ -88,10 +101,22 @@ export default function ChatPanel({
     }
   };
 
+  // Auto-run the chat's opening question on FIRST open only, so the founder lands
+  // on real content rather than a blank box. The ref guard makes a re-open (and
+  // React's dev double-invoke) a no-op; the timeout keeps the state writes out of
+  // the effect's synchronous phase.
+  useEffect(() => {
+    if (initFired.current || !initPrompt || initialMessages.length > 0) return;
+    initFired.current = true;
+    const t = setTimeout(() => void send(initPrompt), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initPrompt]);
+
   return (
     <section className="col" style={{ height: "100%", minHeight: 0 }}>
       <div ref={scroller} className="scrollarea col gap14" style={{ flex: 1, paddingRight: 6 }}>
-        {messages.length === 0 && (
+        {visible.length === 0 && !busy && (
           <div className="col gap8" style={{ alignItems: "flex-start" }}>
             <div className="row gap8" style={{ alignItems: "flex-start" }}>
               <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
@@ -106,7 +131,7 @@ export default function ChatPanel({
             )}
           </div>
         )}
-        {messages.map((m, i) =>
+        {visible.map((m, i) =>
           m.role === "user" ? (
             <div key={i} className="row" style={{ justifyContent: "flex-end" }}>
               <div

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import ArchiveIdeaButton from "@/components/ArchiveIdeaButton";
 import GateChecklist from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
 import { Icons } from "@/components/icons";
@@ -46,20 +47,24 @@ function ago(iso?: string) {
 export default async function IdeasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; archived?: string }>;
 }) {
   if (!clerkEnabled) redirect("/");
   const { userId } = await auth();
   if (!userId) redirect("/");
   const sp = await searchParams;
   const tab = sp.tab === "backing" ? "backing" : "ideas";
+  // The archived shelf — same card grid, restore instead of archive.
+  const showArchived = sp.archived === "1";
 
   const [ideas, wallet, stakes, myListings] = await Promise.all([
     callTool<{ entries: IdeaRow[] }>("query_entries", {
       collection: "ideas",
       where: [
         { field: "owner_id", op: "eq", value: userId },
-        { field: "archived", op: "ne", value: true },
+        showArchived
+          ? { field: "archived", op: "eq", value: true }
+          : { field: "archived", op: "ne", value: true },
       ],
       select: ["name", "one_liner", "stage", "visibility", "brief", "last_activity_at"],
       limit: 100,
@@ -130,6 +135,15 @@ export default async function IdeasPage({
             </Link>
           ))}
           <span className="spacer" />
+          {tab === "ideas" && (
+            <Link
+              href={showArchived ? "/ideas" : "/ideas?archived=1"}
+              className="link-btn"
+              style={{ paddingBottom: 10, marginRight: 12 }}
+            >
+              {showArchived ? "← Active ideas" : "Archived"}
+            </Link>
+          )}
           <div style={{ paddingBottom: 8 }}>
             <NewIdeaButton />
           </div>
@@ -137,11 +151,19 @@ export default async function IdeasPage({
 
         {tab === "ideas" ? (
           ideas.entries.length === 0 ? (
-            <Card style={{ padding: 48, display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}>
-              <div className="serif" style={{ fontSize: 28 }}>What will you hatch first?</div>
-              <p className="muted" style={{ margin: 0 }}>A sentence is enough. We&apos;ll shape it together from there.</p>
-              <NewIdeaButton label="Start your first idea" />
-            </Card>
+            showArchived ? (
+              <Card style={{ padding: 48, display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}>
+                <div className="serif" style={{ fontSize: 26 }}>Nothing archived</div>
+                <p className="muted" style={{ margin: 0 }}>Ideas you archive land here — nothing is ever deleted.</p>
+                <Link href="/ideas" className="btn btn-secondary btn-sm">Back to active ideas</Link>
+              </Card>
+            ) : (
+              <Card style={{ padding: 48, display: "flex", flexDirection: "column", gap: 12, alignItems: "center", textAlign: "center" }}>
+                <div className="serif" style={{ fontSize: 28 }}>What will you hatch first?</div>
+                <p className="muted" style={{ margin: 0 }}>A sentence is enough. We&apos;ll shape it together from there.</p>
+                <NewIdeaButton label="Start your first idea" />
+              </Card>
+            )
           ) : (
             <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
               {ideas.entries.map((i) => {
@@ -169,13 +191,12 @@ export default async function IdeasPage({
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span className="faint" style={{ fontSize: 11.5 }}>Active {ago(i.data.last_activity_at)}</span>
                         {openQs > 0 && (
-                          <>
-                            <span className="spacer" />
-                            <span className="faint" style={{ fontSize: 11.5 }}>
-                              {openQs} open {openQs === 1 ? "question" : "questions"}
-                            </span>
-                          </>
+                          <span className="faint" style={{ fontSize: 11.5 }}>
+                            · {openQs} open {openQs === 1 ? "question" : "questions"}
+                          </span>
                         )}
+                        <span className="spacer" />
+                        <ArchiveIdeaButton ideaId={i.id} archived={showArchived} />
                       </div>
                     </Card>
                   </Link>

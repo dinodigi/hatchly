@@ -49,6 +49,16 @@ function retryAfterMs(e: unknown, attempt: number): number {
   return 400 * attempt + Math.random() * 200;
 }
 
+/** One line per MCP call so we can see where server-render time actually goes
+ *  (Pluggie round-trips vs. our code). On in dev, or set MCP_TIMING=1 in prod to
+ *  measure a real page. `ms` is wall time INCLUDING retry backoff. */
+function logTiming(name: string, args: Record<string, unknown>, ms: number, attempts: number, ok: boolean) {
+  if (process.env.MCP_TIMING !== "1" && process.env.NODE_ENV !== "development") return;
+  const coll = typeof args.collection === "string" ? `:${args.collection}` : "";
+  const tries = attempts > 1 ? ` ${attempts}x` : "";
+  console.log(`[mcp] ${ok ? "ok " : "ERR"} ${Math.round(ms)}ms  ${name}${coll}${tries}`);
+}
+
 export async function callTool<T = unknown>(
   name: string,
   args: Record<string, unknown>,
@@ -56,16 +66,23 @@ export async function callTool<T = unknown>(
   // Page renders fan out several reads at once; pluggie rate-limits bursts.
   // Retry transient faults with backoff so reads don't falsely come back
   // empty (e.g. settings showing "Not set" for a connected key).
+  const started = Date.now();
   let lastErr: unknown;
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) await sleep(retryAfterMs(lastErr, attempt));
     try {
-      return await callToolOnce<T>(name, args);
+      const out = await callToolOnce<T>(name, args);
+      logTiming(name, args, Date.now() - started, attempt + 1, true);
+      return out;
     } catch (e) {
-      if (!isTransient(e)) throw e;
+      if (!isTransient(e)) {
+        logTiming(name, args, Date.now() - started, attempt + 1, false);
+        throw e;
+      }
       lastErr = e;
     }
   }
+  logTiming(name, args, Date.now() - started, 4, false);
   throw lastErr;
 }
 

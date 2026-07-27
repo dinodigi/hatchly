@@ -72,13 +72,13 @@ input, textarea { font: inherit; color: inherit; }
 .hub-rail-btn[data-active="true"]::before { content: ""; position: absolute; left: -9px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
 
 /* idea-hub chat card deck */
-.chat-card { flex: none; width: 158px; min-height: 74px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); padding: 11px 13px; display: flex; flex-direction: column; gap: 5px; box-shadow: var(--shadow-card); transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease; }
+.chat-card { flex: none; width: 196px; min-height: 92px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); padding: 11px 13px; display: flex; flex-direction: column; gap: 5px; box-shadow: var(--shadow-card); transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease; }
 .chat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--border-strong); }
 .chat-card[data-active="true"] { border-color: var(--accent); background: var(--accent-softer); box-shadow: none; }
 .chat-card .cc-ic { font-size: 14px; color: var(--text-muted); line-height: 1; }
 .chat-card[data-active="true"] .cc-ic { color: var(--accent-text); }
 .chat-card b { font-size: 12.5px; font-weight: 600; line-height: 1.28; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.chat-card .cc-sub { font-size: 10px; color: var(--text-muted); margin-top: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-card .cc-sub { font-size: 10px; line-height: 1.35; color: var(--text-muted); margin-top: auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* card */
 .card { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-card); }
@@ -121,6 +121,7 @@ input, textarea { font: inherit; color: inherit; }
    (avatars stacked above their bubbles). */
 .row { display: flex; flex-direction: row; }
 .col { display: flex; flex-direction: column; }
+.spacer { flex: 1; }
 .gap2 { gap: 2px; }
 .gap4 { gap: 4px; }
 .gap6 { gap: 6px; }
