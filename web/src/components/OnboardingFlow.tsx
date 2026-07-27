@@ -65,14 +65,24 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
       <div style={{ textAlign: "center", padding: "20px 0" }}>
         {busy ? (
           <>
-            <div className="serif" style={{ fontSize: 26, fontStyle: "italic", marginBottom: 8 }}>Setting up your workspace…</div>
-            <p className="muted" style={{ fontSize: 14 }}>Naming your idea and preparing your chats.</p>
+            {/* The hatch — the moment between answering and landing in the workspace. */}
+            <div className="hatch-stage" aria-hidden="true">
+              <span className="hatch-ring" />
+              <span className="hatch-ring hatch-ring2" />
+              <span className="hatch-egg">🥚</span>
+            </div>
+            <div className="serif" style={{ fontSize: 26, fontStyle: "italic", margin: "18px 0 8px" }}>Hatching your workspace…</div>
+            <p className="muted" style={{ fontSize: 14 }}>Naming your idea and preparing your conversations.</p>
           </>
         ) : (
           <>
-            <div className="serif" style={{ fontSize: 26, marginBottom: 8 }}>Ready to go.</div>
+            <div className="serif" style={{ fontSize: 27, marginBottom: 10 }}>I think I&apos;ve got it.</div>
+            <p className="muted" style={{ fontSize: 14.5, lineHeight: 1.6, maxWidth: 420, margin: "0 auto 18px" }}>
+              Next I&apos;ll set up your workspace and start a few focused conversations to refine
+              it — each one opens with a first take you can react to.
+            </p>
             {error && <p style={{ color: "var(--danger-text)", fontSize: 13, margin: "0 0 14px" }}>{error}</p>}
-            <button className="btn btn-primary" onClick={() => submit(answers)}>Open my workspace →</button>
+            <button className="btn btn-primary btn-lg" onClick={() => submit(answers)}>Set up my workspace →</button>
           </>
         )}
       </div>

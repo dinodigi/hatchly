@@ -115,6 +115,15 @@ input, textarea { font: inherit; color: inherit; }
 
 .scrollarea { overflow-y: auto; }
 
+/* Onboarding hatch — the wait between "set up my workspace" and landing in it. */
+.hatch-stage { position: relative; width: 96px; height: 96px; margin: 6px auto 0; display: flex; align-items: center; justify-content: center; }
+.hatch-ring { position: absolute; inset: 0; border-radius: 999px; border: 2px solid var(--accent); opacity: 0; animation: hatchRing 1.8s ease-out infinite; }
+.hatch-ring2 { animation-delay: 0.9s; }
+.hatch-egg { font-size: 40px; display: inline-block; animation: hatchWobble 1.1s ease-in-out infinite; transform-origin: 50% 85%; }
+@keyframes hatchRing { 0% { transform: scale(0.55); opacity: 0.55; } 80% { transform: scale(1.05); opacity: 0; } 100% { transform: scale(1.05); opacity: 0; } }
+@keyframes hatchWobble { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@media (prefers-reduced-motion: reduce) { .hatch-ring, .hatch-egg { animation: none; } }
+
 /* Flex layout primitives (v4). These were referenced across the chat, idea
    workspace, and dropdowns but never defined — so .col never made a flex
    column, which left the chat composer unpinned and the thread unscrollable
