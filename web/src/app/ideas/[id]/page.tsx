@@ -7,13 +7,16 @@ import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
 import CoverEditor from "@/components/CoverEditor";
 import DeckCollapse from "@/components/DeckCollapse";
+import RailSection from "@/components/RailSection";
 import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
+import SignalMap from "@/components/SignalMap";
+import SignalPanel from "@/components/SignalPanel";
 import VisibilityMenu from "@/components/VisibilityMenu";
 import WalletChip from "@/components/WalletChip";
 import { Icons } from "@/components/icons";
 import { Card, Pill, SectionLabel, StageBadge, Bucks, Empty } from "@/components/ui";
-import { briefGate, type Brief } from "@/lib/agent";
+import { briefGate, topicCounts, type Brief } from "@/lib/agent";
 import { clerkEnabled } from "@/lib/clerk";
 import { callTool } from "@/lib/mcp";
 
@@ -187,6 +190,7 @@ export default async function IdeaHub({
 
   const brief = idea.data.brief ?? {};
   const gate = briefGate(brief);
+  const counts = topicCounts(memories.entries.map((m) => ({ topic: m.data.topic })));
   // The brief is live state shown separately; the panel lists the real generated docs.
   const generatedArtifacts = artifacts.entries.filter((a) => !a.data.is_brief && a.data.type !== "brief");
   const listing = listings.entries[0] ?? null;
@@ -441,95 +445,168 @@ export default async function IdeaHub({
         )}
 
         {/* ---- Overview (hub.jsx) ---- */}
-        {/* Document-first: the living single pager IS the overview. The
-            conversation strip on top serves it; every empty section points at
-            the chat that fills it. (Layout B, chosen Jul 27.) */}
         {tab === "overview" && !activeChat && (
-          <div style={{ display: "flex", flexDirection: "column", minHeight: 0, height: "calc(100vh - 62px)", overflow: "hidden" }}>
-            {chatDeck}
-            <div className="scrollarea" style={{ flex: 1, minHeight: 0 }}>
-              <div style={{ maxWidth: 820, margin: "0 auto", padding: "30px 28px 90px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-                  <SectionLabel>The single pager · fed by every conversation</SectionLabel>
-                  <span className="spacer" />
-                  <Link href={href({ tab: "memory" })} className="link-btn" style={{ fontSize: 12 }}>
-                    Memory · {memories.entries.length}
-                  </Link>
-                  <Link href={href({ tab: "artifacts" })} className="link-btn" style={{ fontSize: 12 }}>
-                    Artifacts · {generatedArtifacts.length + 1}
-                  </Link>
-                </div>
+          <div style={{ maxWidth: 1000, margin: "0 auto", padding: "34px 28px 90px" }}>
+            <div className="hub-grid" style={{ display: "grid", gridTemplateColumns: "1fr 312px", gap: 30, alignItems: "start" }}>
+              <div style={{ minWidth: 0 }}>
                 {idea.data.description && (
-                  <p className="muted" style={{ fontSize: 15, lineHeight: 1.6, margin: "0 0 26px" }}>
+                  <p className="muted" style={{ fontSize: 15, lineHeight: 1.55, margin: "0 0 20px" }}>
                     {idea.data.description}
                   </p>
                 )}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px" }}>
+                  <SectionLabel>Your conversations · {orderedChats.length}</SectionLabel>
+                  <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
+                </div>
+                <p className="muted" style={{ fontSize: 13, lineHeight: 1.55, margin: "0 0 14px" }}>
+                  Each one fills a part of your idea. Open one and it starts itself — you land on
+                  a first take you can push back on.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {orderedChats.map((c, i) => {
+                    const cov = coverage(c.data.template_key);
+                    return (
+                      <Link key={c.id} href={href({ chat: c.id })} prefetch={false}>
+                        <Card hover style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "15px 18px" }}>
+                          <span style={{ width: 32, height: 32, borderRadius: 9, background: "var(--surface)", color: "var(--text-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 14 }}>
+                            {deckTemplates.get(c.data.template_key ?? "")?.icon ?? String(i + 1)}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 2 }}>{c.data.title}</div>
+                            <div className="faint" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{deckSub(c.data.template_key)}</div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, flex: "none" }}>
+                            {cov && (
+                              <span
+                                className="mono"
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 600,
+                                  padding: "2px 8px",
+                                  borderRadius: 999,
+                                  background: cov.covered >= cov.total ? "var(--success-soft)" : "var(--surface)",
+                                  color: cov.covered >= cov.total ? "var(--success-text)" : "var(--text-muted)",
+                                  border: cov.covered >= cov.total ? "none" : "1px solid var(--border)",
+                                }}
+                              >
+                                {cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`}
+                              </span>
+                            )}
+                            {c.data.last_message_at && (
+                              <span className="faint" style={{ fontSize: 11 }}>{ago(c.data.last_message_at)}</span>
+                            )}
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                  {!orderedChats.length && (
+                    <div className="card" style={{ padding: "30px 20px", textAlign: "center", borderStyle: "dashed", background: "transparent" }}>
+                      <div className="muted" style={{ fontSize: 13.5 }}>No conversations yet.</div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                {(
-                  [
-                    ["problem", "Problem"],
-                    ["who", "Audience"],
-                    ["value", "Core value"],
-                  ] as const
-                ).map(([field, label]) => {
-                  const val = (brief as Record<string, string | undefined>)[field];
-                  const chat = val ? undefined : briefChat(field);
-                  return (
-                    <section key={field} style={{ borderLeft: `3px solid ${val ? "var(--accent)" : "var(--border)"}`, padding: "2px 0 2px 16px", marginBottom: 26 }}>
-                      <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>{label}</div>
-                      {val ? (
-                        <p style={{ fontSize: 15, lineHeight: 1.65, margin: 0 }}>{val}</p>
-                      ) : (
-                        <p style={{ fontSize: 13.5, margin: 0, color: "var(--text-muted)", fontStyle: "italic" }}>
-                          Nothing here yet.{" "}
-                          {chat && (
-                            <Link href={href({ tab: "chats", chat: chat.id })} className="link-btn" style={{ fontStyle: "normal" }}>
-                              Open {chat.data.title} →
-                            </Link>
+              {/* knowledge panel — an accordion, so the rail stays scannable as the
+                  brief and memory grow. Long values clamp; full text lives in the
+                  brief document. Rail scrolls within the viewport, never past it. */}
+              <aside style={{ position: "sticky", top: 24, maxHeight: "calc(100vh - 110px)", overflowY: "auto" }}>
+                <Card style={{ padding: 0, overflow: "hidden" }}>
+                  <RailSection
+                    title="Your brief"
+                    hint={`${[brief.problem, brief.who, brief.value, brief.features?.[0]].filter(Boolean).length}/4 filled`}
+                    action={<Link href={href({ tab: "artifacts", doc: "brief" })} className="link-btn">Open →</Link>}
+                  >
+                    {(
+                      [
+                        ["problem", "Problem"],
+                        ["who", "Audience"],
+                        ["value", "Core value"],
+                        ["features", "First feature"],
+                      ] as const
+                    ).map(([field, label], i) => {
+                      const val = field === "features" ? brief.features?.[0] : (brief as Record<string, string | undefined>)[field];
+                      const chat = val ? undefined : briefChat(field);
+                      return (
+                        <div key={field} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--border)" : "none" }}>
+                          <div style={{ fontSize: 9.5, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 3 }}>{label}</div>
+                          {val ? (
+                            <div className="clamp3" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{val}</div>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Not captured yet</div>
+                              {chat && (
+                                <Link href={href({ tab: "chats", chat: chat.id })} className="link-btn" style={{ fontSize: 11.5, display: "inline-block", marginTop: 2 }}>
+                                  → {chat.data.title}
+                                </Link>
+                              )}
+                            </>
                           )}
-                        </p>
-                      )}
-                    </section>
-                  );
-                })}
-
-                <section style={{ borderLeft: `3px solid ${brief.features?.length ? "var(--accent)" : "var(--border)"}`, padding: "2px 0 2px 16px", marginBottom: 26 }}>
-                  <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>Features</div>
-                  {brief.features?.length ? (
-                    <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 7 }}>
-                      {brief.features.map((x, i) => (
-                        <li key={i} style={{ display: "flex", gap: 9, fontSize: 14.5, lineHeight: 1.5 }}>
-                          <span style={{ color: "var(--accent-text)", flex: "none", marginTop: 1 }}><Icons.check size={14} /></span>
-                          {x}
-                        </li>
+                        </div>
+                      );
+                    })}
+                  </RailSection>
+                  <div style={{ height: 1, background: "var(--border)" }} />
+                  <RailSection
+                    title={<><Icons.brain size={15} /> Memory</>}
+                    hint={`${memories.entries.length} captured`}
+                    action={<Link href={href({ tab: "memory" })} className="link-btn">{memories.entries.length}</Link>}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                      {memories.entries.slice(-3).reverse().map((m) => (
+                        <div key={m.id} style={{ display: "flex", gap: 8, fontSize: 12.5, lineHeight: 1.45 }}>
+                          <span className="dot" style={{ width: 6, height: 6, background: "var(--accent)", marginTop: 5, flex: "none" }} />
+                          <span className="clamp2" style={{ color: "var(--text-secondary)" }}>{m.data.content}</span>
+                        </div>
                       ))}
-                    </ul>
-                  ) : (
-                    <p style={{ fontSize: 13.5, margin: 0, color: "var(--text-muted)", fontStyle: "italic" }}>
-                      Nothing here yet.{" "}
-                      {briefChat("features") && (
-                        <Link href={href({ tab: "chats", chat: briefChat("features")!.id })} className="link-btn" style={{ fontStyle: "normal" }}>
-                          Open {briefChat("features")!.data.title} →
+                      {memories.entries.length > 3 && (
+                        <Link href={href({ tab: "memory" })} className="link-btn" style={{ fontSize: 11.5 }}>
+                          View all {memories.entries.length} →
                         </Link>
                       )}
-                    </p>
-                  )}
-                </section>
-
-                {(brief.open_questions?.length ?? 0) > 0 && (
-                  <section style={{ borderLeft: "3px solid var(--info)", padding: "2px 0 2px 16px", marginBottom: 26 }}>
-                    <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>Open questions</div>
-                    <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 7 }}>
-                      {brief.open_questions!.map((x, i) => (
-                        <li key={i} style={{ display: "flex", gap: 9, fontSize: 14, lineHeight: 1.5, color: "var(--text-secondary)" }}>
-                          <span style={{ color: "var(--info-text)", flex: "none", marginTop: 1 }}><Icons.search size={14} /></span>
-                          {x}
-                        </li>
+                      {!memories.entries.length && <span className="faint" style={{ fontSize: 12.5 }}>Captured as you chat.</span>}
+                    </div>
+                  </RailSection>
+                  <div style={{ height: 1, background: "var(--border)" }} />
+                  <RailSection
+                    title={<><Icons.doc size={15} /> Artifacts</>}
+                    hint={`${generatedArtifacts.length + 1}`}
+                    action={<Link href={href({ tab: "artifacts" })} className="link-btn">{generatedArtifacts.length + 1}</Link>}
+                    defaultOpen={generatedArtifacts.length > 0}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {/* The brief is live state — it always leads. Then the real generated docs. */}
+                      <Link href={href({ tab: "artifacts", doc: "brief" })} className="file-row">
+                        <span className="file-glyph glyph-page"><Icons.doc size={14} /></span>
+                        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>Product brief</div>
+                        </div>
+                        <span className="badge b-idea" style={{ fontSize: 9, flex: "none" }}>Live</span>
+                      </Link>
+                      {generatedArtifacts.map((a) => (
+                        <Link key={a.id} href={href({ tab: "artifacts", doc: a.id })} className="file-row">
+                          <span className="file-glyph glyph-page"><Icons.doc size={14} /></span>
+                          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                            <div style={{ fontWeight: 500, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.data.title}</div>
+                          </div>
+                          {a.data.on_public_page && (
+                            <span className="badge b-launch" style={{ fontSize: 9, flex: "none" }}>
+                              <Icons.globe size={9} /> Public
+                            </span>
+                          )}
+                        </Link>
                       ))}
-                    </ul>
-                  </section>
-                )}
-              </div>
+                    </div>
+                  </RailSection>
+                  <div style={{ height: 1, background: "var(--border)" }} />
+                  <div style={{ padding: "16px 18px" }}>
+                    <SignalPanel hasSignal={Object.values(counts).some((n) => n > 0)}>
+                      <SignalMap counts={counts} />
+                    </SignalPanel>
+                  </div>
+                </Card>
+              </aside>
             </div>
           </div>
         )}
