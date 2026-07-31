@@ -12,10 +12,10 @@ Size key: `S` < half a day · `M` 1–2 days · `L` 3+ days · `?` needs a spec 
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
-| BL-01 | **Degenerate-reply guard** — retry once, never persist a dud like the `"content"` message | S | todo | Only item that currently shows founders something broken. Spec: [chat-reliability-hardening.md](../chat-reliability-hardening.md) §1 |
-| BL-02 | **Bodyless 500 on MCP failure** — wrap the persistence phase, return `{error}` JSON | S | todo | Spec: same doc §2 |
-| BL-03 | **Unguarded `res.json()` in ChatPanel** | S | todo | Spec: same doc §3. Do with BL-02 |
-| BL-04 | **`writableBy: "none"` on `users.role` + `users.suspended`** | S | todo | Schema does not prevent self-escalation to admin. Not exploitable today (delivery token is server-only) but it's defense-in-depth, and cheap |
+| BL-01 | **Degenerate-reply guard** — retry once, never persist a dud like the `"content"` message | S | done | `f79adad` 2026-07-31. One silent retry, then a graceful non-persisted reply |
+| BL-02 | **Bodyless 500 on MCP failure** — wrap the persistence phase, return `{error}` JSON | S | done | `f79adad` 2026-07-31. Save failure → `{error}` 502; atomic transact means clean state |
+| BL-03 | **Unguarded `res.json()` in ChatPanel** | S | done | `f79adad` 2026-07-31. Parse guarded + ok-but-bodyless response rejected |
+| BL-04 | **`writableBy: "none"` on `users.role` + `users.suspended`** | S | done | CMS schema change 2026-07-31, no deploy. Verified via `describe_collection`; delivery-only gate, admin/MCP writes (suspend flow, ensure-user) unaffected — and the app has zero delivery-plane `users` write call sites anyway |
 | BL-05 | **Firas approves the 7 chats + arcs** | — | blocked | Blocked on: Firas. Doc is ready: [chat-question-arcs.md](../chat-question-arcs.md). Blocks BL-06 and all arc iteration |
 
 ## P2 — high value
@@ -29,7 +29,7 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 |---|---|---|---|---|
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | done | Done 2026-07-31 — CMS-data change in `chat_templates` (`pricing`/`brand`/`gtm` system prompts), no deploy needed. Pre-images in Pluggie entry versions. Inactive `competition`/`risk` templates still carry the old pattern — left alone, they can't be opened |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | todo | job / good / push / push back / boundary / stuck |
-| BL-42 | **Retire the dead `questions` field** | S | todo | Superseded by `question_arc`; suppressed on 6 of 7 chats. Keep `opening` as documented fallback |
+| BL-42 | **Retire the dead `questions` field** | S | done | `d10aaae` 2026-07-31. All readers removed (primer pills, page fetch, type); `opening` kept as fallback; CMS column kept for now (prototyping caution) |
 | BL-43 | **Admin `?tab=prompts`** — list + edit form | M | todo | Staff-only. Name, subtitle, system prompt, initiation prompt |
 | BL-44 | **Structured arc editor** | M | todo | Intent text, required toggle, singular/accumulative. Not a JSON textarea. Intent keys read-only after creation |
 | BL-45 | **Preview / dry-run a chat** | M | todo | Run initiation against a throwaway fixture; render reply + chips; write nothing to memories/messages |

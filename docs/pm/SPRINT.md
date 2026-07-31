@@ -123,7 +123,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 | BL-55 | **Contradiction surfacing** — when a new statement conflicts with an existing memory, say so plainly rather than silently overwriting | M |
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference — **done 2026-07-31**, see SHIPPED | S |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M |
-| BL-42 | **Retire the dead `questions` field** | S |
+| BL-42 | **Retire the dead `questions` field** — **done 2026-07-31** (`d10aaae`) | S |
 
 ### Track C — Editable without a deploy
 
@@ -143,10 +143,10 @@ Separately from extraction — what makes it *feel* like a co-founder:
 
 | ID | Item | Size |
 |---|---|---|
-| BL-01 | Degenerate-reply guard | S |
-| BL-02 | Bodyless 500 → JSON error | S |
-| BL-03 | Unguarded `res.json()` | S |
-| BL-04 | `writableBy: "none"` on `users.role` / `suspended` | S |
+| BL-01 | Degenerate-reply guard — **done 2026-07-31** (`f79adad`) | S |
+| BL-02 | Bodyless 500 → JSON error — **done 2026-07-31** (`f79adad`) | S |
+| BL-03 | Unguarded `res.json()` — **done 2026-07-31** (`f79adad`) | S |
+| BL-04 | `writableBy: "none"` on `users.role` / `suspended` — **done 2026-07-31** (CMS schema, no deploy) | S |
 
 ---
 
