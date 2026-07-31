@@ -35,6 +35,27 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 | BL-45 | **Preview / dry-run a chat** | M | todo | Run initiation against a throwaway fixture; render reply + chips; write nothing to memories/messages |
 | BL-46 | **Prompt version history + restore** | S | todo | Pluggie already versions entries (`list_entry_versions` / `restore_entry_version`) — mostly UI |
 
+### Epic: extraction quality (BL-47 … BL-52)
+From an audit of 15 real memories produced by the Basecamp Ledger conversation.
+`kind` classification and verbatim capture are working well; these are the gaps.
+Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked.
+
+| ID | Item | Size | Status | Notes |
+|---|---|---|---|---|
+| BL-47 | **Fix entity extraction** | S | todo | 10/15 memories have `entities: []`. The agent referenced **Splitwise** in conversation and it was never captured. Competitive-analysis recipes depend on this |
+| BL-48 | **Stop duplicate memories** | M | todo | 3 rows for one pricing decision; one is a fragment of another. Noise now, context bloat later |
+| BL-49 | **Anchor confirmations to their intent** | S | todo | "Yes, that's it" created an unanchored `decision` row instead of updating the problem node. Singular-update silently no-ops without an `intent_key` |
+| BL-51 | **Resolve `feeds` vs `brief_updates`** | S | todo | `feeds` used by 2/15; `brief_updates` does the real work. Two mechanisms, one job. Recommend dropping `feeds` |
+| BL-52 | **Decide the `kind` taxonomy's real shape** | S | todo | `question`, `constraint`, `risk` never appear in practice. Add recognition guidance or cut them |
+
+### Epic: co-founder response (BL-53 … BL-55)
+
+| ID | Item | Size | Status | Notes |
+|---|---|---|---|---|
+| BL-53 | **Quote the founder's verbatim back** | S | todo | We store exact words and never use them. Probably the highest-leverage single change for "feels like a partner" |
+| BL-54 | **Cross-chat reference in replies** | S | todo | All memories are in context; nothing tells the model to connect them conversationally |
+| BL-55 | **Surface contradictions** | M | todo | $5 in one chat and $50 in another passes silently. A co-founder would notice |
+
 ### Epic: strengthen chat interaction (BL-10 … BL-17)
 The chat is the product. Everything below makes the core loop feel faster,
 recoverable, and less brittle. **Needs a spec before the big items are sized** —
