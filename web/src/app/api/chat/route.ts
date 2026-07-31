@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { briefGate, runAgentTurn, type ArcIntent, type Brief } from "@/lib/agent";
+import { briefGate, runAgentTurn, type AgentTurnResult, type ArcIntent, type Brief } from "@/lib/agent";
 import { applyBriefUpdates, memoryRowData, planIdeaPatch, planMemoryWrites } from "@/lib/turn-apply";
 import { bumpUsage, resolveKey } from "@/lib/keyvault";
 import { callTool } from "@/lib/mcp";
@@ -132,21 +132,30 @@ export async function POST(req: Request) {
   }
   const arcMode = new Map(chatArc.map((a) => [a.key, a.mode]));
 
+  // A dud sample from structured output: a few characters of reply and nothing
+  // else extracted. Real case: the literal string "content" (BL-01).
+  const isDegenerate = (r: AgentTurnResult) =>
+    r.reply.trim().length < 20 && !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
+
   // The agent turn (BYOK — errors from Anthropic surface as chat-level messages).
+  const turnParams = {
+    apiKey,
+    ideaName: idea.data.name,
+    oneLiner: idea.data.one_liner,
+    brief,
+    memories: memoriesRes.entries.map((e) => ({ content: e.data.content, topic: e.data.topic })),
+    history,
+    userMessage: message,
+    chatFocus,
+    chatArc,
+    resolvedIntents: [...intentNodes.keys()],
+  };
   let result;
   try {
-    result = await runAgentTurn({
-      apiKey,
-      ideaName: idea.data.name,
-      oneLiner: idea.data.one_liner,
-      brief,
-      memories: memoriesRes.entries.map((e) => ({ content: e.data.content, topic: e.data.topic })),
-      history,
-      userMessage: message,
-      chatFocus,
-      chatArc,
-      resolvedIntents: [...intentNodes.keys()],
-    });
+    result = await runAgentTurn(turnParams);
+    // Retry a degenerate reply ONCE, silently — hard cap so a bad streak can't
+    // burn tokens (BL-01).
+    if (isDegenerate(result)) result = await runAgentTurn(turnParams);
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError)
       return NextResponse.json({ error: "your API key was rejected — reconnect it in settings", code: "E_KEY_INVALID" }, { status: 422 });
@@ -155,6 +164,19 @@ export async function POST(req: Request) {
     if (e instanceof Anthropic.APIError)
       return NextResponse.json({ error: `model error: ${e.message}` }, { status: 502 });
     throw e;
+  }
+  // Still a dud after the retry: answer gracefully and persist NOTHING — the
+  // founder re-asks into a clean thread instead of reading junk (BL-01).
+  if (isDegenerate(result)) {
+    return NextResponse.json({
+      chatId,
+      reply: "I lost my train of thought — ask me that again?",
+      suggestions: [],
+      traces: [],
+      memories: [],
+      brief,
+      gate: briefGate(brief),
+    });
   }
 
   // Apply brief updates (+ the feeds:"features" backfill).
@@ -171,9 +193,12 @@ export async function POST(req: Request) {
   const ideaPatch = planIdeaPatch(result, idea.data);
   if (ideaPatch.name) traces.push(`named the idea · ${ideaPatch.name}`);
 
-  // Persist everything atomically.
+  // Persist everything atomically. The model call is guarded above, but this
+  // save used to be the one uncaught await — an MCP rejection escaped as a
+  // bodyless 500 (BL-02). The transact is atomic, so a failure leaves zero
+  // half-written state; tell the client honestly instead of crashing.
   const now = new Date().toISOString();
-  await callTool("transact", {
+  const saved = await callTool("transact", {
     ops: [
       {
         op: "create",
@@ -254,7 +279,15 @@ export async function POST(req: Request) {
           data: { owner_id: userId, idea: body.ideaId, type: "memory", text: `Captured — ${m.content.slice(0, 200)}` },
         })),
     ],
-  });
+  }).then(
+    () => true,
+    (e: unknown) => {
+      console.error(`[chat] persist failed: ${e instanceof Error ? e.message : String(e)}`);
+      return false;
+    },
+  );
+  if (!saved)
+    return NextResponse.json({ error: "that reply couldn't be saved — try again?" }, { status: 502 });
   void bumpUsage(userId);
 
   return NextResponse.json({

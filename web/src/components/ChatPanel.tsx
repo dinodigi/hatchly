@@ -82,14 +82,18 @@ export default function ChatPanel({
         body: JSON.stringify({ ideaId, chatId, message }),
         signal: ctrl.signal,
       });
-      const json = await res.json();
+      // An interrupted response (e.g. a deploy switchover mid-request) has no
+      // body — don't let the parse itself throw raw JSON jargon at the founder.
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (json.code === "E_NO_KEY" || json.code === "E_KEY_INVALID") {
           router.push("/settings?reason=key");
           return;
         }
-        throw new Error(json.error ?? "failed");
+        throw new Error(json.error ?? "something went wrong — try again?");
       }
+      if (typeof json.reply !== "string")
+        throw new Error("something went wrong — your reply may still be saving. Give it a moment and try again.");
       setChatId(json.chatId);
       setMessages((m) => [...m, { role: "assistant", content: json.reply, traces: json.traces ?? [] }]);
       setSuggestions(Array.isArray(json.suggestions) ? json.suggestions.slice(0, 4) : []);
