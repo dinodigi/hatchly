@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { briefGate, runAgentTurn, type ArcIntent, type Brief } from "@/lib/agent";
+import { applyBriefUpdates, memoryRowData, planIdeaPatch, planMemoryWrites } from "@/lib/turn-apply";
 import { bumpUsage, resolveKey } from "@/lib/keyvault";
 import { callTool } from "@/lib/mcp";
 
@@ -156,73 +157,19 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  // Apply brief updates.
-  const newBrief: Brief = {
-    ...brief,
-    features: [...(brief.features ?? [])],
-    open_questions: [...(brief.open_questions ?? [])],
-  };
-  const traces: string[] = [];
-  for (const u of result.brief_updates) {
-    if ((u.section === "problem" || u.section === "who" || u.section === "value") && u.value?.trim()) {
-      newBrief[u.section] = u.value.trim();
-      traces.push(`updated brief · ${u.section === "who" ? "who it's for" : u.section === "value" ? "core value" : "problem"}`);
-    } else if (u.section === "open_questions" && u.resolve_item?.trim()) {
-      const needle = u.resolve_item.trim().toLowerCase();
-      const list = newBrief.open_questions!;
-      const idx = list.findIndex(
-        (x) => x.toLowerCase() === needle || x.toLowerCase().includes(needle) || needle.includes(x.toLowerCase()),
-      );
-      if (idx >= 0) {
-        list.splice(idx, 1);
-        traces.push(`resolved question`);
-      }
-    } else if ((u.section === "features" || u.section === "open_questions") && u.add_item?.trim()) {
-      const list = newBrief[u.section]!;
-      if (!list.some((x) => x.toLowerCase() === u.add_item!.trim().toLowerCase())) {
-        list.push(u.add_item.trim());
-        traces.push(`updated brief · ${u.section === "features" ? "features" : "open questions"}`);
-      }
-    }
-  }
-  // Backfill: a memory that explicitly feeds "features" belongs in the brief even
-  // when the model forgot to emit a matching brief_update — the gap that left
-  // confirmed MVP features tagged in memory but absent from the brief/artifact
-  // (feedback d6c37fec).
-  for (const m of result.memories) {
-    if (m.feeds === "features" && m.content.trim()) {
-      const item = m.content.trim();
-      if (!newBrief.features!.some((x) => x.toLowerCase() === item.toLowerCase())) {
-        newBrief.features!.push(item);
-        traces.push(`updated brief · features`);
-      }
-    }
-  }
+  // Apply brief updates (+ the feeds:"features" backfill).
+  const applied = applyBriefUpdates(brief, result);
+  const newBrief = applied.brief;
+  const traces = applied.traces;
   // Split memories into singular-node UPDATES (an arc intent already answered —
   // the node mutates, history goes to activity) and plain CREATES.
-  interface MemWrite {
-    m: (typeof result.memories)[number];
-    intentKey?: string;
-    updateOf?: { id: string; content: string };
-  }
-  const memWrites: MemWrite[] = result.memories.map((m) => {
-    const intentKey = m.intent && arcMode.has(m.intent) ? m.intent : undefined;
-    const existing = intentKey ? intentNodes.get(intentKey) : undefined;
-    const singular = intentKey ? arcMode.get(intentKey) === "singular" : false;
-    return { m, intentKey, updateOf: singular && existing ? existing : undefined };
-  });
+  const memWrites = planMemoryWrites(result.memories, arcMode, intentNodes);
   for (const w of memWrites)
     traces.push(w.updateOf ? `updated memory · ${w.m.topic}` : `captured memory · ${w.m.topic}`);
 
   // Idea naming — the agent proposes; sanity-cap lengths.
-  const ideaPatch: Record<string, string> = {};
-  if (result.idea?.name?.trim() && result.idea.name.trim() !== idea.data.name) {
-    ideaPatch.name = result.idea.name.trim().slice(0, 40);
-    traces.push(`named the idea · ${ideaPatch.name}`);
-  }
-  if (result.idea?.one_liner?.trim() && result.idea.one_liner.trim() !== idea.data.one_liner) {
-    ideaPatch.one_liner = result.idea.one_liner.trim().slice(0, 100);
-  }
+  const ideaPatch = planIdeaPatch(result, idea.data);
+  if (ideaPatch.name) traces.push(`named the idea · ${ideaPatch.name}`);
 
   // Persist everything atomically.
   const now = new Date().toISOString();
@@ -251,17 +198,7 @@ export async function POST(req: Request) {
         },
       },
       ...memWrites.map(({ m, intentKey, updateOf }) => {
-        const data = {
-          content: m.content.slice(0, 500),
-          verbatim: m.verbatim.slice(0, 2000),
-          source_label: `turn ${nextTurn}`,
-          turn: nextTurn,
-          topic: m.topic,
-          kind: m.kind,
-          entities: (m.entities ?? []).slice(0, 12).map((x) => x.slice(0, 80)),
-          ...(intentKey ? { intent_key: intentKey } : {}),
-          ...(m.feeds ? { feeds: m.feeds } : {}),
-        };
+        const data = memoryRowData(m, intentKey, nextTurn);
         return updateOf
           ? { op: "update", collection: "memories", id: updateOf.id, data: { ...data, chat: chatId } }
           : {

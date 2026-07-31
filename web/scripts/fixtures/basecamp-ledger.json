@@ -1,0 +1,117 @@
+{
+  "name": "basecamp-ledger",
+  "note": "BL-56 fixture — the real Basecamp Ledger founder conversation of 2026-07-27, frozen. The transcript (founder messages, INCLUDING each chat's recorded initiation message and the founder's two '?' pokes at degenerate replies) is the fixed input; system prompts and question arcs are deliberately NOT baked in — the harness fetches them live from chat_templates so a CMS prompt edit is exactly what a re-run measures. If an initiation_prompt is edited in the CMS, this fixture still replays the RECORDED initiation text — that is intentional (fixed input), but worth knowing.",
+  "provenance": {
+    "idea_id": "2dcd2b0a-e161-4236-97cc-eb5cd675b473",
+    "idea_owner": "user_3GlAFxYaw1OYjzKhMv2fn1bZaCS",
+    "recorded": "2026-07-27",
+    "extracted": "2026-07-31",
+    "notes": [
+      "Starting name/one-liner/brief reconstructed from the idea's Pluggie version history: the oldest surviving pre-image (270fbdab, captured 16:40:32) shows name 'Camping trip planner', one-liner 'camping project management'. brief.problem was written BY the problem chat's initiation turn and brief.who BY the market chat's initiation turn, so the pre-conversation brief starts empty here.",
+      "Real chronology interleaved chats (problem t1-t3, then gtm/market initiations, problem t5-t19, product initiation, brand, pricing). Sessions below are linearized in approximate chronological order; the only infidelity is that the gtm/market/product initiation turns see more accumulated memories than they did live. They produced zero memories in the recorded run.",
+      "The recorded run hit two degenerate assistant replies (problem turn 6 = empty string, pricing turn 4 = the literal word 'content'). The founder's '?' messages that followed are part of the frozen transcript on purpose — extraction reaching back through history after a dud reply is part of the measured baseline."
+    ]
+  },
+  "start": {
+    "idea_name": "Camping trip planner",
+    "one_liner": "camping project management",
+    "brief": { "features": [], "open_questions": [] }
+  },
+  "sessions": [
+    {
+      "template_key": "problem",
+      "founder_messages": [
+        "Based on what you already know about my idea, take a first pass at articulating the core problem — who feels it most sharply, how they cope today, and what it actually costs them. Then ask me the one thing you're least sure you got right.",
+        "Both — organizer plans, group feels the mess",
+        "Yes, that's it",
+        "?",
+        "Every trip, even small ones",
+        "Both, equally",
+        "Both from day one",
+        "basically  texts (mulitple of them) and phone calls and fights and always something is missing",
+        "wasted time+ unfair for one person sometimes losing money or having to keep following up on money  pretty much the whole experince",
+        "both, groups do not know anything better and i dont think anyone has built suuch a thing, i also imaged part of the onborading of the gorup AI does questions then the host can answer those questions then AI can automatically create a borad with list of things needed where users can claim those items as they are bringing also maybe an email of their check list and what they claimed they will bring"
+      ]
+    },
+    {
+      "template_key": "gtm",
+      "founder_messages": [
+        "Take a first pass at where my first 100 users actually are, and one concrete first move to reach them this week. Then ask me your most important question."
+      ]
+    },
+    {
+      "template_key": "customer",
+      "founder_messages": [
+        "Based on my idea, take a first pass at who this is for, roughly how many of them there are, and who else is already serving them. Name real competitors or alternatives if you know any. Then ask me your sharpest question about differentiation."
+      ]
+    },
+    {
+      "template_key": "product",
+      "founder_messages": [
+        "Take a first pass at describing what I'm building — the core of it, what a first version should include, and what should stay out of v1. Then ask me the most important thing you're unsure about."
+      ]
+    },
+    {
+      "template_key": "brand",
+      "founder_messages": [
+        "Suggest a handful of name options for my idea, each with a one-line pitch that explains what it is in plain language. Then ask me which direction feels closest.",
+        "what options do you suggest ?",
+        "Warm & communal",
+        "None quite right — show more"
+      ]
+    },
+    {
+      "template_key": "pricing",
+      "founder_messages": [
+        "Take a first pass at how this could make money — who actually pays, the most likely model, and roughly what they might pay. Then ask me what you need to know to sharpen it.",
+        "organizer pays to start and each person joins have to pay (thats them locking themselve on the trip) the money will be lets say 1-5$ per user on the event",
+        "?",
+        "Organizer pays too, same $1-5"
+      ]
+    }
+  ],
+  "expected_entities": [
+    { "name": "text threads", "class": "alternative", "source": "founder", "aliases": ["texts", "text threads", "text thread", "group text", "group texts"] },
+    { "name": "phone calls", "class": "alternative", "source": "founder", "aliases": ["phone calls", "phone call"] },
+    { "name": "$1-5", "class": "price_point", "source": "founder", "aliases": ["$1-5", "1-5$", "$1–5", "1-5 per", "$1 to $5"] },
+    { "name": "gear board / checklist", "class": "feature", "source": "founder", "aliases": ["gear board", "gear checklist", "shared gear checklist", "gear list"] },
+    { "name": "email checklist", "class": "feature", "source": "founder", "aliases": ["email checklist", "email confirmation", "confirmation email"] },
+    { "name": "AI onboarding", "class": "feature", "source": "founder", "aliases": ["ai onboarding", "ai-guided onboarding", "onboarding"] }
+  ],
+  "agent_emergent_watchlist": [
+    { "name": "Splitwise", "class": "competitor_tool", "aliases": ["splitwise"] },
+    { "name": "Google Sheets", "class": "competitor_tool", "aliases": ["google sheet", "google sheets", "shared sheet"] },
+    { "name": "Notion", "class": "competitor_tool", "aliases": ["notion"] },
+    { "name": "Venmo", "class": "competitor_tool", "aliases": ["venmo"] },
+    { "name": "r/CampingandHiking", "class": "channel", "aliases": ["campingandhiking", "reddit"] },
+    { "name": "Facebook groups", "class": "channel", "aliases": ["facebook"] },
+    { "name": "Meetup", "class": "channel", "aliases": ["meetup"] }
+  ],
+  "baseline": {
+    "audited": "Audit of 2026-07-30 (SPRINT.md § Where the engine actually is today); rows re-pulled verbatim from the memories collection 2026-07-31.",
+    "agent_mentioned": ["Splitwise", "Google Sheets", "Notion", "Venmo", "r/CampingandHiking", "Facebook groups", "Meetup"],
+    "final_brief": {
+      "problem": "Group camping trips have no shared system — the organizer manually herds gear lists, meal plans, and cost-splitting across texts and spreadsheets, while the whole group suffers the fallout of forgotten gear and unresolved money disputes.",
+      "who": "Draft: recurring trip organizers — friends or family members who plan group camping trips (3+ people) more than once a year and currently coordinate via texts, spreadsheets, and Splitwise.",
+      "value": "A single shared system that guarantees nobody forgets gear and money never turns into a post-trip fight — for every group trip, big or small."
+    },
+    "degenerate_replies": 2,
+    "rows": [
+      { "template": "problem", "turn": 3, "kind": "evidence", "topic": "problem", "intent_key": "who_hurts", "entities": [], "content": "Both the organizer and the wider group feel the pain — organizer does the planning work, group suffers the resulting chaos.", "verbatim": "Both — organizer plans, group feels the mess" },
+      { "template": "problem", "turn": 7, "kind": "decision", "topic": "problem", "entities": [], "content": "Founder confirmed the problem statement: organizer manually herds logistics while the whole group suffers the fallout.", "verbatim": "Yes, that's it" },
+      { "template": "problem", "turn": 9, "kind": "evidence", "topic": "problem", "intent_key": "frequency", "entities": [], "content": "The coordination chaos hits every trip, even small ones, not just big trips.", "verbatim": "Every trip, even small ones" },
+      { "template": "problem", "turn": 11, "kind": "decision", "topic": "product", "feeds": "value", "entities": [], "content": "Core value is twofold: eliminating forgotten gear and eliminating unresolved cost-splitting disputes, equally.", "verbatim": "Both, equally" },
+      { "template": "problem", "turn": 13, "kind": "decision", "topic": "product", "feeds": "features", "entities": ["gear checklist", "cost-split tracker"], "content": "Founder decided to ship both the gear checklist and cost-split tracker as day-one features, not sequenced.", "verbatim": "Both from day one" },
+      { "template": "problem", "turn": 15, "kind": "evidence", "topic": "problem", "intent_key": "coping", "entities": [], "content": "Groups currently cope via multiple text threads and phone calls, which leads to arguments and something always missing.", "verbatim": "basically texts (mulitple of them) and phone calls and fights and always something is missing" },
+      { "template": "problem", "turn": 17, "kind": "evidence", "topic": "problem", "intent_key": "cost", "entities": [], "content": "The cost of the chaos is wasted time, one person unfairly bearing money-chasing burden, and it souring the whole trip experience.", "verbatim": "wasted time+ unfair for one person sometimes losing money or having to keep following up on money  pretty much the whole experince" },
+      { "template": "problem", "turn": 19, "kind": "assumption", "topic": "problem", "intent_key": "why_unsolved", "entities": [], "content": "Founder believes groups don't know a better way exists and no one has built a tool for this specific recurring group-camping use case.", "verbatim": "groups do not know anything better and i dont think anyone has built suuch a thing" },
+      { "template": "problem", "turn": 19, "kind": "assumption", "topic": "product", "entities": ["AI onboarding"], "content": "Founder envisions an AI onboarding flow: host answers questions, AI auto-generates a shared gear board.", "verbatim": "i also imaged part of the onborading of the gorup AI does questions then the host can answer those questions then AI can automatically create a borad with list of things needed" },
+      { "template": "problem", "turn": 19, "kind": "assumption", "topic": "product", "entities": [], "content": "Group members would claim items on the shared board to indicate what they're bringing.", "verbatim": "where users can claim those items as they are bringing" },
+      { "template": "problem", "turn": 19, "kind": "assumption", "topic": "product", "entities": ["email confirmation"], "content": "System could email each person a checklist confirming what they claimed to bring.", "verbatim": "maybe an email of their check list and what they claimed they will bring" },
+      { "template": "brand", "turn": 7, "kind": "preference", "topic": "brand", "intent_key": "feel", "entities": [], "content": "Founder wants the brand feel to be warm and communal specifically, over trustworthy or premium.", "verbatim": "Warm & communal" },
+      { "template": "pricing", "turn": 5, "kind": "decision", "topic": "pricing", "intent_key": "shape", "entities": ["$1-5"], "content": "Organizer pays to start a trip; each joining member pays $1-5 per event to lock themselves into the trip.", "verbatim": "organizer pays to start and each person joins have to pay (thats them locking themselve on the trip) the money will be lets say 1-5$ per user on the event" },
+      { "template": "pricing", "turn": 5, "kind": "decision", "topic": "pricing", "entities": [], "content": "Per-person payment doubles as a commitment mechanic — locking in your spot on the trip.", "verbatim": "thats them locking themselve on the trip" },
+      { "template": "pricing", "turn": 7, "kind": "decision", "topic": "pricing", "intent_key": "who_pays", "entities": ["$1-5"], "content": "Organizer pays the same $1-5 fee as joining members to lock into a trip.", "verbatim": "Organizer pays too, same $1-5" }
+    ]
+  }
+}

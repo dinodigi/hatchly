@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# BL-56 extraction-audit run artifacts — local evidence, diff and commit copies deliberately
+scripts/audit-runs/
