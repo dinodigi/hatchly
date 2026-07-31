@@ -299,11 +299,13 @@ type ActionName =
   | "reverse_transaction"
   | "adjust_balance"
   | "resolve_report"
-  | "dismiss_report";
+  | "dismiss_report"
+  | "edit_prompt"
+  | "restore_prompt";
 
 interface AuditOp {
   action: ActionName;
-  targetKind: "listing" | "user" | "comment" | "quick_idea" | "transaction" | "report";
+  targetKind: "listing" | "user" | "comment" | "quick_idea" | "transaction" | "report" | "chat_template";
   targetId: string;
   targetLabel?: string;
   reason?: string;

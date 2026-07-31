@@ -3,6 +3,7 @@ import Link from "next/link";
 import ReportActions from "@/components/admin/ReportActions";
 import ListingActions from "@/components/admin/ListingActions";
 import FeedbackActions from "@/components/admin/FeedbackActions";
+import PromptEditor, { type ArcIntentRow, type PromptTemplate } from "@/components/admin/PromptEditor";
 import { Icons } from "@/components/icons";
 import { Bucks, Card, SectionLabel } from "@/components/ui";
 import { clerkEnabled } from "@/lib/clerk";
@@ -25,6 +26,7 @@ const TABS = [
   { key: "moderation", label: "Moderation" },
   { key: "signals", label: "Signals" },
   { key: "feedback", label: "Feedback" },
+  { key: "prompts", label: "Prompts" },
 ] as const;
 
 function Stat({ label, children, hint, tone }: { label: string; children: React.ReactNode; hint?: string; tone?: string }) {
@@ -45,7 +47,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const tab = TABS.some((t) => t.key === sp.tab) ? sp.tab! : "economy";
 
-  const [econ, collusion, reports, listings, audit, feedback] = await Promise.all([
+  const [econ, collusion, reports, listings, audit, feedback, promptTemplates] = await Promise.all([
     economyStats(),
     collusionScan(),
     callTool<{ entries: Entry<{ target_kind: string; target_id: string; reason: string; detail?: string; status: string; created_at?: string }>[] }>("query_entries", {
@@ -70,6 +72,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       orderBy: { field: "created_at", dir: "desc" },
       limit: 100,
     }),
+    // Prompt Studio (BL-43) — only when its tab is open; the editor is the
+    // heavy part, not this read. Inactive templates included on purpose.
+    tab === "prompts"
+      ? callTool<{ entries: Entry<PromptTemplate & { question_arc?: string }>[] }>("query_entries", {
+          collection: "chat_templates",
+          select: ["key", "name", "subtitle", "icon", "role", "active", "system_prompt", "initiation_prompt", "opening", "question_arc"],
+          orderBy: { field: "order", dir: "asc" },
+          limit: 50,
+        })
+      : Promise.resolve({ entries: [] as Entry<PromptTemplate & { question_arc?: string }>[] }),
   ]);
 
   const when = (iso?: string) =>
@@ -86,7 +98,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <span className="badge b-idea" style={{ fontSize: 9.5 }}>{staff.role}</span>
         </div>
         <p className="muted" style={{ fontSize: 14.5, margin: "0 0 22px" }}>
-          Money supply, funnelling signals, moderation, and the feedback board. Every action here is logged.
+          Money supply, funnelling signals, moderation, feedback, and the chat prompts. Every action here is logged.
         </p>
 
         {/* ---- tabs ---- */}
@@ -326,6 +338,30 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     <FeedbackActions id={f.id} status={f.data.status} response={f.data.response ?? ""} />
                   </div>
                 );
+              })}
+            </Card>
+          </>
+        )}
+        {/* ---- Prompts (BL-43/BL-46) ---- */}
+        {tab === "prompts" && (
+          <>
+            <SectionLabel style={{ marginBottom: 12 }}>Chat templates · pitch order</SectionLabel>
+            <p className="faint" style={{ fontSize: 12.5, margin: "0 0 14px" }}>
+              Edits go live on the <b>next chat opened</b> — chats already in progress keep the prompt they started with.
+              Every save is versioned; History restores any of the last 10.
+            </p>
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              {promptTemplates.entries.length === 0 && (
+                <p className="faint" style={{ padding: "16px 18px", margin: 0, fontSize: 12.5, fontStyle: "italic" }}>No chat templates found.</p>
+              )}
+              {promptTemplates.entries.map((t) => {
+                let arc: ArcIntentRow[] = [];
+                try {
+                  arc = (JSON.parse(t.data.question_arc || "[]") as ArcIntentRow[]).filter((a) => a?.key && a?.intent);
+                } catch {
+                  arc = [];
+                }
+                return <PromptEditor key={t.id} id={t.id} tpl={t.data} arc={arc} />;
               })}
             </Card>
           </>
