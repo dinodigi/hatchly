@@ -42,6 +42,7 @@ Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
+| BL-56 | **Extraction audit harness** | M | todo | **Do first.** Replays a fixed transcript, reports the five metrics. Everything else in this epic is unfalsifiable without it |
 | BL-47 | **Fix entity extraction** | S | todo | 10/15 memories have `entities: []`. The agent referenced **Splitwise** in conversation and it was never captured. Competitive-analysis recipes depend on this |
 | BL-48 | **Stop duplicate memories** | M | todo | 3 rows for one pricing decision; one is a fragment of another. Noise now, context bloat later |
 | BL-49 | **Anchor confirmations to their intent** | S | todo | "Yes, that's it" created an unanchored `decision` row instead of updating the problem node. Singular-update silently no-ops without an `intent_key` |

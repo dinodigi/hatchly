@@ -96,8 +96,16 @@ Separately from extraction — what makes it *feel* like a co-founder:
 
 ### Track A — Extraction quality
 
+> ⚠️ **BL-56 goes first.** Every other item in this track is measured by it, and
+> "re-run the audit" is not a tool today — it's hand-querying and eyeballing.
+> Also note: the prompt-tuning items below (BL-47/48/49) are **not deterministic
+> code changes**. Sizes assume one iteration; budget for two or three. If an item
+> hasn't moved its metric after three audit runs, stop and re-plan rather than
+> tuning further.
+
 | ID | Item | Size |
 |---|---|---|
+| BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable | M |
 | BL-47 | **Fix entity extraction** — sharpen the schema description with worked examples (competitors, tools, channels, price points, place names). Splitwise-class misses are the test case | S |
 | BL-48 | **Stop duplicate memories** — instruct the model not to capture a fragment of a fact it just captured; prefer updating the anchored memory over adding a sibling | M |
 | BL-49 | **Anchor confirmations** — "yes, that's it" should update the intent's node, not create an unanchored `decision` row | S |
@@ -116,6 +124,11 @@ Separately from extraction — what makes it *feel* like a co-founder:
 | BL-42 | **Retire the dead `questions` field** | S |
 
 ### Track C — Editable without a deploy
+
+> ⚠️ **Expect this to spill into Sprint 7, and that's fine.** Four medium items
+> is a sprint on its own. It is last on purpose: shipping the Studio over
+> prompts we haven't fixed yet just gives Firas a nicer editor for our mess.
+> If Tracks A/B run long, move this whole track rather than half-building it.
 
 | ID | Item | Size |
 |---|---|---|
