@@ -37,14 +37,17 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad json" }, { status: 400 });
   }
-  if (!body.ideaId || !["private", "link", "public"].includes(body.visibility ?? ""))
+  // Two states only. "link" is disabled — it was never implemented (it behaved
+  // identically to private) and needs a design pass. The enum still allows it,
+  // so re-enabling is adding it back here and in VisibilityMenu. See BL-50.
+  if (!body.ideaId || !["private", "public"].includes(body.visibility ?? ""))
     return NextResponse.json({ error: "ideaId and visibility required" }, { status: 400 });
 
   const idea = await callTool<Entry<IdeaData>>("get_entry", { collection: "ideas", id: body.ideaId });
   if (idea.data.owner_id !== userId)
     return NextResponse.json({ error: "not your idea" }, { status: 403 });
 
-  const visibility = body.visibility as "private" | "link" | "public";
+  const visibility = body.visibility as "private" | "public";
   const coverPreset = ["meadow", "linen", "dusk", "gold", "slate"].includes(body.coverPreset ?? "")
     ? body.coverPreset
     : idea.data.cover_preset;

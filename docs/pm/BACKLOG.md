@@ -77,6 +77,24 @@ see BL-10.
 | BL-38 | **Full collection security sweep** | S | todo | Audited 5 of 25 (keys, users, wallets, listings, model_keys) — all clean. Remaining 20 unverified |
 | BL-39 | **Exclude suspended dupe from public rankings — data cleanup** | S | todo | Code fix shipped; the duplicate "Dino Digi" account still exists in `users` |
 
+## Needs its own sprint
+
+| ID | Item | Size | Status | Notes |
+|---|---|---|---|---|
+| BL-50 | **Shareable link (share-by-URL visibility)** | L | todo | **Disabled 2026-07-30** — the option existed in the menu but was never implemented: `/api/publish` treated `link` exactly like `private`, so "anyone with the link can view" was a false promise. Now two states only (private / public). Enum still carries `link`, so re-enabling is UI + one route branch. **Needs real design first** — see open questions below |
+
+**BL-50 open questions to answer before building:**
+- What does a link-viewer actually *see*? The full brief? A read-only public
+  page? Which chats, if any?
+- Is the link guessable, or does it need an unguessable token separate from the
+  idea id?
+- Can it be revoked? Does it expire? One link per idea, or many?
+- Can a link-viewer leave feedback or back the idea, or is it view-only?
+- Does link-visibility create a `listing` row (currently only `public` does), and
+  if so how is it kept out of the stream?
+- SEO / crawlers — should link pages be `noindex`?
+- What shows in the link preview (OG image) — and does that leak anything?
+
 ## Parked — deliberate, with a reason
 
 | Item | Why parked | Unparks when |

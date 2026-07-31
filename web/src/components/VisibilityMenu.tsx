@@ -3,11 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/* Header visibility dropdown — v4's VisibilityMenu. */
+/* Header visibility dropdown — v4's VisibilityMenu.
+
+   TWO STATES for now. "link" (share-by-URL) is disabled deliberately: it was
+   advertised in this menu but never actually implemented — the publish route
+   treated it exactly like private (listing hidden), so the promise "anyone with
+   the link can view" was false. It needs a real design pass before it returns.
+
+   To re-enable: restore the entry below AND the "link" branch in
+   /api/publish/route.ts. The `visibility` enum still carries the option, so
+   nothing was destroyed. Tracked as BL-50. */
 
 const VIS = [
   { key: "private", label: "Private", icon: "🔒", desc: "Only you can see this." },
-  { key: "link", label: "Link-only", icon: "🔗", desc: "Anyone with the link can view." },
   { key: "public", label: "Public", icon: "🌐", desc: "On the stream — discoverable and backable." },
 ] as const;
 
