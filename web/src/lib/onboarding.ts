@@ -20,7 +20,6 @@ export interface ChatTemplate {
   create_when?: string;
   system_prompt: string;
   opening: string;
-  questions?: string;
   completion?: string;
   active?: boolean;
 }

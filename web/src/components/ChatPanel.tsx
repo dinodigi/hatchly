@@ -13,11 +13,11 @@ interface Msg {
 }
 
 interface Template {
+  /** Documented fallback for chats without an initiation prompt (refine). */
   opening: string;
   /** Fired automatically the first time this chat is opened, as if the founder
    *  asked it — so they land on real content instead of a blank box. */
   initiation_prompt?: string;
-  questions: { text: string; options: { label: string; expands_to?: string }[]; allow_help?: boolean }[];
 }
 
 export default function ChatPanel({
@@ -32,7 +32,7 @@ export default function ChatPanel({
   initialMessages: Msg[];
   /** The last assistant message's persisted chips — survive a reload. */
   initialSuggestions?: string[];
-  /** A pre-made chat's template — its opening line and curated first questions. */
+  /** A pre-made chat's template — its opening line / initiation. */
   template?: Template;
 }) {
   const router = useRouter();
@@ -51,11 +51,6 @@ export default function ChatPanel({
   }, [messages, busy]);
 
   const initPrompt = template?.initiation_prompt?.trim();
-
-  // The curated pills for the opening — shown until the founder answers, then the
-  // agent takes over. Suppressed when the chat self-initiates, since the agent
-  // asks its own follow-up in that case.
-  const primer = template && !initPrompt && messages.length === 0 ? template.questions[0] : undefined;
 
   // The initiation prompt was sent on the founder's behalf — don't echo it back
   // as though they typed it.
@@ -135,11 +130,6 @@ export default function ChatPanel({
                 {template?.opening ?? "What's the idea? A sentence is enough — or just talk."}
               </div>
             </div>
-            {template && (
-              <span className="faint" style={{ fontSize: 11.5, marginLeft: 34 }}>
-                Curated from your onboarding · tap an answer or just type.
-              </span>
-            )}
           </div>
         )}
         {visible.map((m, i) =>
@@ -220,29 +210,6 @@ export default function ChatPanel({
               {s}
             </button>
           ))}
-        </div>
-      )}
-
-      {primer && (
-        <div className="col gap6" style={{ marginTop: 14 }}>
-          <span className="faint" style={{ fontSize: 12, fontWeight: 500 }}>{primer.text}</span>
-          <div className="row gap6" style={{ flexWrap: "wrap" }}>
-            {primer.options.map((o) => (
-              <button
-                key={o.label}
-                className="tag-pick"
-                disabled={busy}
-                onClick={() => send(o.expands_to?.trim() || o.label)}
-              >
-                {o.label}
-              </button>
-            ))}
-            {primer.allow_help && (
-              <button className="tag-pick" disabled={busy} onClick={() => send("Help me decide — propose an answer from what you already know.")}>
-                Help me decide
-              </button>
-            )}
-          </div>
         </div>
       )}
 

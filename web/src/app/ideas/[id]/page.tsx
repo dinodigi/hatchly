@@ -218,32 +218,18 @@ export default async function IdeaHub({
       })
     : { entries: [] as MessageRow[] };
 
-  // A pre-made chat renders its template opening + curated questions until the
-  // founder answers. Load it only for the open chat.
-  interface QOpt { label: string; expands_to?: string }
-  interface TplQuestion { text: string; options?: QOpt[]; allow_help?: boolean }
-  let chatTemplate: { opening: string; initiation_prompt?: string; questions: { text: string; options: QOpt[]; allow_help?: boolean }[] } | undefined;
+  // A pre-made chat renders its template opening (or self-initiates) — the
+  // legacy `questions` primer is retired (BL-42); question_arc owns the agenda.
+  let chatTemplate: { opening: string; initiation_prompt?: string } | undefined;
   if (activeChat?.data.template_key) {
-    const tplRes = await callTool<{ entries: { data: { opening: string; questions?: string; initiation_prompt?: string } }[] }>("query_entries", {
+    const tplRes = await callTool<{ entries: { data: { opening: string; initiation_prompt?: string } }[] }>("query_entries", {
       collection: "chat_templates",
       where: [{ field: "key", op: "eq", value: activeChat.data.template_key }],
-      select: ["opening", "questions", "initiation_prompt"],
+      select: ["opening", "initiation_prompt"],
       limit: 1,
     }).catch(() => null);
     const t = tplRes?.entries[0]?.data;
-    if (t) {
-      let questions: { text: string; options: QOpt[]; allow_help?: boolean }[] = [];
-      try {
-        questions = (JSON.parse(t.questions || "[]") as TplQuestion[]).map((q) => ({
-          text: q.text,
-          options: q.options ?? [],
-          allow_help: q.allow_help,
-        }));
-      } catch {
-        questions = [];
-      }
-      chatTemplate = { opening: t.opening, initiation_prompt: t.initiation_prompt, questions };
-    }
+    if (t) chatTemplate = { opening: t.opening, initiation_prompt: t.initiation_prompt };
   }
 
   // Templates map — labels the deck cards, and links each empty brief line to the
