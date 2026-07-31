@@ -30,10 +30,10 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | done | Done 2026-07-31 — CMS-data change in `chat_templates` (`pricing`/`brand`/`gtm` system prompts), no deploy needed. Pre-images in Pluggie entry versions. Inactive `competition`/`risk` templates still carry the old pattern — left alone, they can't be opened |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | todo | job / good / push / push back / boundary / stuck |
 | BL-42 | **Retire the dead `questions` field** | S | done | `d10aaae` 2026-07-31. All readers removed (primer pills, page fetch, type); `opening` kept as fallback; CMS column kept for now (prototyping caution) |
-| BL-43 | **Admin `?tab=prompts`** — list + edit form | M | todo | Staff-only. Name, subtitle, system prompt, initiation prompt |
+| BL-43 | **Admin `?tab=prompts`** — list + edit form | M | done | `3f27beb` 2026-07-31. Pulled ahead of Tracks A/B (both blocked on the audit API key). Signed-out gates verified (403 JSON / redirect); signed-in flows need a staff-session test |
 | BL-44 | **Structured arc editor** | M | todo | Intent text, required toggle, singular/accumulative. Not a JSON textarea. Intent keys read-only after creation |
 | BL-45 | **Preview / dry-run a chat** | M | todo | Run initiation against a throwaway fixture; render reply + chips; write nothing to memories/messages |
-| BL-46 | **Prompt version history + restore** | S | todo | Pluggie already versions entries (`list_entry_versions` / `restore_entry_version`) — mostly UI |
+| BL-46 | **Prompt version history + restore** | S | done | `3f27beb` 2026-07-31, with BL-43. Last 10 versions per template, restore audited (`admin_actions` enum extended: `edit_prompt`/`restore_prompt`, `chat_template`) |
 
 ### Epic: extraction quality (BL-47 … BL-52)
 From an audit of 15 real memories produced by the Basecamp Ledger conversation.
