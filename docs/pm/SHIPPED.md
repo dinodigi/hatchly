@@ -7,6 +7,15 @@ All commits are on `main` and deployed to Render.
 
 ---
 
+## Sprint 6 — The Co-Founder Engine · in progress
+
+| Commit | What landed |
+|---|---|
+| `67299eb` | **BL-56** — extraction audit harness (`npm run audit:extraction` in `web/`). Replays the frozen Basecamp Ledger transcript through the real pipeline against in-memory state; five metrics + degenerate-reply count vs baseline. `--baseline` mode reproduces the audit's hand counts exactly (incl. the 3 duplicate pairs); `--dry-run` verified against live templates. Route's apply-logic extracted to shared `turn-apply.ts` so harness and route can't drift. **Not yet run live** — needs `ANTHROPIC_API_KEY` in `web/.env.local` |
+| — (CMS data, no deploy) | **BL-40** — removed the false "Produce a X artifact" instruction from `pricing`, `brand`, `gtm` system prompts and the stale "(via BrandBucket)" reference from `brand`, in the `chat_templates` collection (2026-07-31). Pure removal; arcs, initiation prompts, and `produces` keys untouched. Pre-images in Pluggie entry versions. Verified: no code path injects artifact language (`produces`/`completion` never reach the model context — [route.ts:82](../../web/src/app/api/chat/route.ts), [agent.ts](../../web/src/lib/agent.ts)) |
+
+---
+
 ## Sprint 5 — Idea Hub & Memory Foundation · closed 2026-07-30
 
 Retro: [retros/sprint-5-idea-hub-and-memory.md](retros/sprint-5-idea-hub-and-memory.md)

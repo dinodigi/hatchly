@@ -1,7 +1,7 @@
 # Sprint 6 — The Co-Founder Engine
 
-**Status:** planned, not started
-**Window:** TBD
+**Status:** in progress
+**Window:** 2026-07-31 → TBD
 **Goal:** *a better engine that extracts well from the founder and responds so it
 feels like a co-founder* — not a form that interviews them.
 
@@ -58,7 +58,9 @@ The middle one is a fragment of the first. Similarly, *"Founder confirmed the
 problem statement…"* duplicates problem content already captured. Noise now;
 context bloat and contradictory retrieval later.
 
-**3. Six of fifteen memories carry no `intent_key`.** They're not wrong — but
+**3. Seven of fifteen memories carry no `intent_key`.** *(The audit originally
+hand-counted six; the BL-56 harness recount of the stored rows says seven.)*
+They're not wrong — but
 they don't count toward coverage, and they're exactly where the duplication
 lives. The unanchored captures are the noisy ones.
 
@@ -105,7 +107,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 
 | ID | Item | Size |
 |---|---|---|
-| BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable | M |
+| BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable — **built 2026-07-31**; baseline + dry-run modes verified, first live replay needs `ANTHROPIC_API_KEY` in `web/.env.local` | M |
 | BL-47 | **Fix entity extraction** — sharpen the schema description with worked examples (competitors, tools, channels, price points, place names). Splitwise-class misses are the test case | S |
 | BL-48 | **Stop duplicate memories** — instruct the model not to capture a fragment of a fact it just captured; prefer updating the anchored memory over adding a sibling | M |
 | BL-49 | **Anchor confirmations** — "yes, that's it" should update the intent's node, not create an unanchored `decision` row | S |
@@ -119,7 +121,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 | BL-53 | **Use verbatim in replies** — quote the founder's own words back when confirming or challenging. Highest-leverage single change for "feels like a co-founder" | S |
 | BL-54 | **Cross-chat reference** — instruct the model to connect what it already knows ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price") | S |
 | BL-55 | **Contradiction surfacing** — when a new statement conflicts with an existing memory, say so plainly rather than silently overwriting | M |
-| BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S |
+| BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference — **done 2026-07-31**, see SHIPPED | S |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M |
 | BL-42 | **Retire the dead `questions` field** | S |
 
@@ -161,7 +163,7 @@ it end to end, and count:
 | Memories with entities populated | 5 / 15 (33%) | > 70% where entities exist |
 | Named competitors/tools captured | 0 (Splitwise missed) | every one the conversation names |
 | Duplicate / fragment memories | ≥ 3 of 15 | ≤ 1 |
-| Memories with no `intent_key` | 6 / 15 | < 3 |
+| Memories with no `intent_key` | 7 / 15 *(audit said 6; harness recount says 7)* | < 3 |
 | `kind` values in use | 4 of 7 | 6 of 7, or taxonomy cut |
 
 Re-run after every prompt change. It's the same conversation, so differences are

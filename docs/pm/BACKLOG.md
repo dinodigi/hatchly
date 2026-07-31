@@ -27,7 +27,7 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
-| BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | todo | `pricing`, `brand`, `gtm` all tell the model to do something it cannot do. Highest priority — it's a correctness bug, not style |
+| BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | done | Done 2026-07-31 — CMS-data change in `chat_templates` (`pricing`/`brand`/`gtm` system prompts), no deploy needed. Pre-images in Pluggie entry versions. Inactive `competition`/`risk` templates still carry the old pattern — left alone, they can't be opened |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | todo | job / good / push / push back / boundary / stuck |
 | BL-42 | **Retire the dead `questions` field** | S | todo | Superseded by `question_arc`; suppressed on 6 of 7 chats. Keep `opening` as documented fallback |
 | BL-43 | **Admin `?tab=prompts`** — list + edit form | M | todo | Staff-only. Name, subtitle, system prompt, initiation prompt |
@@ -42,7 +42,7 @@ Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
-| BL-56 | **Extraction audit harness** | M | todo | **Do first.** Replays a fixed transcript, reports the five metrics. Everything else in this epic is unfalsifiable without it |
+| BL-56 | **Extraction audit harness** | M | blocked | Code landed 2026-07-31 (`npm run audit:extraction` in `web/`; `--baseline` reproduces the audit's counts, `--dry-run` verified against live templates). Blocked on: `ANTHROPIC_API_KEY` in `web/.env.local` (a human) for the first live replay — the harness deliberately never touches founder BYOK keys |
 | BL-47 | **Fix entity extraction** | S | todo | 10/15 memories have `entities: []`. The agent referenced **Splitwise** in conversation and it was never captured. Competitive-analysis recipes depend on this |
 | BL-48 | **Stop duplicate memories** | M | todo | 3 rows for one pricing decision; one is a fragment of another. Noise now, context bloat later |
 | BL-49 | **Anchor confirmations to their intent** | S | todo | "Yes, that's it" created an unanchored `decision` row instead of updating the problem node. Singular-update silently no-ops without an `intent_key` |
