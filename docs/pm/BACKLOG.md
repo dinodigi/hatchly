@@ -20,6 +20,21 @@ Size key: `S` < half a day · `M` 1–2 days · `L` 3+ days · `?` needs a spec 
 
 ## P2 — high value
 
+### Epic: chat prompt quality + Prompt Studio (BL-40 … BL-46)
+Spec: [chat-prompt-overhaul.md](../chat-prompt-overhaul.md). Audit of all seven
+live prompts found false instructions, a stale integration reference, and a 4×
+depth gap. Plus: make prompts editable from `/admin` without a deploy.
+
+| ID | Item | Size | Status | Notes |
+|---|---|---|---|---|
+| BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | todo | `pricing`, `brand`, `gtm` all tell the model to do something it cannot do. Highest priority — it's a correctness bug, not style |
+| BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | todo | job / good / push / push back / boundary / stuck |
+| BL-42 | **Retire the dead `questions` field** | S | todo | Superseded by `question_arc`; suppressed on 6 of 7 chats. Keep `opening` as documented fallback |
+| BL-43 | **Admin `?tab=prompts`** — list + edit form | M | todo | Staff-only. Name, subtitle, system prompt, initiation prompt |
+| BL-44 | **Structured arc editor** | M | todo | Intent text, required toggle, singular/accumulative. Not a JSON textarea. Intent keys read-only after creation |
+| BL-45 | **Preview / dry-run a chat** | M | todo | Run initiation against a throwaway fixture; render reply + chips; write nothing to memories/messages |
+| BL-46 | **Prompt version history + restore** | S | todo | Pluggie already versions entries (`list_entry_versions` / `restore_entry_version`) — mostly UI |
+
 ### Epic: strengthen chat interaction (BL-10 … BL-17)
 The chat is the product. Everything below makes the core loop feel faster,
 recoverable, and less brittle. **Needs a spec before the big items are sized** —
@@ -43,7 +58,7 @@ see BL-10.
 | BL-20 | **Deck artifact + recipe layer** | L | todo | Last big Sprint 3 piece. Deliberately parked until the pipeline is proven and BL-05 lands. Spec: [sprint-3](../sprint-3-idea-hub-refinement.md) Phase 6 |
 | BL-21 | **Leaderboards via `aggregate_entries`** | S | todo | Validated live. Replaces a 500-row JS reduce, deletes the `suspendedUserIds()` workaround, more correct at scale. Spec: [sprint-4](../sprint-4-platform-perf.md) §2 |
 | BL-22 | **Cache static reads** (`chat_templates`, `onboarding_questions`) | S | todo | Re-fetched on every render; 2+ round-trips per page |
-| BL-23 | **Chat templates → git-versioned YAML** | M | todo | `question_arc` is JSON-in-a-text-field today — no validation, unreadable in admin. YAML gives real structure, diffs, PR review. Cost: non-engineers lose live editing. Revisit at launch. Requires: treat `intent_key` as a stable identifier (add/deprecate, never rename) |
+| ~~BL-23~~ | ~~Chat templates → git-versioned YAML~~ | — | **dropped** | Superseded by BL-43…BL-46. YAML opposes admin editing, which is the explicit ask; its two motivations (JSON-textarea pain, version control) are answered by the structured arc editor and Pluggie's entry versioning. **Carry forward the one thing YAML would have enforced: intent keys are stable identifiers — add and deprecate, never rename** |
 | BL-24 | **Live updates via the `changes` stream** | L | todo | Nothing subscribes today — every count only moves on hard reload. Systemic; own pass. Spec: [sprint-2](../sprint-2-features.md) §2 |
 | BL-25 | **Mobile pass** | L | todo | **Nothing below 900px has ever been checked, in the entire product.** Deferred since Sprint 0. Firas will open this on a phone eventually |
 
