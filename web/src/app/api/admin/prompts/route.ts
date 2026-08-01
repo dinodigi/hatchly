@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { auditOp, getStaff } from "@/lib/admin";
 import { callTool } from "@/lib/mcp";
 
-/* Prompt Studio backend (BL-43/BL-46) — edit chat_templates from /admin
+/* Prompt Studio backend (BL-43/BL-44/BL-46) — edit chat_templates from /admin
    without a deploy, with Pluggie's entry versioning as free history.
    Staff only. The legacy `questions` field is deliberately not editable
-   here (retired, BL-42); question_arc gets a structured editor in BL-44. */
+   here (retired, BL-42). The question arc arrives STRUCTURED (patch.arc),
+   never as hand-escaped JSON — the server validates and serializes it. */
 
 /** Editable fields and their schema caps. `system_prompt` is richtext (no cap);
  *  the rest mirror the collection's text limits. */
@@ -21,6 +22,30 @@ type EditableKey = keyof typeof EDITABLE;
 /** Required by the schema — an empty value would be rejected anyway; refuse it
  *  with a message instead of a raw validation error. */
 const REQUIRED: EditableKey[] = ["name", "system_prompt", "opening"];
+
+/** Validate a structured arc (BL-44) and return it in storage shape, or an
+ *  error string. Intent keys are stable identifiers — the UI keeps existing
+ *  keys read-only; here we can only enforce format and uniqueness. */
+function parseArc(raw: unknown): { arc?: { key: string; intent: string; required: boolean; mode: string }[]; error?: string } {
+  if (!Array.isArray(raw)) return { error: "arc must be a list" };
+  if (raw.length > 20) return { error: "arc is over 20 intents" };
+  const seen = new Set<string>();
+  const arc = [];
+  for (const item of raw) {
+    const { key, intent, required, mode } = (item ?? {}) as Record<string, unknown>;
+    if (typeof key !== "string" || !/^[a-z][a-z0-9_]{0,39}$/.test(key))
+      return { error: `intent key "${String(key)}" must be snake_case (a-z, 0-9, _)` };
+    if (seen.has(key)) return { error: `duplicate intent key "${key}"` };
+    seen.add(key);
+    if (typeof intent !== "string" || !intent.trim()) return { error: `intent "${key}" needs its question text` };
+    if (intent.trim().length > 300) return { error: `intent "${key}" text is over 300 characters` };
+    if (mode !== "singular" && mode !== "accumulative") return { error: `intent "${key}" needs a mode` };
+    arc.push({ key, intent: intent.trim(), required: required === true, mode });
+  }
+  const serialized = JSON.stringify(arc);
+  if (serialized.length > 10000) return { error: "arc is over the 10000-character storage cap" };
+  return { arc };
+}
 
 interface VersionRow {
   versionId: string;
@@ -116,6 +141,11 @@ export async function POST(req: Request) {
     // Optional fields empty out to unset, so the chat code's "no initiation
     // prompt" fallback behaves as documented.
     data[key] = trimmed || null;
+  }
+  if (body.patch.arc !== undefined) {
+    const parsed = parseArc(body.patch.arc);
+    if (parsed.error) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    data.question_arc = JSON.stringify(parsed.arc);
   }
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "nothing to update" }, { status: 400 });
