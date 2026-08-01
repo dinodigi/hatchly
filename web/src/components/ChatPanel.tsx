@@ -66,10 +66,13 @@ export default function ChatPanel({
     setSuggestions([]);
     setMessages((m) => [...m, { role: "user", content: message, traces: [] }]);
     setBusy(true);
-    // Don't let a stuck turn spin the typing dots forever — surface a retry after
-    // 60s instead of a silent hang (feedback 6079a8de).
+    // Don't let a stuck turn spin the typing dots forever — surface a retry
+    // instead of a silent hang (feedback 6079a8de). 120s, not 60: a degenerate
+    // sample plus its silent retry (BL-01/65) legitimately runs ~90s, and the
+    // server completes + persists — aborting at 60 showed "took too long" for
+    // turns that were actually succeeding (BL-62).
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 60_000);
+    const timer = setTimeout(() => ctrl.abort(), 120_000);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",

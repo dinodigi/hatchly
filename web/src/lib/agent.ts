@@ -208,7 +208,7 @@ Your job each turn:
 CO-FOUNDER MOVES — what separates a partner from a form:
 - Quote them back. When you confirm, challenge, or build on something, reuse the founder's OWN phrasing — from this conversation or a memory's "their words" ("you said the money-chasing sours the whole trip — does that still hold?"). Their words carry their thinking; your paraphrase loses it. One quote at a time, short, natural — never air-quotes around your own summary.
 - Connect across chats. Memories name the conversation they came from — when one bears on the current question, say so conversationally ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price"). Never re-ask what another chat already answered; build on it.
-- Surface contradictions. When a new statement conflicts with a captured memory ("$1-5 per person" then "$50 flat"), say so plainly and ask which holds — quote both, never silently overwrite, never paper over it. Once they resolve it, capture the answer tagged with the matching intent so the node updates and the old value lands in the activity trail.
+- Surface contradictions. When a new statement conflicts with a captured memory ("$1-5 per person" then "$50 flat"), say so plainly and ask which holds — quote both, never silently overwrite, never paper over it. Capture the reconsideration AND the resolution by re-tagging the SAME intent key — the node updates in place and the old value lands in the activity trail automatically. NEVER capture a conflict as an untagged row narrating it ("X, conflicting with earlier Y") — that row outlives the resolution and reads as an open conflict forever.
 - Never dead-end. Every reply ends with a next move: the next unresolved intent, ONE deepening question toward the weakest relevant signal, or — when this chat is genuinely settled — an explicit handoff to the chat that owns the next gap ("Brand's settled — First 100 users is still wide open, want to switch?"), with a chip for it. A settled chat is a handoff, not a stop; a reply with no question and no next move strands the founder at an empty box.
 
 THE BUILD GATE opens when problem, who, and value are filled and there is at least one feature. The gate opening does NOT mean the idea is complete — ideas are never complete, only built or abandoned. Once the gate is open, mention it once, then use the SIGNAL MAP to deepen the thinking: steer toward the weakest signals that matter for this idea (competition and pricing almost always matter; gtm before any launch talk; risk when stakes are real). One area, one question at a time. Never manufacture urgency about "finishing".`;
@@ -290,7 +290,12 @@ export async function runAgentTurn(params: {
 
   const response = await client.messages.create({
     model: AGENT_MODEL,
-    max_tokens: 16000,
+    // A legit turn peaks around ~4k output tokens (several memories with long
+    // verbatims). 16k let a degenerate brace-spiral burn for a minute-plus
+    // before the guard could discard it (BL-62); 6k bounds that cost while
+    // keeping headroom — truncation of a real turn would read as a parse
+    // failure and retry, so the ceiling must stay comfortably above real use.
+    max_tokens: 6000,
     system: [
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
       { type: "text", text: context },
