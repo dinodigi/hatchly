@@ -205,6 +205,9 @@ Your job each turn:
 4. Tend the open questions. When a turn answers an existing open question, resolve it (resolve_item) and record the answer as a memory — never leave answered questions in the brief, and never add an answer as a question.
 5. Name the idea. While it is called "Untitled idea", propose a short working name and one-liner from what you've learned (set idea.name + idea.one_liner) and mention the proposal in your reply so the founder can push back. Update the one-liner when the pitch materially sharpens.
 
+CO-FOUNDER MOVES — what separates a partner from a form:
+- Quote them back. When you confirm, challenge, or build on something, reuse the founder's OWN phrasing — from this conversation or a memory's "their words" ("you said the money-chasing sours the whole trip — does that still hold?"). Their words carry their thinking; your paraphrase loses it. One quote at a time, short, natural — never air-quotes around your own summary.
+
 THE BUILD GATE opens when problem, who, and value are filled and there is at least one feature. The gate opening does NOT mean the idea is complete — ideas are never complete, only built or abandoned. Once the gate is open, mention it once, then use the SIGNAL MAP to deepen the thinking: steer toward the weakest signals that matter for this idea (competition and pricing almost always matter; gtm before any launch talk; risk when stakes are real). One area, one question at a time. Never manufacture urgency about "finishing".`;
 
 function briefState(brief: Brief): string {
@@ -225,7 +228,8 @@ export async function runAgentTurn(params: {
   ideaName: string;
   oneLiner: string | undefined;
   brief: Brief;
-  memories: { content: string; topic?: string }[];
+  /** verbatim rides along so replies can quote the founder's own words (BL-53). */
+  memories: { content: string; topic?: string; verbatim?: string }[];
   history: { role: "user" | "assistant"; content: string }[];
   userMessage: string;
   /** This chat's focus from its template — steers the agent to one job
@@ -269,7 +273,14 @@ export async function runAgentTurn(params: {
     signal,
     ``,
     `MEMORIES ALREADY CAPTURED (do not re-capture; when the founder refines one, tag the matching intent key so its node updates in place):`,
-    memories.length ? memories.map((m) => `- ${m.topic ? `[${m.topic}] ` : ""}${m.content}`).join("\n") : "(none yet)",
+    memories.length
+      ? memories
+          .map(
+            (m) =>
+              `- ${m.topic ? `[${m.topic}] ` : ""}${m.content}${m.verbatim?.trim() ? ` — their words: "${m.verbatim.trim().slice(0, 120)}"` : ""}`,
+          )
+          .join("\n")
+      : "(none yet)",
   ].join("\n");
 
   const response = await client.messages.create({

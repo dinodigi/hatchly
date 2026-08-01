@@ -327,7 +327,7 @@ async function replay(fixture: Fixture, apiKey: string) {
               ideaName,
               oneLiner,
               brief,
-              memories: rows.map((r) => ({ content: r.content, topic: r.topic })),
+              memories: rows.map((r) => ({ content: r.content, topic: r.topic, verbatim: r.verbatim })),
               history,
               userMessage: message,
               chatFocus: tpl.focus,
