@@ -77,8 +77,6 @@ export interface AgentMemory {
   entities?: string[];
   /** which arc intent this answers — only keys from THIS chat's arc */
   intent?: string;
-  /** only when the fact directly fills a brief section */
-  feeds?: BriefSection;
 }
 
 export interface AgentBriefUpdate {
@@ -146,12 +144,6 @@ const OUTPUT_SCHEMA = {
             description:
               "OPTIONAL: the arc-intent key this fact ANSWERS, from the ARC INTENTS list in context (exact key). Omit when the fact answers none of them, or when no arc is provided.",
           },
-          feeds: {
-            type: "string",
-            enum: ["problem", "who", "value", "features", "open_questions"],
-            description:
-              "OPTIONAL: which brief section this fact directly fills. Omit when the fact is context (design taste, pricing thoughts, competitor mentions) that belongs in memory but not in the 5-section brief.",
-          },
         },
         required: ["content", "verbatim", "topic", "kind", "entities"],
         additionalProperties: false,
@@ -208,7 +200,7 @@ FORMATTING — your reply renders in a narrow chat bubble; write for scanning, n
 
 Your job each turn:
 1. Reply conversationally, moving the idea forward. When the brief has gaps, ask about the SINGLE most important gap next (priority: problem > who > value > features). When the brief is complete, say so and point them at the build gate.
-2. Extract memories: meaningful facts the founder stated THIS turn. Capture the claim, their verbatim words, and the TOPIC (what the fact is about — design taste is "design", money talk is "pricing", launch/marketing talk is "gtm", competitor mentions are "competition", and so on). Fill "entities" with every named thing in the fact — competitors, tools, channels, price points, named features; when the founder says they cope with "texts and phone calls", those ARE entities, not just prose. One distinct fact = one memory — never capture a fragment of a fact you just captured. Only set "feeds" when the fact directly fills one of the 5 brief sections; taste, preferences, and context stay in memory without feeding the brief. Never invent, embellish, or infer beyond what was said. Your own proposals and first-pass analysis are never memories — only what the founder states or confirms. Small talk and requests-to-you produce no memories.
+2. Extract memories: meaningful facts the founder stated THIS turn. Capture the claim, their verbatim words, and the TOPIC (what the fact is about — design taste is "design", money talk is "pricing", launch/marketing talk is "gtm", competitor mentions are "competition", and so on). Fill "entities" with every named thing in the fact — competitors, tools, channels, price points, named features; when the founder says they cope with "texts and phone calls", those ARE entities, not just prose. One distinct fact = one memory — never capture a fragment of a fact you just captured. Memory and brief are separate acts: taste, preferences, and context stay in memory without feeding the brief; anything that fills a brief section goes through brief_updates. Never invent, embellish, or infer beyond what was said. Your own proposals and first-pass analysis are never memories — only what the founder states or confirms. Small talk and requests-to-you produce no memories.
 3. Update the brief when this turn justified it. Refine existing text freely as understanding sharpens; keep each section tight (one or two sentences; features/questions are short single lines). Keep the brief PRODUCT-level: implementation details (auth providers, stacks, integrations) are memories with topic "tech" or "product", not brief features — unless they ARE the product.
 4. Tend the open questions. When a turn answers an existing open question, resolve it (resolve_item) and record the answer as a memory — never leave answered questions in the brief, and never add an answer as a question.
 5. Name the idea. While it is called "Untitled idea", propose a short working name and one-liner from what you've learned (set idea.name + idea.one_liner) and mention the proposal in your reply so the founder can push back. Update the one-liner when the pitch materially sharpens.

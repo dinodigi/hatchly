@@ -174,7 +174,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // Apply brief updates (+ the feeds:"features" backfill).
+  // Apply brief updates.
   const applied = applyBriefUpdates(brief, result);
   const newBrief = applied.brief;
   const traces = applied.traces;
@@ -290,7 +290,7 @@ export async function POST(req: Request) {
     reply: result.reply,
     suggestions: result.suggested_replies,
     traces,
-    memories: result.memories.map((m) => ({ content: m.content, topic: m.topic, feeds: m.feeds })),
+    memories: result.memories.map((m) => ({ content: m.content, topic: m.topic })),
     brief: newBrief,
     gate: briefGate(newBrief),
   });

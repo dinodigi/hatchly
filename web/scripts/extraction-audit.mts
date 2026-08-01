@@ -57,15 +57,18 @@ interface FixtureRow {
   verbatim: string;
 }
 
+type FinalBrief = Pick<Brief, "problem" | "who" | "value" | "features" | "open_questions">;
+
 interface Fixture {
   name: string;
   start: { idea_name: string; one_liner: string; brief: Brief };
   sessions: { template_key: string; founder_messages: string[] }[];
   expected_entities: ExpectedEntity[];
+  expected_brief?: { features_min: number };
   agent_emergent_watchlist: ExpectedEntity[];
   baseline: {
     agent_mentioned: string[];
-    final_brief: { problem?: string; who?: string; value?: string };
+    final_brief: FinalBrief;
     degenerate_replies: number;
     rows: FixtureRow[];
   };
@@ -148,15 +151,28 @@ interface Metrics {
   degenerateReplies: number;
   /** Duds surviving the BL-01 retry mirror — what a founder would actually see. */
   degenerateFinal?: number;
+  /** Brief completeness — brief_updates owns the brief alone since BL-51; this
+   *  floor guards the d6c37fec regression (confirmed features never landing). */
+  briefFill: { problem: boolean; who: boolean; value: boolean; features: number; openQuestions: number; ok: boolean };
 }
 
 function computeMetrics(
   rows: Row[],
   fixture: Fixture,
-  finalBrief: { problem?: string; who?: string; value?: string },
+  finalBrief: FinalBrief,
   agentMentioned: string[],
   degenerateReplies: number,
 ): Metrics {
+  const featuresMin = fixture.expected_brief?.features_min ?? 2;
+  const briefFill = {
+    problem: !!finalBrief.problem?.trim(),
+    who: !!finalBrief.who?.trim(),
+    value: !!finalBrief.value?.trim(),
+    features: finalBrief.features?.length ?? 0,
+    openQuestions: finalBrief.open_questions?.length ?? 0,
+    ok: false,
+  };
+  briefFill.ok = briefFill.problem && briefFill.who && briefFill.value && briefFill.features >= featuresMin;
   // 1. entities populated
   const entitiesPopulated = rows.filter((r) => (r.entities ?? []).length > 0).length;
 
@@ -223,7 +239,7 @@ function computeMetrics(
   // 5. kind values in use
   const kinds = [...new Set(rows.map((r) => r.kind))].sort();
 
-  return { total: rows.length, entitiesPopulated, competitorsExpected, otherExpected, dupPairs, noIntent, kinds, degenerateReplies };
+  return { total: rows.length, entitiesPopulated, competitorsExpected, otherExpected, dupPairs, noIntent, kinds, degenerateReplies, briefFill };
 }
 
 // ---------- live replay ----------
@@ -414,6 +430,9 @@ function printReport(m: Metrics, baseline: Metrics, targetNote = true) {
     m.degenerateFinal !== undefined ? `${m.degenerateReplies} (${m.degenerateFinal} past retry)` : String(m.degenerateReplies),
     "0",
   );
+  const fill = (b: Metrics["briefFill"]) =>
+    `${b.problem ? "p" : "·"}${b.who ? "w" : "·"}${b.value ? "v" : "·"} ${b.features}f ${b.openQuestions}q${b.ok ? "" : " ⚠"}`;
+  line("Brief fill", fill(baseline.briefFill), fill(m.briefFill), "pwv + features");
 
   console.log(`\n  kinds this run: ${m.kinds.join(", ") || "(none)"}`);
   console.log(`\n  Competitors/tools:`);
@@ -504,13 +523,7 @@ async function main() {
 
   const t0 = Date.now();
   const run = await replay(fixture, apiKey);
-  const metrics = computeMetrics(
-    run.rows,
-    fixture,
-    { problem: run.brief.problem, who: run.brief.who, value: run.brief.value },
-    run.agentMentioned,
-    run.degenerateRaw,
-  );
+  const metrics = computeMetrics(run.rows, fixture, run.brief, run.agentMentioned, run.degenerateRaw);
   metrics.degenerateFinal = run.degenerateFinal;
   printReport(metrics, baselineMetrics);
 
@@ -537,6 +550,7 @@ async function main() {
           kinds_in_use: metrics.kinds,
           degenerate_raw: metrics.degenerateReplies,
           degenerate_past_retry: metrics.degenerateFinal ?? 0,
+          brief_fill: metrics.briefFill,
         },
         entity_detail: { competitors: metrics.competitorsExpected, other: metrics.otherExpected },
         dup_pairs: metrics.dupPairs,

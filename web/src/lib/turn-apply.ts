@@ -17,12 +17,14 @@ export function isDegenerate(r: Pick<AgentTurnResult, "reply" | "memories" | "br
   return r.reply.trim().length < 20 && !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
 }
 
-/** Apply a turn's brief updates + the feeds:"features" backfill. Returns the
- *  new brief and the human-readable trace lines, in the exact order the chat
- *  UI has always shown them. */
+/** Apply a turn's brief updates. Returns the new brief and the human-readable
+ *  trace lines, in the exact order the chat UI has always shown them.
+ *  (The feeds:"features" backfill lived here until BL-51 retired `feeds` —
+ *  brief_updates owns the brief alone now; the audit harness watches brief
+ *  fill so a regression to d6c37fec-style missed features is visible.) */
 export function applyBriefUpdates(
   brief: Brief,
-  result: Pick<AgentTurnResult, "brief_updates" | "memories">,
+  result: Pick<AgentTurnResult, "brief_updates">,
 ): { brief: Brief; traces: string[] } {
   const newBrief: Brief = {
     ...brief,
@@ -49,19 +51,6 @@ export function applyBriefUpdates(
       if (!list.some((x) => x.toLowerCase() === u.add_item!.trim().toLowerCase())) {
         list.push(u.add_item.trim());
         traces.push(`updated brief · ${u.section === "features" ? "features" : "open questions"}`);
-      }
-    }
-  }
-  // Backfill: a memory that explicitly feeds "features" belongs in the brief even
-  // when the model forgot to emit a matching brief_update — the gap that left
-  // confirmed MVP features tagged in memory but absent from the brief/artifact
-  // (feedback d6c37fec).
-  for (const m of result.memories) {
-    if (m.feeds === "features" && m.content.trim()) {
-      const item = m.content.trim();
-      if (!newBrief.features!.some((x) => x.toLowerCase() === item.toLowerCase())) {
-        newBrief.features!.push(item);
-        traces.push(`updated brief · features`);
       }
     }
   }
@@ -105,7 +94,6 @@ export function memoryRowData(m: AgentMemory, intentKey: string | undefined, nex
     kind: m.kind,
     entities: (m.entities ?? []).slice(0, 12).map((x) => x.slice(0, 80)),
     ...(intentKey ? { intent_key: intentKey } : {}),
-    ...(m.feeds ? { feeds: m.feeds } : {}),
   };
 }
 

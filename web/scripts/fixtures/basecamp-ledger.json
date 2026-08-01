@@ -78,6 +78,10 @@
     { "name": "email checklist", "class": "feature", "source": "founder", "aliases": ["email checklist", "email confirmation", "confirmation email"] },
     { "name": "AI onboarding", "class": "feature", "source": "founder", "aliases": ["ai onboarding", "ai-guided onboarding", "onboarding"] }
   ],
+  "expected_brief": {
+    "note": "Brief-fill floor for any run — guards the d6c37fec regression (confirmed features missing from the brief) now that brief_updates owns the brief alone (BL-51).",
+    "features_min": 2
+  },
   "agent_emergent_watchlist": [
     { "name": "Splitwise", "class": "competitor_tool", "aliases": ["splitwise"] },
     { "name": "Google Sheets", "class": "competitor_tool", "aliases": ["google sheet", "google sheets", "shared sheet"] },
@@ -93,7 +97,18 @@
     "final_brief": {
       "problem": "Group camping trips have no shared system — the organizer manually herds gear lists, meal plans, and cost-splitting across texts and spreadsheets, while the whole group suffers the fallout of forgotten gear and unresolved money disputes.",
       "who": "Draft: recurring trip organizers — friends or family members who plan group camping trips (3+ people) more than once a year and currently coordinate via texts, spreadsheets, and Splitwise.",
-      "value": "A single shared system that guarantees nobody forgets gear and money never turns into a post-trip fight — for every group trip, big or small."
+      "value": "A single shared system that guarantees nobody forgets gear and money never turns into a post-trip fight — for every group trip, big or small.",
+      "features": [
+        "Shared gear checklist",
+        "Cost-split tracker",
+        "Founder decided to ship both the gear checklist and cost-split tracker as day-one features, not sequenced.",
+        "AI-guided onboarding that turns host answers into a shared gear board members can claim items from",
+        "Email confirmation sent to each member listing what they claimed to bring",
+        "V1 core loop: AI-generated gear board + claiming + email confirmation + cost-split tracker, shipped together"
+      ],
+      "open_questions": [
+        "What's free to preview (e.g. gear board, trip details) vs. requires the $1-5 payment to unlock?"
+      ]
     },
     "degenerate_replies": 2,
     "rows": [
