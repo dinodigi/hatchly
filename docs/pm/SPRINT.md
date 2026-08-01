@@ -136,7 +136,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 |---|---|---|
 | BL-43 | **Admin `?tab=prompts`** — list + edit form — **done 2026-07-31** (`3f27beb`; pulled forward while Tracks A/B wait on the audit key) | M |
 | BL-44 | **Structured arc editor** — no JSON textarea; intent keys read-only after creation — **done 2026-07-31** (`3f0162d`) | M |
-| BL-45 | **Preview / dry-run** against a fixture idea; writes nothing. Burns a model call — also wants the key | M |
+| BL-45 | **Preview / dry-run** against a fixture idea; writes nothing. Burns a model call — also wants the key — **done 2026-08-01** (`a8a9e20`; runs on the staffer's own BYOK key) | M |
 | BL-46 | **Prompt version history + restore** (Pluggie already versions entries) — **done 2026-07-31** (`3f27beb`) | S |
 
 ### Track D — Never show a founder something broken
