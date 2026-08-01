@@ -10,11 +10,14 @@ import type { AgentMemory, AgentTurnResult, Brief } from "./agent";
  * the Next server (the harness runs it under plain node).
  */
 
-/** A dud sample from structured output: a few characters of reply and nothing
- *  else extracted. Real case: the literal string "content" (BL-01). Shared so
- *  the route's retry guard and the audit harness use the same definition. */
+/** A dud sample from structured output. Two shapes, both real: a few
+ *  characters of reply with nothing else extracted (the literal "content",
+ *  BL-01), and a LONG brace-spiral / leaked meta-rambling reply (BL-59) — no
+ *  legitimate chat reply contains a run of closing braces. Shared so the
+ *  route's retry guard and the audit harness use the same definition. */
 export function isDegenerate(r: Pick<AgentTurnResult, "reply" | "memories" | "brief_updates" | "suggested_replies">): boolean {
-  return r.reply.trim().length < 20 && !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
+  const emptyTurn = !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
+  return (r.reply.trim().length < 20 && emptyTurn) || /\}{8,}/.test(r.reply);
 }
 
 /** Apply a turn's brief updates. Returns the new brief and the human-readable

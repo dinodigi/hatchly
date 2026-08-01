@@ -320,8 +320,15 @@ export async function runAgentTurn(params: {
         : [],
     };
   } catch {
-    // Schema-constrained output should always parse; degrade gracefully if not.
-    return { reply: text || "…", memories: [], brief_updates: [], idea: null, suggested_replies: [] };
+    // A schema-constrained response that doesn't parse is a degenerate sample
+    // (brace-spiral, truncation at max_tokens), NEVER a reply — returning the
+    // raw text here is how model innards ended up rendered to a founder
+    // (BL-59). Hand back an empty turn so the BL-01 guard retries, then
+    // degrades gracefully without persisting.
+    console.error(
+      `[agent] unparseable structured output — treating as degenerate (stop=${response.stop_reason}, ${text.length} chars)`,
+    );
+    return { reply: "", memories: [], brief_updates: [], idea: null, suggested_replies: [] };
   }
 }
 
