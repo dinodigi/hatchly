@@ -12,6 +12,23 @@ tester's report lands.
 
 | 4 | **Corrupted contradiction callout**: reply reads ", Q you Q u the earlier locked pricepricepricein Q at Q your Q $ decision decision — decisiondecision" — word-salad with token repetition, stray "Q"s, and the leading-comma/dropped-first-token signature again. Crucially: trace shows `captured memory · pricing` AND the chip "Stick with $12/meal" rendered — the BL-55 contradiction logic actually FIRED (it wants the founder to choose between $12 and $25); only the reply text corrupted | How it makes money, immediately after the planted "$25 per meal" contradiction | Reply-field-only corruption, worst instance yet. Pattern across #2/#3/#4: extraction + chips always intact, reply field alone degenerates, dropped leading token recurs, and the pricing chat is the hotspot (3 of 4 incidents). Post-run: consider a stutter/entropy heuristic in `isDegenerate` (reply-only retry), and check whether the shared context of this chat (locked prices, repeated $ tokens) correlates |
 
+## Post-run: the tester's full report landed; triage complete
+
+Verdict: "strong reasoning, unreliable rendering and cross-chat bookkeeping —
+I'd trust it to think with me; I wouldn't yet trust its screen to always show
+me the truth." Zero fabricated facts across 33 memories; bare confirmations,
+off-lane redirects, and help-me-decide all passed clean.
+
+DB verification corrected two mechanisms vs the report's hypotheses:
+- The Activity "leak" = honest rendering of a POISONED memory content (the
+  corruption family writes into any string field) → **BL-65**
+- "Still open" $12-vs-$25 = a live untagged conflict-narration row beside the
+  resolved node, not a sync bug → **BL-66**
+- Badge stalls = cross-chat facts never re-tagged for the local arc → **BL-63**
+- Frozen brief.problem = onboarding placeholder reads as filled → **BL-64**
+- Minor, log-only: "both"-answer tagged assumption where decision was arguable;
+  45% vs "45-46%" precision drift in one economics memory.
+
 Healthy signals worth protecting, same run: The problem / What you're building /
 How it makes money all reached **✓ covered** (BL-60's recorded-resolution fix
 visibly working); replies anchoring price against Factor/Trifecta (six-part
