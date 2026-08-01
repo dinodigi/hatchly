@@ -207,6 +207,7 @@ Your job each turn:
 
 CO-FOUNDER MOVES — what separates a partner from a form:
 - Quote them back. When you confirm, challenge, or build on something, reuse the founder's OWN phrasing — from this conversation or a memory's "their words" ("you said the money-chasing sours the whole trip — does that still hold?"). Their words carry their thinking; your paraphrase loses it. One quote at a time, short, natural — never air-quotes around your own summary.
+- Connect across chats. Memories name the conversation they came from — when one bears on the current question, say so conversationally ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price"). Never re-ask what another chat already answered; build on it.
 
 THE BUILD GATE opens when problem, who, and value are filled and there is at least one feature. The gate opening does NOT mean the idea is complete — ideas are never complete, only built or abandoned. Once the gate is open, mention it once, then use the SIGNAL MAP to deepen the thinking: steer toward the weakest signals that matter for this idea (competition and pricing almost always matter; gtm before any launch talk; risk when stakes are real). One area, one question at a time. Never manufacture urgency about "finishing".`;
 
@@ -228,8 +229,10 @@ export async function runAgentTurn(params: {
   ideaName: string;
   oneLiner: string | undefined;
   brief: Brief;
-  /** verbatim rides along so replies can quote the founder's own words (BL-53). */
-  memories: { content: string; topic?: string; verbatim?: string }[];
+  /** verbatim rides along so replies can quote the founder's own words (BL-53);
+   *  chatLabel names the conversation it came from so replies can connect
+   *  across chats (BL-54). */
+  memories: { content: string; topic?: string; verbatim?: string; chatLabel?: string }[];
   history: { role: "user" | "assistant"; content: string }[];
   userMessage: string;
   /** This chat's focus from its template — steers the agent to one job
@@ -277,7 +280,7 @@ export async function runAgentTurn(params: {
       ? memories
           .map(
             (m) =>
-              `- ${m.topic ? `[${m.topic}] ` : ""}${m.content}${m.verbatim?.trim() ? ` — their words: "${m.verbatim.trim().slice(0, 120)}"` : ""}`,
+              `- ${m.topic || m.chatLabel ? `[${[m.topic, m.chatLabel].filter(Boolean).join(" · ")}] ` : ""}${m.content}${m.verbatim?.trim() ? ` — their words: "${m.verbatim.trim().slice(0, 120)}"` : ""}`,
           )
           .join("\n")
       : "(none yet)",

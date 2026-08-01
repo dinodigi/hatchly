@@ -110,13 +110,13 @@ export async function POST(req: Request) {
       select: ["role", "content", "turn"],
       limit: 40,
     }),
-    callTool<{ entries: Entry<{ content: string; topic?: string; intent_key?: string; verbatim?: string }>[] }>("query_entries", {
+    callTool<{ entries: Entry<{ content: string; topic?: string; intent_key?: string; verbatim?: string; chat?: { id: string; label: string } }>[] }>("query_entries", {
       collection: "memories",
       where: [
         { field: "idea", op: "eq", value: body.ideaId },
         { field: "superseded", op: "ne", value: true },
       ],
-      select: ["content", "topic", "intent_key", "verbatim"],
+      select: ["content", "topic", "intent_key", "verbatim", "chat"],
       limit: 100,
     }),
   ]);
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
     ideaName: idea.data.name,
     oneLiner: idea.data.one_liner,
     brief,
-    memories: memoriesRes.entries.map((e) => ({ content: e.data.content, topic: e.data.topic, verbatim: e.data.verbatim })),
+    memories: memoriesRes.entries.map((e) => ({ content: e.data.content, topic: e.data.topic, verbatim: e.data.verbatim, chatLabel: e.data.chat?.label })),
     history,
     userMessage: message,
     chatFocus,
