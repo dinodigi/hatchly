@@ -55,9 +55,9 @@ Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
-| BL-53 | **Quote the founder's verbatim back** | S | todo | We store exact words and never use them. Probably the highest-leverage single change for "feels like a partner" |
-| BL-54 | **Cross-chat reference in replies** | S | todo | All memories are in context; nothing tells the model to connect them conversationally |
-| BL-55 | **Surface contradictions** | M | todo | $5 in one chat and $50 in another passes silently. A co-founder would notice |
+| BL-53 | **Quote the founder's verbatim back** | S | done | `10407fe` 2026-08-01. Verbatim now rides into the memory context ("their words", ≤120 chars) + CO-FOUNDER MOVES instruction. Visible in the guard-run replies ("…the one you said gets stuck following up on gear and money") |
+| BL-54 | **Cross-chat reference in replies** | S | done | `a3f3031` 2026-08-01. Memories carry their chat's name; agent references them conversationally and never re-asks. Visible in guard runs (pricing building on problem-chat memories) |
+| BL-55 | **Surface contradictions** | M | done | `a7919bf` 2026-08-01. Instruction: quote both values, ask which holds, capture the resolution on the intent so the node updates. Fixture has no self-contradiction — verified by instruction review + awaits the human read |
 
 ### Epic: strengthen chat interaction (BL-10 … BL-17)
 The chat is the product. Everything below makes the core loop feel faster,

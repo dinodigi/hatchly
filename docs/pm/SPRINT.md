@@ -118,9 +118,9 @@ Separately from extraction — what makes it *feel* like a co-founder:
 
 | ID | Item | Size |
 |---|---|---|
-| BL-53 | **Use verbatim in replies** — quote the founder's own words back when confirming or challenging. Highest-leverage single change for "feels like a co-founder" | S |
-| BL-54 | **Cross-chat reference** — instruct the model to connect what it already knows ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price") | S |
-| BL-55 | **Contradiction surfacing** — when a new statement conflicts with an existing memory, say so plainly rather than silently overwriting | M |
+| BL-53 | **Use verbatim in replies** — quote the founder's own words back when confirming or challenging. Highest-leverage single change for "feels like a co-founder" — **done 2026-08-01** (`10407fe`; quoting visible in guard-run replies) | S |
+| BL-54 | **Cross-chat reference** — instruct the model to connect what it already knows ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price") — **done 2026-08-01** (`a3f3031`) | S |
+| BL-55 | **Contradiction surfacing** — when a new statement conflicts with an existing memory, say so plainly rather than silently overwriting — **done 2026-08-01** (instruction shipped; fixture can't exercise it — human read verifies) | M |
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference — **done 2026-07-31**, see SHIPPED | S |
 | BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M |
 | BL-42 | **Retire the dead `questions` field** — **done 2026-07-31** (`d10aaae`) | S |
@@ -179,6 +179,12 @@ missed 3/3 measurements, channels never captured, kinds pinned at 4/7
 everywhere) **and run twice per change**. Track A compares against these live
 references, not the Jul-27 stored rows. New defect found and filed: both runs
 captured the agent's own initiation analysis as founder memories (→ BL-57).
+
+**Replay-divergence caveat (learned run 13, 2026-08-01):** ambiguous frozen
+answers ("Both, equally") re-ground against whatever the regenerated agent
+actually asked — when its question order shifts, brief-fill/anchoring can dip
+with no engine defect. Read the run's replies before blaming the engine; the
+caveat is written into the fixture's provenance notes.
 
 **2. The co-founder read.** Have Firas or Zeena read one full transcript and
 answer: *did it feel like a partner or a form?* Subjective on purpose — it's the

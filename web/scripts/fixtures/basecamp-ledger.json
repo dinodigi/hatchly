@@ -9,7 +9,8 @@
     "notes": [
       "Starting name/one-liner/brief reconstructed from the idea's Pluggie version history: the oldest surviving pre-image (270fbdab, captured 16:40:32) shows name 'Camping trip planner', one-liner 'camping project management'. brief.problem was written BY the problem chat's initiation turn and brief.who BY the market chat's initiation turn, so the pre-conversation brief starts empty here.",
       "Real chronology interleaved chats (problem t1-t3, then gtm/market initiations, problem t5-t19, product initiation, brand, pricing). Sessions below are linearized in approximate chronological order; the only infidelity is that the gtm/market/product initiation turns see more accumulated memories than they did live. They produced zero memories in the recorded run.",
-      "The recorded run hit two degenerate assistant replies (problem turn 6 = empty string, pricing turn 4 = the literal word 'content'). The founder's '?' messages that followed are part of the frozen transcript on purpose — extraction reaching back through history after a dud reply is part of the measured baseline."
+      "The recorded run hit two degenerate assistant replies (problem turn 6 = empty string, pricing turn 4 = the literal word 'content'). The founder's '?' messages that followed are part of the frozen transcript on purpose — extraction reaching back through history after a dud reply is part of the measured baseline.",
+      "REPLAY DIVERGENCE (learned from run 2026-08-01T07-03-09): ambiguous frozen answers ('Both, equally', 'yes') re-ground against whatever the regenerated agent actually asked — when its question ORDER shifts, those answers legitimately mean something else, and turn-order-sensitive metrics (brief fill, intent anchoring) can dip without any engine defect. Before blaming the engine for such a dip, read the run's replies and check whether the conversation path diverged."
     ]
   },
   "start": {
