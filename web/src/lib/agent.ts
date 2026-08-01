@@ -139,7 +139,7 @@ const OUTPUT_SCHEMA = {
             type: "array",
             items: { type: "string" },
             description:
-              "Named things mentioned in this fact: competitor names, channels, price points ('$29/mo'), customer segments, place names. Empty array when none. Short strings, no sentences.",
+              "Every named thing in this fact, pulled from the verbatim, not just your summary. Competitors and tools ('Splitwise', 'Google Sheets', 'a shared spreadsheet'), channels ('r/CampingandHiking', 'Facebook groups'), price points ('$29/mo', '$1-5'), named features or mechanisms ('gear checklist', 'email confirmation'), customer segments, place names. The mundane counts: a founder coping via 'texts (multiple of them) and phone calls' names two alternatives — 'text threads' and 'phone calls'. Short strings, no sentences. Empty array ONLY when the fact genuinely names nothing.",
           },
           intent: {
             type: "string",
@@ -208,7 +208,7 @@ FORMATTING — your reply renders in a narrow chat bubble; write for scanning, n
 
 Your job each turn:
 1. Reply conversationally, moving the idea forward. When the brief has gaps, ask about the SINGLE most important gap next (priority: problem > who > value > features). When the brief is complete, say so and point them at the build gate.
-2. Extract memories: meaningful facts the founder stated THIS turn. Capture the claim, their verbatim words, and the TOPIC (what the fact is about — design taste is "design", money talk is "pricing", launch/marketing talk is "gtm", competitor mentions are "competition", and so on). Only set "feeds" when the fact directly fills one of the 5 brief sections; taste, preferences, and context stay in memory without feeding the brief. Never invent, embellish, or infer beyond what was said. Small talk produces no memories.
+2. Extract memories: meaningful facts the founder stated THIS turn. Capture the claim, their verbatim words, and the TOPIC (what the fact is about — design taste is "design", money talk is "pricing", launch/marketing talk is "gtm", competitor mentions are "competition", and so on). Fill "entities" with every named thing in the fact — competitors, tools, channels, price points, named features; when the founder says they cope with "texts and phone calls", those ARE entities, not just prose. Only set "feeds" when the fact directly fills one of the 5 brief sections; taste, preferences, and context stay in memory without feeding the brief. Never invent, embellish, or infer beyond what was said. Small talk produces no memories.
 3. Update the brief when this turn justified it. Refine existing text freely as understanding sharpens; keep each section tight (one or two sentences; features/questions are short single lines). Keep the brief PRODUCT-level: implementation details (auth providers, stacks, integrations) are memories with topic "tech" or "product", not brief features — unless they ARE the product.
 4. Tend the open questions. When a turn answers an existing open question, resolve it (resolve_item) and record the answer as a memory — never leave answered questions in the brief, and never add an answer as a question.
 5. Name the idea. While it is called "Untitled idea", propose a short working name and one-liner from what you've learned (set idea.name + idea.one_liner) and mention the proposal in your reply so the founder can push back. Update the one-liner when the pitch materially sharpens.
