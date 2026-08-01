@@ -29,6 +29,15 @@ DB verification corrected two mechanisms vs the report's hypotheses:
 - Minor, log-only: "both"-answer tagged assumption where decision was arguable;
   45% vs "45-46%" precision drift in one economics memory.
 
+**Triage outcome (all closed same day):** BL-65/62/66 shipped as the
+containment package (`96c510d`, `e5ceb83`); BL-63 (`d7ff11a`) and BL-64
+(`158bdcf`) closed the badge-stall and placeholder-brief findings. Harness
+note recorded along the way: a DOUBLE-degenerate turn is a lost turn in the
+replay (frozen transcript can't re-ask) but a recoverable "ask me again"
+moment in production — read a brief-fill dip against the degenerate-past-retry
+count before blaming a change (bit us on run `18-35-52`: problem t4 died
+twice, who/value never landed; the sibling run filled everything).
+
 Healthy signals worth protecting, same run: The problem / What you're building /
 How it makes money all reached **✓ covered** (BL-60's recorded-resolution fix
 visibly working); replies anchoring price against Factor/Trifecta (six-part
