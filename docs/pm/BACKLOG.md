@@ -76,6 +76,7 @@ see BL-10.
 | BL-15 | **Richer waiting state** — say what it's doing, not just dots | S | todo | Partially done (first-open line). Extend to normal turns |
 | BL-16 | **Inline edit of brief fields + memory cards** | M | todo | Smoke-test feedback `85c78858`, still the only open round-2 item. Today you must argue the AI back into shape conversationally |
 | BL-17 | **Voice input** | L | todo | Specced, not built: [voice-and-upload-spec.md](../voice-and-upload-spec.md). Mic button is a no-op with `title="coming soon"` |
+| BL-61 | **Multi-select answer chips** | S | todo | From Dino 2026-08-01. Some questions have several true answers (channels, never-feels, v1 features) — today chips are one-tap-send. Sketch: agent flags a suggestion set as multi-select (schema field), chips become toggles + "Send selected" composes one message ("Reddit + Facebook groups + Meetup"). Extraction needs nothing — accumulative intents already love compound answers. Natural trigger: questions aimed at `mode: accumulative` intents |
 
 ### Everything else P2
 
