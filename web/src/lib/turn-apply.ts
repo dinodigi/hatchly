@@ -10,6 +10,13 @@ import type { AgentMemory, AgentTurnResult, Brief } from "./agent";
  * the Next server (the harness runs it under plain node).
  */
 
+/** A dud sample from structured output: a few characters of reply and nothing
+ *  else extracted. Real case: the literal string "content" (BL-01). Shared so
+ *  the route's retry guard and the audit harness use the same definition. */
+export function isDegenerate(r: Pick<AgentTurnResult, "reply" | "memories" | "brief_updates" | "suggested_replies">): boolean {
+  return r.reply.trim().length < 20 && !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
+}
+
 /** Apply a turn's brief updates + the feeds:"features" backfill. Returns the
  *  new brief and the human-readable trace lines, in the exact order the chat
  *  UI has always shown them. */

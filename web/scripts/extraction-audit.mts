@@ -30,6 +30,7 @@ import path from "node:path";
 import { runAgentTurn, type ArcIntent, type Brief } from "../src/lib/agent";
 import {
   applyBriefUpdates,
+  isDegenerate,
   memoryRowData,
   planIdeaPatch,
   planMemoryWrites,
@@ -143,7 +144,10 @@ interface Metrics {
   dupPairs: DupPair[];
   noIntent: { content: string }[];
   kinds: string[];
+  /** Raw model-level degenerate samples (comparable to the pre-BL-01 baseline). */
   degenerateReplies: number;
+  /** Duds surviving the BL-01 retry mirror — what a founder would actually see. */
+  degenerateFinal?: number;
 }
 
 function computeMetrics(
@@ -277,6 +281,8 @@ async function replay(fixture: Fixture, apiKey: string) {
   let oneLiner: string | undefined = fixture.start.one_liner;
   const replies: { template: string; turn: number; text: string }[] = [];
   let nextId = 1;
+  let degenerateRaw = 0;
+  let degenerateFinal = 0;
 
   const totalTurns = fixture.sessions.reduce((n, s) => n + s.founder_messages.length, 0);
   console.log(`Replaying ${totalTurns} founder turns across ${fixture.sessions.length} chats (model: see agent.ts AGENT_MODEL)…\n`);
@@ -297,31 +303,42 @@ async function replay(fixture: Fixture, apiKey: string) {
         if (r.intent_key && !intentNodes.has(r.intent_key)) intentNodes.set(r.intent_key, { id: r.id, content: r.content });
       }
 
-      let result;
-      for (let attempt = 0; ; attempt++) {
-        try {
-          result = await runAgentTurn({
-            apiKey,
-            ideaName,
-            oneLiner,
-            brief,
-            memories: rows.map((r) => ({ content: r.content, topic: r.topic })),
-            history,
-            userMessage: message,
-            chatFocus: tpl.focus,
-            chatArc: tpl.arc,
-            resolvedIntents: [...intentNodes.keys()],
-          });
-          break;
-        } catch (e) {
-          if (attempt === 0 && isTransientModelError(e)) {
-            const wait = (e as { status?: number })?.status === 429 ? 20000 : 4000;
-            console.log(`  transient model error (${(e as Error).message}) — retrying in ${wait / 1000}s`);
-            await new Promise((r) => setTimeout(r, wait));
-            continue;
+      const turnCall = async () => {
+        for (let attempt = 0; ; attempt++) {
+          try {
+            return await runAgentTurn({
+              apiKey,
+              ideaName,
+              oneLiner,
+              brief,
+              memories: rows.map((r) => ({ content: r.content, topic: r.topic })),
+              history,
+              userMessage: message,
+              chatFocus: tpl.focus,
+              chatArc: tpl.arc,
+              resolvedIntents: [...intentNodes.keys()],
+            });
+          } catch (e) {
+            if (attempt === 0 && isTransientModelError(e)) {
+              const wait = (e as { status?: number })?.status === 429 ? 20000 : 4000;
+              console.log(`  transient model error (${(e as Error).message}) — retrying in ${wait / 1000}s`);
+              await new Promise((r) => setTimeout(r, wait));
+              continue;
+            }
+            throw e;
           }
-          throw e;
         }
+      };
+      let result = await turnCall();
+      // Mirror the route's BL-01 guard: one silent retry on a degenerate
+      // sample, so the replay measures what production founders experience.
+      // Raw count still reported — it's the model-level degeneracy rate.
+      if (isDegenerate(result)) {
+        degenerateRaw++;
+        console.log(`  [${session.template_key} t${nextTurn}] degenerate sample — retrying once (BL-01 mirror)`);
+        const second = await turnCall();
+        if (isDegenerate(second)) degenerateFinal++;
+        else result = second;
       }
 
       const applied = applyBriefUpdates(brief, result);
@@ -352,7 +369,6 @@ async function replay(fixture: Fixture, apiKey: string) {
     }
   }
 
-  const degenerate = replies.filter((r) => r.text.trim().length < 10).length;
   // Which watchlist names did THIS run's replies mention? Those join the
   // captured-entities denominator (the Splitwise-class test).
   const replyText = normText(replies.map((r) => r.text).join(" \n "));
@@ -360,7 +376,7 @@ async function replay(fixture: Fixture, apiKey: string) {
     .filter((e) => e.aliases.some((a) => replyText.includes(normText(a))))
     .map((e) => e.name);
 
-  return { rows, brief, ideaName, oneLiner, replies, degenerate, agentMentioned, templates };
+  return { rows, brief, ideaName, oneLiner, replies, degenerateRaw, degenerateFinal, agentMentioned, templates };
 }
 
 // ---------- report ----------
@@ -392,7 +408,12 @@ function printReport(m: Metrics, baseline: Metrics, targetNote = true) {
   line("Duplicate/fragment pairs", String(baseline.dupPairs.length), String(m.dupPairs.length), "<= 1");
   line("No intent_key", `${baseline.noIntent.length}/${baseline.total}`, `${m.noIntent.length}/${m.total}`, "< 3");
   line("kind values in use", `${baseline.kinds.length}/7`, `${m.kinds.length}/7`, "6/7 or cut");
-  line("Degenerate replies", String(baseline.degenerateReplies), String(m.degenerateReplies), "0");
+  line(
+    "Degenerate samples (raw)",
+    String(baseline.degenerateReplies),
+    m.degenerateFinal !== undefined ? `${m.degenerateReplies} (${m.degenerateFinal} past retry)` : String(m.degenerateReplies),
+    "0",
+  );
 
   console.log(`\n  kinds this run: ${m.kinds.join(", ") || "(none)"}`);
   console.log(`\n  Competitors/tools:`);
@@ -488,8 +509,9 @@ async function main() {
     fixture,
     { problem: run.brief.problem, who: run.brief.who, value: run.brief.value },
     run.agentMentioned,
-    run.degenerate,
+    run.degenerateRaw,
   );
+  metrics.degenerateFinal = run.degenerateFinal;
   printReport(metrics, baselineMetrics);
 
   // Persist the run for diffing — gitignored; commit a copy if it's evidence.
@@ -513,7 +535,8 @@ async function main() {
           duplicate_pairs: metrics.dupPairs.length,
           no_intent_key: `${metrics.noIntent.length}/${metrics.total}`,
           kinds_in_use: metrics.kinds,
-          degenerate_replies: metrics.degenerateReplies,
+          degenerate_raw: metrics.degenerateReplies,
+          degenerate_past_retry: metrics.degenerateFinal ?? 0,
         },
         entity_detail: { competitors: metrics.competitorsExpected, other: metrics.otherExpected },
         dup_pairs: metrics.dupPairs,

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { briefGate, runAgentTurn, type AgentTurnResult, type ArcIntent, type Brief } from "@/lib/agent";
-import { applyBriefUpdates, memoryRowData, planIdeaPatch, planMemoryWrites } from "@/lib/turn-apply";
+import { briefGate, runAgentTurn, type ArcIntent, type Brief } from "@/lib/agent";
+import { applyBriefUpdates, isDegenerate, memoryRowData, planIdeaPatch, planMemoryWrites } from "@/lib/turn-apply";
 import { bumpUsage, resolveKey } from "@/lib/keyvault";
 import { callTool } from "@/lib/mcp";
 
@@ -131,11 +131,6 @@ export async function POST(req: Request) {
       intentNodes.set(e.data.intent_key, { id: e.id, content: e.data.content });
   }
   const arcMode = new Map(chatArc.map((a) => [a.key, a.mode]));
-
-  // A dud sample from structured output: a few characters of reply and nothing
-  // else extracted. Real case: the literal string "content" (BL-01).
-  const isDegenerate = (r: AgentTurnResult) =>
-    r.reply.trim().length < 20 && !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
 
   // The agent turn (BYOK — errors from Anthropic surface as chat-level messages).
   const turnParams = {
