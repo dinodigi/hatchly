@@ -36,6 +36,14 @@ interface Version {
   changedFields: string[];
 }
 
+interface PreviewResult {
+  idea: string;
+  reply: string;
+  suggestions: string[];
+  memories: { content: string; topic?: string; kind?: string; intent?: string; entities: string[] }[];
+  brief_updates: { section: string; value?: string; add_item?: string; resolve_item?: string }[];
+}
+
 const FIELD_META: { key: keyof PromptTemplate; label: string; rows: number; hint?: string }[] = [
   { key: "name", label: "Name", rows: 1 },
   { key: "subtitle", label: "Subtitle", rows: 1 },
@@ -52,6 +60,7 @@ export default function PromptEditor({ id, tpl, arc }: { id: string; tpl: Prompt
   const [form, setForm] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  const [preview, setPreview] = useState<PreviewResult | "loading" | null>(null);
 
   // Arc drafting (BL-44): null = untouched, render from props. `isNew` rows
   // keep their key editable until saved; existing keys are locked.
@@ -108,6 +117,35 @@ export default function PromptEditor({ id, tpl, arc }: { id: string; tpl: Prompt
     }
   };
 
+  // BL-45: dry-run the LIVE prompt against a sample idea. Saves nothing;
+  // burns one model call on the signed-in staffer's own key.
+  const runPreview = async () => {
+    if (busy || preview === "loading") return;
+    if (dirty) {
+      setNote({ tone: "err", text: "unsaved changes — the preview runs the SAVED prompt. Save first (or cancel)." });
+      return;
+    }
+    setPreview("loading");
+    setNote(null);
+    try {
+      const res = await fetch("/api/admin/prompts/preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPreview(null);
+        setNote({ tone: "err", text: json.error ?? "preview failed" });
+        return;
+      }
+      setPreview(json as PreviewResult);
+    } catch {
+      setPreview(null);
+      setNote({ tone: "err", text: "preview failed" });
+    }
+  };
+
   const loadHistory = async () => {
     setShowHistory((v) => !v);
     if (versions !== null) return;
@@ -161,11 +199,56 @@ export default function PromptEditor({ id, tpl, arc }: { id: string; tpl: Prompt
           {arc.length ? `${arc.length} intents · ${requiredArc} required` : "no arc"}
         </span>
         <button className="btn btn-secondary btn-sm" onClick={openEdit}>{editing ? "Close" : "Edit"}</button>
+        <button className="btn btn-ghost btn-sm" disabled={preview === "loading"} onClick={() => void runPreview()}>
+          {preview === "loading" ? "Previewing…" : "Preview"}
+        </button>
         <button className="btn btn-ghost btn-sm" onClick={() => void loadHistory()}>History</button>
       </div>
 
       {note && (
         <p style={{ margin: "0 18px 10px", fontSize: 12, color: note.tone === "ok" ? "var(--success-text)" : "var(--danger-text)" }}>{note.text}</p>
+      )}
+
+      {/* ---- preview (BL-45): dry run, nothing saved ---- */}
+      {preview && preview !== "loading" && (
+        <div style={{ margin: "0 18px 16px", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--surface)", fontSize: 11.5 }}>
+            <span style={{ fontWeight: 600 }}>Preview</span>
+            <span className="faint">against sample idea &ldquo;{preview.idea}&rdquo; · dry run — nothing was saved · one model call on your key</span>
+            <span style={{ flex: 1 }} />
+            <button className="btn btn-ghost btn-sm" onClick={() => setPreview(null)}>Dismiss</button>
+          </div>
+          <div style={{ padding: "12px 14px", fontSize: 13.5, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{preview.reply}</div>
+          {preview.suggestions.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "0 14px 12px" }}>
+              {preview.suggestions.map((s) => (
+                <span key={s} className="tag-pick" style={{ cursor: "default" }}>{s}</span>
+              ))}
+            </div>
+          )}
+          {(preview.memories.length > 0 || preview.brief_updates.length > 0) && (
+            <div style={{ padding: "10px 14px", borderTop: "1px solid var(--border)", fontSize: 12 }}>
+              <div className="faint" style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 6 }}>
+                Would be captured
+              </div>
+              {preview.memories.map((m, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", flexWrap: "wrap" }}>
+                  <span style={{ flex: 1, minWidth: 200 }}>{m.content}</span>
+                  {m.kind && <span className="badge" style={{ fontSize: 9, background: "var(--surface)", color: "var(--text-secondary)" }}>{m.kind}</span>}
+                  {m.intent && <span className="badge" style={{ fontSize: 9, background: "var(--accent-soft)", color: "var(--accent-text)" }}>{m.intent}</span>}
+                  {m.entities.map((e) => (
+                    <span key={e} className="badge" style={{ fontSize: 9, background: "var(--info-soft)", color: "var(--info-text)" }}>{e}</span>
+                  ))}
+                </div>
+              ))}
+              {preview.brief_updates.map((u, i) => (
+                <div key={`b${i}`} className="faint" style={{ padding: "3px 0" }}>
+                  brief · {u.section}: {u.value ?? u.add_item ?? (u.resolve_item ? `resolves "${u.resolve_item}"` : "")}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ---- edit form ---- */}
