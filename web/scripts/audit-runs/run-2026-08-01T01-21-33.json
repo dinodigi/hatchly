@@ -1,0 +1,527 @@
+{
+  "ran_at": "2026-08-01T01:21:33.226Z",
+  "fixture": "basecamp-ledger",
+  "duration_s": 382,
+  "prompts_under_test": {
+    "product": {
+      "name": "What you're building",
+      "system_prompt": "This chat pins down the solution: what it actually does, the core mechanism that solves the problem, what belongs in a first version and what is explicitly out, and how the founder would know it is working. Push for concrete scope over vision. Keep it product-level — stack and integration details are memories, not brief features.",
+      "arc_intents": 5
+    },
+    "customer": {
+      "name": "The market",
+      "system_prompt": "This chat covers the market: the beachhead customer and their behaviour, roughly how many of them there are, where they already gather, and who else already serves them. Name real competitors and alternatives when you know them, then push hard on what makes this different. Rough sizing is fine — precision is not the point, direction is.",
+      "arc_intents": 5
+    },
+    "problem": {
+      "name": "The problem",
+      "system_prompt": "You are the founder's AI co-founder. This chat pins the core problem — who hurts, how badly, and why now. Push past vague statements to something concrete. When you have enough, propose a crisp one-sentence problem for the brief and ask them to confirm.",
+      "arc_intents": 5
+    },
+    "gtm": {
+      "name": "First 100 users",
+      "system_prompt": "This chat finds a small, winnable beachhead for the first hundred users.",
+      "arc_intents": 5
+    },
+    "pricing": {
+      "name": "How it makes money",
+      "system_prompt": "This chat figures out the revenue shape and who it must feel fair to.",
+      "arc_intents": 5
+    },
+    "brand": {
+      "name": "Name & brand",
+      "system_prompt": "This chat settles the brand feel, then suggests names.",
+      "arc_intents": 4
+    }
+  },
+  "metrics": {
+    "entities_populated": "8/19",
+    "competitors_captured": "4/4",
+    "duplicate_pairs": 5,
+    "no_intent_key": "6/19",
+    "kinds_in_use": [
+      "assumption",
+      "decision",
+      "evidence",
+      "preference"
+    ],
+    "degenerate_raw": 1,
+    "degenerate_past_retry": 0
+  },
+  "entity_detail": {
+    "competitors": [
+      {
+        "name": "text threads",
+        "class": "alternative",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "phone calls",
+        "class": "alternative",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "Splitwise",
+        "class": "competitor_tool",
+        "source": "agent",
+        "captured": true
+      },
+      {
+        "name": "Google Sheets",
+        "class": "competitor_tool",
+        "source": "agent",
+        "captured": true
+      }
+    ],
+    "other": [
+      {
+        "name": "$1-5",
+        "class": "price_point",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "gear board / checklist",
+        "class": "feature",
+        "source": "founder",
+        "captured": false
+      },
+      {
+        "name": "email checklist",
+        "class": "feature",
+        "source": "founder",
+        "captured": false
+      },
+      {
+        "name": "AI onboarding",
+        "class": "feature",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "r/CampingandHiking",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      },
+      {
+        "name": "Facebook groups",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      },
+      {
+        "name": "Meetup",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      }
+    ]
+  },
+  "dup_pairs": [
+    {
+      "a": "[problem t19] No one has built a tool like this yet, and groups don't know…",
+      "b": "[problem t19] The confirmed value: a shared hub for gear, dates, and money…",
+      "reason": "same founder words",
+      "score": 0.8333333333333334
+    },
+    {
+      "a": "[customer t1] Beachhead is the recurring group camping trip organizer — fr…",
+      "b": "[customer t1] Rough sizing: likely a couple million recurring camping trip…",
+      "reason": "same founder words",
+      "score": 1
+    },
+    {
+      "a": "[problem t15] Despite all the chasing, something is always missing on the …",
+      "b": "brief.problem",
+      "reason": "restates brief field",
+      "score": 0.8571428571428571
+    },
+    {
+      "a": "[problem t19] The confirmed value: a shared hub for gear, dates, and money…",
+      "b": "brief.value",
+      "reason": "restates brief field",
+      "score": 0.6842105263157895
+    },
+    {
+      "a": "[customer t1] Beachhead is the recurring group camping trip organizer — fr…",
+      "b": "brief.who",
+      "reason": "restates brief field",
+      "score": 0.875
+    }
+  ],
+  "final_state": {
+    "idea_name": "Camp Captain",
+    "one_liner": "The shared planning hub that keeps one person from carrying an entire camping trip alone.",
+    "brief": {
+      "features": [
+        "AI onboarding asks the host questions and auto-generates a shared checklist/board of needed items",
+        "Group members claim items on the board that they're personally bringing",
+        "Email recap sent to each person summarizing their checklist and claimed items"
+      ],
+      "open_questions": [
+        "Should v1 track money owed (dates/gear only vs. adding a money-owed ledger), or leave money out entirely for now?"
+      ],
+      "problem": "Planning a group camping trip is unpaid project management that falls on one organizer, who burns hours chasing gear lists, dates, and payments across text threads, phone calls, and spreadsheets — often floating money that isn't repaid — every trip, even small ones. The chasing sparks fights, and despite the effort something is always missing, with the rest of the group feeling the fallout.",
+      "who": "The de facto organizer of a recurring group camping trip — friend or family groups of roughly 4-10 people taking 2-4 trips a year — plus the wider group who bears the consequences when things fall through.",
+      "value": "Camp Captain gives the organizer one shared hub for gear, dates, and money so nothing depends on their memory or nagging, and the group actually pays their share and shows up prepared."
+    }
+  },
+  "rows": [
+    {
+      "id": "1",
+      "template": "problem",
+      "content": "Both the organizer and the wider group feel the pain: organizer does the planning, group feels the consequences.",
+      "verbatim": "Yes, that's it",
+      "source_label": "turn 5",
+      "turn": 5,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "who_hurts"
+    },
+    {
+      "id": "2",
+      "template": "problem",
+      "content": "The organizing pain hits every trip, even small ones, not just big trips.",
+      "verbatim": "Every trip, even small ones",
+      "source_label": "turn 9",
+      "turn": 9,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "frequency"
+    },
+    {
+      "id": "3",
+      "template": "problem",
+      "content": "The organizer's toll is wasted time, money floated and not fully repaid, and having to keep following up — the whole experience feels unfair to them.",
+      "verbatim": "wasted time+ unfair for one person sometimes losing money or having to keep following up on money  pretty much the whole experince",
+      "source_label": "turn 17",
+      "turn": 17,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "cost"
+    },
+    {
+      "id": "4",
+      "template": "problem",
+      "content": "Organizer has coped with trip planning via texts and spreadsheets from day one — no better tool has replaced this.",
+      "verbatim": "Both from day one",
+      "source_label": "turn 13",
+      "turn": 13,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [
+        "texts",
+        "spreadsheets"
+      ],
+      "intent_key": "coping"
+    },
+    {
+      "id": "5",
+      "template": "problem",
+      "content": "Organizer copes via multiple text threads and phone calls, not just a spreadsheet.",
+      "verbatim": "basically texts (mulitple of them) and phone calls",
+      "source_label": "turn 15",
+      "turn": 15,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [
+        "text threads",
+        "phone calls"
+      ],
+      "intent_key": "coping"
+    },
+    {
+      "id": "6",
+      "template": "problem",
+      "content": "Planning friction escalates into actual fights within the group.",
+      "verbatim": "and fights",
+      "source_label": "turn 15",
+      "turn": 15,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [
+        "fights"
+      ]
+    },
+    {
+      "id": "7",
+      "template": "problem",
+      "content": "Despite all the chasing, something is always missing on the trip.",
+      "verbatim": "and always something is missing",
+      "source_label": "turn 15",
+      "turn": 15,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": []
+    },
+    {
+      "id": "8",
+      "template": "problem",
+      "content": "No one has built a tool like this yet, and groups don't know a better way exists — which is part of why the problem persists.",
+      "verbatim": "groups do not know anything better and i dont think anyone has built suuch a thing",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "competition",
+      "kind": "assumption",
+      "entities": [],
+      "intent_key": "why_unsolved"
+    },
+    {
+      "id": "9",
+      "template": "problem",
+      "content": "The confirmed value: a shared hub for gear, dates, and money so nothing depends on the organizer's memory, and the group actually pays their share without being chased.",
+      "verbatim": "both, groups do not know anything better",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "decision",
+      "entities": [],
+      "feeds": "value"
+    },
+    {
+      "id": "10",
+      "template": "problem",
+      "content": "Planned onboarding: AI asks the host questions, then auto-generates a shared board listing needed items.",
+      "verbatim": "i also imaged part of the onborading of the gorup AI does questions then the host can answer those questions then AI can automatically create a borad with list of things needed",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "decision",
+      "entities": [
+        "AI onboarding",
+        "shared board"
+      ]
+    },
+    {
+      "id": "11",
+      "template": "problem",
+      "content": "Group members can claim items on the board that they're bringing.",
+      "verbatim": "where users can claim those items as they are bringing",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "decision",
+      "entities": [
+        "item claiming"
+      ]
+    },
+    {
+      "id": "12",
+      "template": "problem",
+      "content": "An email is sent recapping each person's checklist and what they claimed they'll bring.",
+      "verbatim": "also maybe an email of their check list and what they claimed they will bring",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "decision",
+      "entities": [
+        "email recap"
+      ]
+    },
+    {
+      "id": "13",
+      "template": "customer",
+      "content": "Beachhead is the recurring group camping trip organizer — friend/family groups of roughly 4-10 people doing 2-4 trips a year.",
+      "verbatim": "who this is for, roughly how many of them there are",
+      "source_label": "turn 1",
+      "turn": 1,
+      "topic": "customer",
+      "kind": "assumption",
+      "entities": [],
+      "intent_key": "beachhead"
+    },
+    {
+      "id": "14",
+      "template": "customer",
+      "content": "Rough sizing: likely a couple million recurring camping trip organizers in the US, based on overall outdoor recreation participation.",
+      "verbatim": "roughly how many of them there are",
+      "source_label": "turn 1",
+      "turn": 1,
+      "topic": "market_size",
+      "kind": "assumption",
+      "entities": [],
+      "intent_key": "size"
+    },
+    {
+      "id": "15",
+      "template": "customer",
+      "content": "Real alternatives already in use: Splitwise for money, Google Sheets/Trello for lists, group texts/WhatsApp for coordination, TripIt for general trip logistics — none combine gear, dates, and money for camping.",
+      "verbatim": "Name real competitors or alternatives if you know any.",
+      "source_label": "turn 1",
+      "turn": 1,
+      "topic": "competition",
+      "kind": "assumption",
+      "entities": [
+        "Splitwise",
+        "Google Sheets",
+        "Trello",
+        "WhatsApp",
+        "TripIt"
+      ],
+      "intent_key": "competitors"
+    },
+    {
+      "id": "16",
+      "template": "brand",
+      "content": "Founder wants the brand to feel warm and communal.",
+      "verbatim": "Warm & communal",
+      "source_label": "turn 7",
+      "turn": 7,
+      "topic": "brand",
+      "kind": "preference",
+      "entities": [],
+      "intent_key": "feel"
+    },
+    {
+      "id": "17",
+      "template": "pricing",
+      "content": "The organizer pays to start a trip on Camp Captain; each joining member also pays individually to participate.",
+      "verbatim": "organizer pays to start and each person join have to pay",
+      "source_label": "turn 3",
+      "turn": 3,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [],
+      "intent_key": "who_pays"
+    },
+    {
+      "id": "18",
+      "template": "pricing",
+      "content": "Payment model is per-person, per-event: each member pays to join a trip, which functions as their commitment lock-in.",
+      "verbatim": "each person joins have to pay (thats them locking themselve on the trip)",
+      "source_label": "turn 3",
+      "turn": 3,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [],
+      "intent_key": "shape"
+    },
+    {
+      "id": "19",
+      "template": "pricing",
+      "content": "The organizer also pays the same $1-5 per-event fee as other members, not a separate cost.",
+      "verbatim": "Organizer pays too, same $1-5",
+      "source_label": "turn 7",
+      "turn": 7,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [
+        "$1-5"
+      ],
+      "intent_key": "price"
+    }
+  ],
+  "replies": [
+    {
+      "template": "problem",
+      "turn": 2,
+      "text": "Here's a first pass, built only off the idea name so treat it as a draft to correct:\n\nProblem: planning a group camping trip is unpaid project management that lands on one person — they're stuck chasing gear lists, dates, and who's bringing what across text threads and a shared spreadsheet, and the group still shows up missing something or bickering over who owes what.\n\nWho: the de facto trip organizer in a friend or family group — the one who always ends up running point, whether they volunteered or just got stuck with it.\n\nThe part I'm least sure about: is this really a solo-organizer pain, or do most groups actually split the planning and the pain is more \"nobody owns it so things fall through the cracks\"?"
+    },
+    {
+      "template": "problem",
+      "turn": 4,
+      "text": "That split matters — the organizer eats the workload, the group eats the consequences (forgotten gear, awkward money chases, one person quietly resentful by day two). That sharpens who hurts and how.\n\nWhat does this actually cost the organizer — hours of their week, money floated and never repaid, or the social cost of being the nag?"
+    },
+    {
+      "template": "problem",
+      "turn": 6,
+      "text": "Got it — organizer plans, group feels the mess, that's locked in. Now the cost part: for the organizer, is it mostly hours burned chasing people, money they float and don't get back, or the social friction of being the nag every trip?"
+    },
+    {
+      "template": "problem",
+      "turn": 8,
+      "text": " Let ' me be more concrete — when the organizer runs a trip, what actually costs them the most? "
+    },
+    {
+      "template": "problem",
+      "turn": 10,
+      "text": ": That tells me how often it bites — every single trip, not just the big ones — which is useful. I still need the actual cost: is it mostly hours spent chasing people, money floated and not repaid, or the social toll of being the nag?"
+    },
+    {
+      "template": "problem",
+      "turn": 12,
+      "text": "So the organizer pays twice — hours spent chasing everyone down, and money floated that doesn't come back — every single trip, even small ones. That's a real toll for something nobody's paying them for.\n\nHow do they cope with it today — a shared spreadsheet, a group chat, something else?"
+    },
+    {
+      "template": "problem",
+      "turn": 14,
+      "text": ": OK, so texts and spreadsheets have been the coping mechanism since day one — no tool ever really replaced the chaos, it just got documented. That closes out the picture of the problem itself.\n\nNow: what's the actual promise of Camp Captain — if it works, what does the organizer get back that they don't have today?"
+    },
+    {
+      "template": "problem",
+      "turn": 16,
+      "text": "So it's worse than a spreadsheet gap — it's a phone tree, text threads, and actual arguments, and something still slips through the cracks anyway. That's a full picture of the pain now.\n\nSo: if Camp Captain worked perfectly, what does the organizer get back — hours saved, money that's actually settled, or just the fights disappearing?"
+    },
+    {
+      "template": "problem",
+      "turn": 18,
+      "text": "That confirms the full weight of it — wasted time, money that's unfairly on one person's tab, and the follow-up hassle, trip after trip. Let me try proposing the value directly instead of asking again: Camp Captain would give the organizer one shared hub for gear, dates, and money so nothing depends on their memory or nagging, and the group actually pays their share without being chased.\n\nDoes that land, or is the real win something else — like just not being the bad guy anymore?"
+    },
+    {
+      "template": "problem",
+      "turn": 20,
+      "text": "That's a lot of shape in one message — let's lock the value first: Camp Captain gives the organizer one shared hub for gear, dates, and money so nothing depends on their memory or nagging, and the group actually pays their share and shows up prepared. The AI-onboarding-into-a-shared-board idea is a real feature, and so is the claim-your-item mechanic and the email recap.\n\nWith problem, who, value, and features now in place, the brief has what it needs to build on — nice work getting there. Before we go further: have you actually talked to campers or organizers who've lived this, or is this built from your own experience so far?"
+    },
+    {
+      "template": "gtm",
+      "turn": 2,
+      "text": "First pass: the people already carrying this pain hang out in group-trip planning corners — r/CampingandHiking and r/Ultralight, regional outdoor Facebook groups, Meetup camping clubs, and the group chats (GroupMe/WhatsApp) organizers already run for their crews.\n\nConcrete first move this week: post in 2-3 of those subreddits/FB groups asking how people split gear and costs for group trips — it validates the pain and surfaces organizers to DM directly for early access.\n\nWhich of these feels like the right first watering hole to test?"
+    },
+    {
+      "template": "customer",
+      "turn": 2,
+      "text": "First pass: beachhead is the person who organizes recurring group camping trips — friend or family groups of roughly 4-10 people, doing 2-4 trips a year, not commercial trip outfitters. Sizing loosely off outdoor recreation participation, that's likely a couple million such organizers in the US alone, though no one's counted this specific role.\n\nOn who else serves them — nothing built for camping specifically, but people cobble together:\n\n1. Splitwise — handles money splitting, ignores gear entirely\n2. Google Sheets / Trello — manual, no automation, someone still has to chase updates\n3. Group texts / WhatsApp threads — where most of this actually happens today\n4. TripIt — trip logistics for travel, not built for shared gear or group money\n\nSo the sharpest question: when someone's used to a group text and a spreadsheet, what's the one thing about Camp Captain that makes them actually switch instead of just tolerating the chaos again?"
+    },
+    {
+      "template": "product",
+      "turn": 2,
+      "text": "Here's a first pass.\n\nCore mechanism: the host answers a few AI questions, Camp Captain turns that into a shared board (gear, dates, money-in-theory), people claim what they're bringing, and everyone gets an email recap so nothing lives only in the organizer's head.\n\nV1 in: AI onboarding, the shared checklist/board, item claiming, and the recap email.\n\nV1 out (my guess): actual payment processing, calendar/scheduling integration, and any in-app chat — those add real complexity and aren't proven necessary yet.\n\nThe one thing I'm unsure about: the problem statement leans hard on money not getting repaid, but nothing in v1 actually handles money — it just tracks gear. Should v1 track who owes what, or is money out of scope entirely for now?"
+    },
+    {
+      "template": "brand",
+      "turn": 2,
+      "text": "Here are a few directions — plain-language pitch attached to each so you can feel the tone difference, not just the word.\n\n1. Camp Captain — the shared hub that keeps one person from carrying the whole trip.\n2. BasePack — plan gear, dates, and money together, so nothing rides on one person's memory.\n3. TrailShare — the camping trip board where gear, dates, and money stop living in someone's head.\n4. GroupTrek — one shared checklist for gear, dates, and money, so the organizer doesn't have to be the app.\n5. Fireside — keep the group's gear, dates, and money in one place, not one person's inbox.\n\nWhich of these feels closest to what you want people to feel when they open it?"
+    },
+    {
+      "template": "brand",
+      "turn": 4,
+      "text": "Here they are again as quick picks — tap whichever direction feels right, or tell me none of them land:\n\n1. Camp Captain\n2. BasePack\n3. TrailShare\n4. GroupTrek\n5. Fireside"
+    },
+    {
+      "template": "brand",
+      "turn": 6,
+      "text": "Warm and communal — that points away from something like BasePack or TrailShare, which read more utilitarian, and toward names that feel like people gathered around something together.\n\nFireside and Camp Captain both lean that way naturally.\n\nWhich of those two feels more like the one, or does neither quite hit warm & communal for you?"
+    },
+    {
+      "template": "brand",
+      "turn": 8,
+      "text": "Warm and communal, got got it — think fire circle, not not project management. Here's another round leaning into that:\n\n1. Camp Circle — the shared space where everyone brings a little, so no one carries it all.\n2. The Gathering — one place for gear, dates, and money before the whole group meets up.\n3. Basecamp Buddies — a friendly hub that keeps the whole crew in on the planning, not just one person.\n4. Tinder & Ties — camping trip planning that feels like packing together, not chasing each other.\n5. Camp Crew — the shared board that makes the trip feel like everyone's, not just the organizer's.\n\nDo any of these feel closer to warm & communal, or still not it?"
+    },
+    {
+      "template": "pricing",
+      "turn": 2,
+      "text": "First pass: the organizer pays, since they're the one feeling the pain and driving adoption — group members don't need an account to claim items or get their recap email.\n\nModel: freemium. Free tier covers the checklist, dates, and claiming — a paid tier (~$5-8/month or a ~$25/season pass, given trips only happen 2-4x/year) unlocks the money-owed ledger and payment tracking, since that's the part that currently costs the organizer real cash.\n\nDoes it feel right that the organizer eats the cost alone, or should the group chip in when someone claims an item (splitting a few dollars across everyone)?"
+    },
+    {
+      "template": "pricing",
+      "turn": 4,
+      "text": "That's a cleaner model than subscription — the $1-5 join fee turns commitment into a real signal, not just a checklist tick. It also answers the split-cost question: organizer starts it, group shares the cost.\n\nWhat does that $1-5 actually unlock for the person paying — just the confirmed spot, or full access to the shared board and their claimed items too?"
+    },
+    {
+      "template": "pricing",
+      "turn": 6,
+      "text": "Sorry, let me make that concrete. When someone pays their $1-5 to join a trip, what do they get for it?"
+    },
+    {
+      "template": "pricing",
+      "turn": 8,
+      "text": "Good — so it's not organizer-subsidizes-group, it's everyone including the organizer pays the same $1-5 to join, which feels fairer and simpler to build. That still leaves one gap: what does that fee actually unlock — just their confirmed spot on the trip, or access to the board and claiming too?"
+    }
+  ]
+}
