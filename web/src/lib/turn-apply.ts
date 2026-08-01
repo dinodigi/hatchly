@@ -10,14 +10,39 @@ import type { AgentMemory, AgentTurnResult, Brief } from "./agent";
  * the Next server (the harness runs it under plain node).
  */
 
-/** A dud sample from structured output. Two shapes, both real: a few
- *  characters of reply with nothing else extracted (the literal "content",
- *  BL-01), and a LONG brace-spiral / leaked meta-rambling reply (BL-59) — no
- *  legitimate chat reply contains a run of closing braces. Shared so the
- *  route's retry guard and the audit harness use the same definition. */
-export function isDegenerate(r: Pick<AgentTurnResult, "reply" | "memories" | "brief_updates" | "suggested_replies">): boolean {
-  const emptyTurn = !r.memories.length && !r.brief_updates.length && !r.suggested_replies.length;
-  return (r.reply.trim().length < 20 && emptyTurn) || /\}{8,}/.test(r.reply);
+/** Corruption signatures of the degenerate-sample family (BL-01/59/65), all
+ *  observed in production: closing-brace floods, leaked serialization
+ *  fragments inside prose, spaced token stutter ("since since since"), and
+ *  concatenated stutter ("pricepriceprice"). A founder-visible string should
+ *  never contain any of these; a false positive merely costs one retry. */
+function isCorruptText(s: string): boolean {
+  return (
+    /\}{8,}/.test(s) ||
+    /['"](?:kind|topic|entities|intent|verbatim|content|feeds|reply)['"]\s*:/.test(s) ||
+    /\b(\w[\w']*)(?: \1\b){2,}/.test(s) ||
+    /(\w{4,})\1\1/.test(s)
+  );
+}
+
+/** A dud sample from structured output. Shapes seen in production: a husk
+ *  reply (the literal "content"; a lone ":") — WITH or WITHOUT successful
+ *  extraction, since the never-dead-end rule means no legitimate reply is
+ *  under 20 chars — and corruption signatures in ANY string the model
+ *  returned: reply, memory content/verbatim, brief updates, chips, idea
+ *  naming. Corrupted memory content is how garbage reached the Activity
+ *  trail (BL-65). Shared so the route's retry guard and the audit harness
+ *  use one definition. */
+export function isDegenerate(r: Pick<AgentTurnResult, "reply" | "memories" | "brief_updates" | "suggested_replies" | "idea">): boolean {
+  if (r.reply.trim().length < 20) return true;
+  const strings: (string | undefined)[] = [
+    r.reply,
+    ...r.memories.flatMap((m) => [m.content, m.verbatim]),
+    ...r.brief_updates.flatMap((u) => [u.value, u.add_item, u.resolve_item]),
+    ...r.suggested_replies,
+    r.idea?.name,
+    r.idea?.one_liner,
+  ];
+  return strings.some((s) => typeof s === "string" && isCorruptText(s));
 }
 
 /** Apply a turn's brief updates. Returns the new brief and the human-readable
