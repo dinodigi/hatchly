@@ -34,6 +34,7 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 | BL-44 | **Structured arc editor** | M | done | `3f0162d` 2026-07-31. Intent text / required / mode / reorder / add / remove-with-warning; existing keys locked, new keys snake_case-normalized; server validates and serializes. Needs a staff-session test alongside BL-43 |
 | BL-45 | **Preview / dry-run a chat** | M | todo | Run initiation against a throwaway fixture; render reply + chips; write nothing to memories/messages |
 | BL-46 | **Prompt version history + restore** | S | done | `3f27beb` 2026-07-31, with BL-43. Last 10 versions per template, restore audited (`admin_actions` enum extended: `edit_prompt`/`restore_prompt`, `chat_template`) |
+| BL-58 | **Restore needs a diff preview** | S | todo | Day-one Studio stumble (2026-08-01): a one-click restore on `product` silently reverted to a pre-arc version and wiped 5 intents — recovered from the pre-image. The History rows show what changed *at* that version, not what restoring it would change *now*. Show a vs-current field diff (and flag versions missing the arc) before confirming. From: user testing BL-43/46 |
 
 ### Epic: extraction quality (BL-47 … BL-52)
 From an audit of 15 real memories produced by the Basecamp Ledger conversation.
