@@ -17,6 +17,7 @@ Size key: `S` < half a day · `M` 1–2 days · `L` 3+ days · `?` needs a spec 
 | BL-03 | **Unguarded `res.json()` in ChatPanel** | S | done | `f79adad` 2026-07-31. Parse guarded + ok-but-bodyless response rejected |
 | BL-04 | **`writableBy: "none"` on `users.role` + `users.suspended`** | S | done | CMS schema change 2026-07-31, no deploy. Verified via `describe_collection`; delivery-only gate, admin/MCP writes (suspend flow, ensure-user) unaffected — and the app has zero delivery-plane `users` write call sites anyway |
 | BL-05 | **Firas approves the 7 chats + arcs** | — | blocked | Blocked on: Firas. Doc is ready: [chat-question-arcs.md](../chat-question-arcs.md). Blocks BL-06 and all arc iteration |
+| BL-59 | **Parse-failure fallback rendered raw model output as a reply** | S | done | Found on prod by Dino 2026-08-01 (two brace-spiral replies in one chat, `{"reply":…}}}}` innards rendered verbatim). Root cause: `agent.ts`'s JSON.parse catch returned the raw text as the reply, and BL-01's guard only caught SHORT duds. Fixed same day: parse failure → empty degenerate turn (BL-01 retry + graceful path takes over); `isDegenerate` also flags brace-floods regardless of length. Both poisoned rows repaired in place (pre-images in Pluggie). Note: one bad persisted turn primed the next spiral — never persisting garbage is the containment |
 
 ## P2 — high value
 
