@@ -107,7 +107,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 
 | ID | Item | Size |
 |---|---|---|
-| BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable — **built 2026-07-31**; baseline + dry-run modes verified, first live replay needs `ANTHROPIC_API_KEY` in `web/.env.local` | M |
+| BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable — **done 2026-07-31** (`67299eb`, `7964dad`): two live reference runs committed, BL-01 retry mirrored | M |
 | BL-47 | **Fix entity extraction** — sharpen the schema description with worked examples (competitors, tools, channels, price points, place names). Splitwise-class misses are the test case | S |
 | BL-48 | **Stop duplicate memories** — instruct the model not to capture a fragment of a fact it just captured; prefer updating the anchored memory over adding a sibling | M |
 | BL-49 | **Anchor confirmations** — "yes, that's it" should update the intent's node, not create an unanchored `decision` row | S |
@@ -168,6 +168,17 @@ it end to end, and count:
 
 Re-run after every prompt change. It's the same conversation, so differences are
 attributable.
+
+**First live harness runs (2026-07-31, prompts unchanged; JSONs in
+`web/scripts/audit-runs/`):** run 1 — entities 9/19, competitors 3/4
+(**Splitwise captured**), dups 4, no-intent 5/19, kinds 4/7. Run 2 (BL-01 retry
+mirrored) — entities 7/14, competitors 3/5, dups 1, no-intent 4/14, kinds 4/7,
+degenerate 2 raw / 0 past retry. Read: per-item captures and dup counts swing
+on identical prompts — **judge Track A on consistent signals** (phone calls
+missed 3/3 measurements, channels never captured, kinds pinned at 4/7
+everywhere) **and run twice per change**. Track A compares against these live
+references, not the Jul-27 stored rows. New defect found and filed: both runs
+captured the agent's own initiation analysis as founder memories (→ BL-57).
 
 **2. The co-founder read.** Have Firas or Zeena read one full transcript and
 answer: *did it feel like a partner or a form?* Subjective on purpose — it's the

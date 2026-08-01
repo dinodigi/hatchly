@@ -42,12 +42,13 @@ Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked
 
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
-| BL-56 | **Extraction audit harness** | M | blocked | Code landed 2026-07-31 (`npm run audit:extraction` in `web/`; `--baseline` reproduces the audit's counts, `--dry-run` verified against live templates). Blocked on: `ANTHROPIC_API_KEY` in `web/.env.local` (a human) for the first live replay — the harness deliberately never touches founder BYOK keys |
+| BL-56 | **Extraction audit harness** | M | done | `67299eb` + `7964dad`. Two live reference runs 2026-07-31 (committed in `web/scripts/audit-runs/`) — Track A measures against these, not the Jul-27 stored rows. Replay mirrors the BL-01 retry (2 raw duds, 0 past retry in run 2). Run-to-run variance on identical prompts is real (dups 4→1) — judge changes on consistent signals, two runs per change |
 | BL-47 | **Fix entity extraction** | S | todo | 10/15 memories have `entities: []`. The agent referenced **Splitwise** in conversation and it was never captured. Competitive-analysis recipes depend on this |
 | BL-48 | **Stop duplicate memories** | M | todo | 3 rows for one pricing decision; one is a fragment of another. Noise now, context bloat later |
 | BL-49 | **Anchor confirmations to their intent** | S | todo | "Yes, that's it" created an unanchored `decision` row instead of updating the problem node. Singular-update silently no-ops without an `intent_key` |
 | BL-51 | **Resolve `feeds` vs `brief_updates`** | S | todo | `feeds` used by 2/15; `brief_updates` does the real work. Two mechanisms, one job. Recommend dropping `feeds` |
-| BL-52 | **Decide the `kind` taxonomy's real shape** | S | todo | `question`, `constraint`, `risk` never appear in practice. Add recognition guidance or cut them |
+| BL-52 | **Decide the `kind` taxonomy's real shape** | S | todo | `question`, `constraint`, `risk` never appear in practice. Add recognition guidance or cut them. Evidence hardened: 4/7 in the stored baseline AND both live audit runs |
+| BL-57 | **Initiation turns capture the agent's own analysis as memories** | S | todo | Both live audit runs (2026-07-31): the customer-chat initiation stored the agent's first pass ("proposed beachhead…", "rough market size: low millions…") as founder facts, restating `brief.who` — inflates entity/dup metrics and violates "never invent facts the founder did not say". From: BL-56 reference runs |
 
 ### Epic: co-founder response (BL-53 … BL-55)
 
