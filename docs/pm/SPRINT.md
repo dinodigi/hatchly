@@ -108,7 +108,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 | ID | Item | Size |
 |---|---|---|
 | BL-56 | **Build the extraction audit harness** — script that replays a fixed transcript and reports the five metrics below. Without it the rest of this track is unfalsifiable — **done 2026-07-31** (`67299eb`, `7964dad`): two live reference runs committed, BL-01 retry mirrored | M |
-| BL-47 | **Fix entity extraction** — sharpen the schema description with worked examples (competitors, tools, channels, price points, place names). Splitwise-class misses are the test case | S |
+| BL-47 | **Fix entity extraction** — sharpen the schema description with worked examples (competitors, tools, channels, price points, place names). Splitwise-class misses are the test case — **done 2026-07-31** (`77f02d7`; entities → 54/69%, phone-calls-class misses fixed; agent-named capture correctly waits on founder engagement, see BL-57) | S |
 | BL-48 | **Stop duplicate memories** — instruct the model not to capture a fragment of a fact it just captured; prefer updating the anchored memory over adding a sibling | M |
 | BL-49 | **Anchor confirmations** — "yes, that's it" should update the intent's node, not create an unanchored `decision` row | S |
 | BL-51 | **Resolve `feeds` vs `brief_updates`** — pick one mechanism. Recommend: drop `feeds`, let `brief_updates` own the brief | S |

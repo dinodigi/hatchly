@@ -43,7 +43,7 @@ Measurement baseline lives in [SPRINT.md](SPRINT.md) § How we'll know it worked
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
 | BL-56 | **Extraction audit harness** | M | done | `67299eb` + `7964dad`. Two live reference runs 2026-07-31 (committed in `web/scripts/audit-runs/`) — Track A measures against these, not the Jul-27 stored rows. Replay mirrors the BL-01 retry (2 raw duds, 0 past retry in run 2). Run-to-run variance on identical prompts is real (dups 4→1) — judge changes on consistent signals, two runs per change |
-| BL-47 | **Fix entity extraction** | S | todo | 10/15 memories have `entities: []`. The agent referenced **Splitwise** in conversation and it was never captured. Competitive-analysis recipes depend on this |
+| BL-47 | **Fix entity extraction** | S | done | `77f02d7` 2026-07-31, one iteration, two runs. Entities 47/50% pre → 54/69% post; run 4 captured 5/6 founder-named incl. **phone calls** (0/5 prior measurements). Honest reframe: agent-named tools (Splitwise) now correctly NOT captured on this fixture — the founder never engaged with them; earlier ✓s were the BL-57 defect. Second iteration only if needed after BL-48/57 stabilize the denominator |
 | BL-48 | **Stop duplicate memories** | M | todo | 3 rows for one pricing decision; one is a fragment of another. Noise now, context bloat later |
 | BL-49 | **Anchor confirmations to their intent** | S | todo | "Yes, that's it" created an unanchored `decision` row instead of updating the problem node. Singular-update silently no-ops without an `intent_key` |
 | BL-51 | **Resolve `feeds` vs `brief_updates`** | S | todo | `feeds` used by 2/15; `brief_updates` does the real work. Two mechanisms, one job. Recommend dropping `feeds` |
