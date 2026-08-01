@@ -49,9 +49,11 @@ export async function POST(req: Request) {
         one_liner: raw ? raw.slice(0, 300) : "A new idea, still taking shape.",
         stage: "ideation",
         visibility: "private",
-        // The founder's "what's broken" line is the first draft of the problem —
-        // the problem chat refines it from here.
-        brief: broken ? { problem: broken, features: [], open_questions: [] } : { features: [], open_questions: [] },
+        // The founder's "what's broken" line is the first draft of the problem.
+        // The "Draft:" marker matters: without it a picked onboarding option
+        // ("Too slow, manual, or painful") reads as a FILLED section and
+        // survives the whole problem chat untouched (BL-64).
+        brief: broken ? { problem: `Draft: ${broken}`, features: [], open_questions: [] } : { features: [], open_questions: [] },
         archived: false,
         last_activity_at: new Date().toISOString(),
       },
