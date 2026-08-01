@@ -1,0 +1,450 @@
+{
+  "ran_at": "2026-08-01T07:25:04.641Z",
+  "fixture": "basecamp-ledger",
+  "duration_s": 403,
+  "prompts_under_test": {
+    "product": {
+      "name": "What you're building",
+      "system_prompt": "Job: Pin the solution — the core mechanism, what's in a first version, and what's explicitly out.\nGood: A mechanism the founder can say in one sentence, a v1 list short enough to build, an explicit not-doing list, and a way they'd know it's working.\nPush: Feature soup is not a product — make them pick the ONE mechanism that solves the problem, then let v1 be only what that mechanism needs.\nPush back: Founders scope v1 like a roadmap. Anything that can wait a month after launch is out of v1 — say so and make them choose.\nBoundary: Stack and integration choices are memories, not brief features; money questions belong in How it makes money.\nStuck: Propose a brutally small v1 yourself and let them add back the one thing they can't live without.",
+      "arc_intents": 5
+    },
+    "customer": {
+      "name": "The market",
+      "system_prompt": "Job: Pin the beachhead — who's first, who else already serves them, and why this wins.\nGood: A first narrow group the founder can name and find, the real alternatives those people use today (including non-apps — spreadsheets, group texts), and one difference that would make them switch.\nPush: \"Everyone who X\" is not an audience — shrink it until the founder can picture an actual person. Sizing can stay rough; the FIRST group cannot.\nPush back: \"No competitors\" is almost never true — the competitor is usually a workaround. Name the workaround and treat it as the incumbent.\nBoundary: How to REACH these people belongs in First 100 users. Stay on who they are and why they'd switch.\nStuck: Offer two or three candidate beachheads drawn from what you already know and let them react.",
+      "arc_intents": 5
+    },
+    "problem": {
+      "name": "The problem",
+      "system_prompt": "Job: Pin the core problem — who hurts, how badly, and why it persists.\nGood: A named sufferer, their current workaround, a real cost (time, money, or a soured experience), and a one-sentence problem the founder confirms in their own words.\nPush: \"People are frustrated\" is not a problem — get WHO, doing WHAT workaround, paying WHAT cost. Vague pain becomes concrete the moment you ask about the last time it happened.\nPush back: Founders often present a solution wearing a problem costume (\"the problem is there's no app for X\"). Strip it to the underlying pain and check the pain stands on its own.\nBoundary: What the product does about it belongs in What you're building; exactly who to sell to first belongs in The market. Capture stray facts, then steer back.\nStuck: Ask for the story of the last time it hurt — a specific incident always contains the problem.",
+      "arc_intents": 5
+    },
+    "gtm": {
+      "name": "First 100 users",
+      "system_prompt": "Job: Find a small, winnable path to the first hundred users.\nGood: Named places these people already gather, one concrete first move the founder could take this week, and the hook — the line that makes someone stop.\nPush: \"Social media marketing\" is not a move — get to a named channel, a named action, and what the founder would actually post or say.\nPush back: Founders default to building an audience from scratch when borrowing one is faster — where do these people ALREADY gather, and who already has their trust?\nBoundary: What the product is stays in What you're building; who it's for in The market. This chat is only the path to them.\nStuck: Propose the cheapest move that could reach ten of the right people this week and ask what stops them doing it tomorrow.",
+      "arc_intents": 5
+    },
+    "pricing": {
+      "name": "How it makes money",
+      "system_prompt": "Job: Settle who pays, in what shape, and roughly how much.\nGood: A named payer, a pricing model, and a rough number the founder can defend — even if it's a range they'd test.\nPush: \"We'll figure out monetization later\" is not an answer — ask what they'd charge if they had to charge tomorrow. Prices without a comparison are guesses; anchor against what this audience already pays for something adjacent.\nPush back: Founders routinely assume the user and the payer are the same person. In marketplaces, B2B, and anything with an organizer, they often aren't — check.\nBoundary: Distribution and acquisition cost belong in First 100 users. Stay on the money model itself.\nStuck: Offer two or three concrete models drawn from comparable products and let them react — reacting is easier than inventing.",
+      "arc_intents": 5
+    },
+    "brand": {
+      "name": "Name & brand",
+      "system_prompt": "Job: Settle how it should feel, what it's called, and the one-line pitch.\nGood: A feel the founder owns in their own words, a working name they'd say out loud to a stranger, and a pitch that explains the product in plain language.\nPush: \"Modern and clean\" describes everything — ask what it should feel like to the PERSON using it in the moment it matters, and what it must never feel like.\nPush back: Founders fall for clever names that need explaining. If the name needs the pitch to make sense, the pitch is doing the name's job — say so.\nBoundary: Who it's for lives in The market; visual design details are memories, not this conversation's job.\nStuck: Offer names in two or three distinct lanes (warm, plain, playful) and let them pick a lane before polishing.",
+      "arc_intents": 4
+    }
+  },
+  "metrics": {
+    "entities_populated": "7/14",
+    "competitors_captured": "2/4",
+    "duplicate_pairs": 2,
+    "no_intent_key": "5/14",
+    "kinds_in_use": [
+      "assumption",
+      "decision",
+      "evidence",
+      "preference"
+    ],
+    "degenerate_raw": 0,
+    "degenerate_past_retry": 0,
+    "brief_fill": {
+      "problem": true,
+      "who": true,
+      "value": true,
+      "features": 2,
+      "openQuestions": 0,
+      "ok": true
+    }
+  },
+  "entity_detail": {
+    "competitors": [
+      {
+        "name": "text threads",
+        "class": "alternative",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "phone calls",
+        "class": "alternative",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "Splitwise",
+        "class": "competitor_tool",
+        "source": "agent",
+        "captured": false
+      },
+      {
+        "name": "Notion",
+        "class": "competitor_tool",
+        "source": "agent",
+        "captured": false
+      }
+    ],
+    "other": [
+      {
+        "name": "$1-5",
+        "class": "price_point",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "gear board / checklist",
+        "class": "feature",
+        "source": "founder",
+        "captured": false
+      },
+      {
+        "name": "email checklist",
+        "class": "feature",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "AI onboarding",
+        "class": "feature",
+        "source": "founder",
+        "captured": true
+      },
+      {
+        "name": "r/CampingandHiking",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      },
+      {
+        "name": "Facebook groups",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      },
+      {
+        "name": "Meetup",
+        "class": "channel",
+        "source": "agent",
+        "captured": false
+      }
+    ]
+  },
+  "dup_pairs": [
+    {
+      "a": "[problem t19] Fixing the problem means no more chasing money, no more figh…",
+      "b": "[problem t19] Founder believes groups have no better option today and that…",
+      "reason": "same founder words",
+      "score": 0.8333333333333334
+    },
+    {
+      "a": "[problem t17] The burden falls unfairly on one person — usually the organi…",
+      "b": "brief.who",
+      "reason": "restates brief field",
+      "score": 0.6428571428571429
+    }
+  ],
+  "final_state": {
+    "idea_name": "Trailmate",
+    "one_liner": "The camping co-organizer that turns group texts into a shared gear list and a fair split.",
+    "brief": {
+      "features": [
+        "AI-guided host onboarding that auto-generates a shared gear/needs board members can claim items from",
+        "Email confirmation summarizing each person's claimed items and checklist"
+      ],
+      "open_questions": [],
+      "problem": "The person organizing a group camping trip becomes the unpaid project manager — chasing gear, money owed, and scheduling — and when it falls apart, the whole group inherits a bad trip, not just the organizer.",
+      "who": "The trip organizer, who unfairly bears the burden of chasing money, absorbing losses, and following up — while the whole group suffers wasted time and fights when things go wrong.",
+      "value": "Removes the unfair burden from the organizer — no more chasing money, no more fights over gear, and everyone (especially the organizer) gets their time and goodwill back."
+    }
+  },
+  "rows": [
+    {
+      "id": "1",
+      "template": "problem",
+      "content": "The cost includes wasted time and sometimes lost money, plus ongoing follow-up to collect money owed, which sours the whole trip experience.",
+      "verbatim": "wasted time+ sometimes losing money or having to keep following up on money  pretty much the whole experince",
+      "source_label": "turn 17",
+      "turn": 17,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "cost"
+    },
+    {
+      "id": "2",
+      "template": "problem",
+      "content": "The organizer pain and group fallout happens on every trip, even small ones, not just big complex ones.",
+      "verbatim": "Every trip, even small ones",
+      "source_label": "turn 9",
+      "turn": 9,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "frequency"
+    },
+    {
+      "id": "3",
+      "template": "problem",
+      "content": "Groups cope with trip coordination today using a group text and a shared spreadsheet equally, with neither being authoritative.",
+      "verbatim": "Both, equally",
+      "source_label": "turn 11",
+      "turn": 11,
+      "topic": "problem",
+      "kind": "evidence",
+      "entities": [
+        "group text",
+        "shared spreadsheet"
+      ],
+      "intent_key": "coping"
+    },
+    {
+      "id": "4",
+      "template": "problem",
+      "content": "Groups cope with trip logistics using multiple scattered text threads and phone calls, not just a single group text.",
+      "verbatim": "basically texts (mulitple of them) and phone calls",
+      "source_label": "turn 15",
+      "turn": 15,
+      "topic": "customer",
+      "kind": "evidence",
+      "entities": [
+        "text threads",
+        "phone calls"
+      ],
+      "intent_key": "coping"
+    },
+    {
+      "id": "5",
+      "template": "problem",
+      "content": "The burden falls unfairly on one person — usually the organizer — who ends up chasing money and absorbing losses.",
+      "verbatim": "unfair for one person",
+      "source_label": "turn 17",
+      "turn": 17,
+      "topic": "customer",
+      "kind": "evidence",
+      "entities": [],
+      "intent_key": "who_hurts"
+    },
+    {
+      "id": "6",
+      "template": "problem",
+      "content": "Fixing the problem means no more chasing money, no more fights, and the organizer getting their time back — not just one of those.",
+      "verbatim": "both, groups do not know anything better",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "other",
+      "kind": "decision",
+      "entities": []
+    },
+    {
+      "id": "7",
+      "template": "problem",
+      "content": "Founder believes groups have no better option today and that nobody has built a dedicated tool for this problem.",
+      "verbatim": "groups do not know anything better and i dont think anyone has built suuch a thing",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "competition",
+      "kind": "assumption",
+      "entities": []
+    },
+    {
+      "id": "8",
+      "template": "problem",
+      "content": "Envisioned onboarding: AI asks the host questions, then auto-generates a shared board of needed items that group members can claim as things they'll bring.",
+      "verbatim": "i also imaged part of the onborading of the gorup AI does questions then the host can answer those questions then AI can automatically create a borad with list of things needed where users can claim those items as they are bringing",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "decision",
+      "entities": [
+        "AI onboarding",
+        "claimable item board"
+      ]
+    },
+    {
+      "id": "9",
+      "template": "problem",
+      "content": "Considered feature: an email sent to each person summarizing their checklist and what they claimed they'll bring.",
+      "verbatim": "maybe an email of their check list and what they claimed they will bring",
+      "source_label": "turn 19",
+      "turn": 19,
+      "topic": "product",
+      "kind": "assumption",
+      "entities": [
+        "email checklist"
+      ]
+    },
+    {
+      "id": "10",
+      "template": "brand",
+      "content": "Founder wants the idea to feel warm and communal rather than plain or playful.",
+      "verbatim": "Warm & communal",
+      "source_label": "turn 5",
+      "turn": 5,
+      "topic": "brand",
+      "kind": "preference",
+      "entities": [],
+      "intent_key": "feel"
+    },
+    {
+      "id": "11",
+      "template": "brand",
+      "content": "None of the first three name options (Trailmate, GroupTrip, CampTab) felt right to the founder",
+      "verbatim": "None quite right — show more",
+      "source_label": "turn 7",
+      "turn": 7,
+      "topic": "brand",
+      "kind": "preference",
+      "entities": [
+        "Trailmate",
+        "GroupTrip",
+        "CampTab"
+      ]
+    },
+    {
+      "id": "12",
+      "template": "pricing",
+      "content": "Both the organizer and each joining member pay — the organizer pays to start the trip, and each member pays to join, which also locks them into the trip.",
+      "verbatim": "organizer pays to start and each person joins have to pay (thats them locking themselve on the trip)",
+      "source_label": "turn 3",
+      "turn": 3,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [],
+      "intent_key": "who_pays"
+    },
+    {
+      "id": "13",
+      "template": "pricing",
+      "content": "Pricing model is per-person, per-event — each user pays a small fee tied to joining a specific trip.",
+      "verbatim": "the money will be lets say 1-5$ per user on the event",
+      "source_label": "turn 3",
+      "turn": 3,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [
+        "$1-5 per user"
+      ],
+      "intent_key": "shape"
+    },
+    {
+      "id": "14",
+      "template": "pricing",
+      "content": "The organizer pays the same $1-5 fee as every other member, with no special pricing for opening the trip",
+      "verbatim": "Organizer pays too, same $1-5",
+      "source_label": "turn 7",
+      "turn": 7,
+      "topic": "pricing",
+      "kind": "decision",
+      "entities": [
+        "$1-5"
+      ],
+      "intent_key": "price"
+    }
+  ],
+  "replies": [
+    {
+      "template": "problem",
+      "turn": 2,
+      "text": "Here's a first pass, treat it as a draft to poke holes in:\n\nThe person who ends up organizing a group camping trip becomes the unpaid project manager — chasing who's bringing what gear, tracking who owes money, syncing everyone's availability — usually through a scattered group text or a spreadsheet nobody updates. The cost shows up at the campsite: forgotten gear, someone quietly eating the bill, or the trip almost not happening because scheduling dragged on for weeks.\n\nThe thing I'm least sure about: is the sharpest pain really the LOGISTICS coordination (gear, money, scheduling), or is it more about the actual trip content (routes, permits, packing lists, where to go)?"
+    },
+    {
+      "template": "problem",
+      "turn": 4,
+      "text": "Got it — the organizer carries the mental load, but the whole group inherits the chaos when something falls through. So the pain isn't just 'coordinaton is annoying,' it's that one person's disorganization becomes everyone's bad trip.\n\nWhat do most groups actually use to try to wrangle this today?"
+    },
+    {
+      "template": "problem",
+      "turn": 6,
+      "text": "That framing sticks then: one organizer's disorganization becomes the whole group's bad trip. Now — when that mess happens, how do groups usually try to cope today? Group text, a shared spreadsheet, sticky notes, or just winging it?"
+    },
+    {
+      "template": "problem",
+      "turn": 8,
+      "text": "Sorry — let me ask that more simply. When a group plans a camping trip today, what do they actually use to coordinate gear, money, and schedules?"
+    },
+    {
+      "template": "problem",
+      "turn": 10,
+      "text": "Good to know — this isn't a rare occasional headache, it bites on every trip, even small ones. So next: how do groups actually cope today when nobody owns this? Group text, shared spreadsheet, or just winging it and hoping?"
+    },
+    {
+      "template": "problem",
+      "turn": 12,
+      "text": "Group text and a shared spreadsheet, running in parallel with neither one being the source of truth — that's basically two half-broken systems instead of one. That's a good sign there's no real tool for this yet. Once someone owes money or forgets gear, what actually happens — does someone eat the cost, or does it turn into an awkward chase after the trip?"
+    },
+    {
+      "template": "problem",
+      "turn": 14,
+      "text": "So the cost isn't something that creeps in over time — it's there on the very first trip: someone eats the money, and there's also an awkward chase to sort it out. That's a sharper problem than "
+    },
+    {
+      "template": "problem",
+      "turn": 16,
+      "text": "So it's not one clean method — group texts (plural, scattered), phone calls, actual fights when money or blame comes up, and gear that's always missing something. That's messier than a coordination gap — it's relational friction on top of logistics failure. Who feels this most sharply: the organizer eating the stress, or does everyone in the group end up equally burned?"
+    },
+    {
+      "template": "problem",
+      "turn": 18,
+      "text": "That's the missing piece — it's not evenly shared pain, it's unfair: one person (usually the organizer) eats the lost money and the awkward follow-up, while the wasted time and soured mood spread to the whole group. So the sharpest hurt lands on whoever's stuck chasing the money.\n\nIf you fixed this, what's the one thing that actually changes for them — no more chasing money, no more fights, or just getting their time back?"
+    },
+    {
+      "template": "problem",
+      "turn": 20,
+      "text": "That's the value locking in — fixing this means no more chasing money, no more fights, and the organizer actually gets their time back instead of carrying the whole trip. And the AI-onboarding idea is sharp: host answers a few questions, AI builds the gear/needs board, people claim what they're bringing, everyone gets an email of what they signed up for.\n\nWith problem, who, value, and a real feature now in place, the brief has what it needs to move forward — I'll flag that gate once, then we can go deeper. Since nobody's built this yet by your read, have you looked at anything close — Splitwise, TripIt, a Facebook event — to see why they stop short?"
+    },
+    {
+      "template": "gtm",
+      "turn": 2,
+      "text": "Here's a first pass: the people bearing this pain hang out in r/CampingandHiking, r/GroupCamping-style Facebook groups (\"Group Camping Trip Planning\", regional camping clubs), and Meetup.com outdoor groups — places where someone is *currently* organizing a trip and venting about logistics.\n\nConcrete move this week: post in 2-3 of those threads/groups asking \"how do you split gear and costs for group trips?\" — not pitching CampSync, just fishing for the organizers who reply with a horror story. Those replies are your first 10-20 users to DM directly.\n\nBefore I go further — what's the line that makes one of those organizers stop scrolling and actually click?"
+    },
+    {
+      "template": "customer",
+      "turn": 2,
+      "text": "Here's a first pass — treat it as a draft to react to, not gospel.\n\nBeachhead: recurring car-camping friend groups (4-8 people) who trip together 2-3+ times a season and rotate who \"organizes,\" so the pain repeats often enough to matter.\n\nRough size: hard to pin exactly, but tens of millions of Americans car-camp yearly, and a meaningful slice do it with the same friend group repeatedly — a real market, not a niche.\n\nWho's already \"serving\" them (the real incumbents):\n1. Group texts + a shared spreadsheet — what you already confirmed groups use\n2. Splitwise — for splitting the money, but nothing for gear or claiming\n3. Trello/Notion boards some organized groups jury-rig for gear lists\n4. Nothing purpose-built for camping trip logistics specifically\n\nGiven group text + spreadsheet is free and already the habit, what's the one thing that makes someone switch — the fairness of claimed items being visible to everyone, the AI doing the setup work instead of the organizer, or the automatic email nudge holding people accountable?"
+    },
+    {
+      "template": "product",
+      "turn": 2,
+      "text": "Here's a first pass.\n\nCore mechanism: the host answers a few AI prompts about the trip, and the app turns that into one shared board — replacing the tangle of texts and spreadsheets — where everyone claims gear and (implicitly) tracks who owes what, so the organizer isn't chasing anyone by hand.\n\nV1:\n1. AI onboarding Q&A that generates the gear board\n2. Claim system so members mark what they're bringing\n3. Email confirmation summarizing each person's claims/checklist\n\nOut of v1:\n1. In-app chat/messaging (texts still work fine for that)\n2. Payment processing or automated bill-splitting math\n3. Trip scheduling/calendar features\n\nOne thing I'm genuinely unsure about: your idea's name promises a 'fair split,' but nothing in the v1 I just sketched actually handles money owed — is tracking who-owes-what part of the core mechanism for v1, or is that a phase-two problem?"
+    },
+    {
+      "template": "brand",
+      "turn": 2,
+      "text": "Here are three directions, each built around a different feel for the organizer:\n\n1. Trailmate — warm: the camping co-organizer that turns your group text into one shared gear list and a fair split, so no one's stuck chasing money.\n\n2. GroupTrip — plain: the app that replaces your scattered group texts with one gear board and one split, no chasing required.\n\n3. CampTab — playful: think of it as your trip's shared tab — everyone claims what they'll bring, everyone sees what they owe.\n\nWhich of these feels closest to how you want this to land with a stranger?"
+    },
+    {
+      "template": "brand",
+      "turn": 4,
+      "text": "Same three lanes, restated simply:\n\n1. Trailmate — warm, feels like a co-organizer helping you out.\n\n2. GroupTrip — plain, describes exactly what it does.\n\n3. CampTab — playful, leans into the shared-tab/fairness angle.\n\nWhich lane feels closest — warm, plain, or playful?"
+    },
+    {
+      "template": "brand",
+      "turn": 6,
+      "text": "Warm and communal — that points to Trailmate, the co-organizer that feels like it's on your side rather than just a tool. Does that name land, or want a couple more options in that same warm lane before we settle it?"
+    },
+    {
+      "template": "brand",
+      "turn": 8,
+      "text": "More in the warm/communal lane:\n\n1. Basecamp Buddy — the trip's steady sidekick that keeps gear and money sorted so nobody carries it alone.\n\n2. Campfire Circle — turns your group chat into one shared board everyone gathers around.\n\n3. TrailShare — the easy way a group splits gear and costs without anyone chasing anyone.\n\n4. Pack Together — plain but warm, says exactly what it does: you pack as a group, fairly.\n\nDo any of these feel closer, or still not quite it?"
+    },
+    {
+      "template": "pricing",
+      "turn": 2,
+      "text": "I can't help with that one — want to get back to the idea?"
+    },
+    {
+      "template": "pricing",
+      "turn": 4,
+      "text": "Two payers then — the organizer pays to open the trip, and each member pays again when they join, which is also what locks them in. That's a bring-your-own-pay-per-seat model rather than one person footing the bill.\n\nWhat does the organizer's own fee look like — same $1-5 as everyone else, or something different since they're opening the trip?"
+    },
+    {
+      "template": "pricing",
+      "turn": 6,
+      "text": "Sorry — let me ask that more plainly. You said the organizer pays to start the trip and each member pays $1-5 to join — does the organizer pay that same $1-5, or a different amount since they're the one opening it up?"
+    },
+    {
+      "template": "pricing",
+      "turn": 8,
+      "text": "Good — that keeps it simple and fair, everyone pays the same $1-5 whether they're the organizer or not.the app for gear list, or does the whole experience sit behind that per-trip fee?"
+    }
+  ]
+}

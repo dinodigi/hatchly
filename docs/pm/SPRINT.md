@@ -122,7 +122,7 @@ Separately from extraction — what makes it *feel* like a co-founder:
 | BL-54 | **Cross-chat reference** — instruct the model to connect what it already knows ("in Name & brand you said warm and communal — that argues against a per-seat enterprise price") — **done 2026-08-01** (`a3f3031`) | S |
 | BL-55 | **Contradiction surfacing** — when a new statement conflicts with an existing memory, say so plainly rather than silently overwriting — **done 2026-08-01** (instruction shipped; fixture can't exercise it — human read verifies) | M |
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference — **done 2026-07-31**, see SHIPPED | S |
-| BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M |
+| BL-41 | **Rewrite all 7 system prompts** to the six-part standard — **done 2026-08-01** (CMS, one versioned edit per chat; guard pair clean, new behavior visible in replies) | M |
 | BL-42 | **Retire the dead `questions` field** — **done 2026-07-31** (`d10aaae`) | S |
 
 ### Track C — Editable without a deploy

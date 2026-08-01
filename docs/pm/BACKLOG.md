@@ -28,7 +28,7 @@ depth gap. Plus: make prompts editable from `/admin` without a deploy.
 | ID | Item | Size | Status | Notes |
 |---|---|---|---|---|
 | BL-40 | **Remove false "Produce a X artifact" instructions** + stale BrandBucket reference | S | done | Done 2026-07-31 — CMS-data change in `chat_templates` (`pricing`/`brand`/`gtm` system prompts), no deploy needed. Pre-images in Pluggie entry versions. Inactive `competition`/`risk` templates still carry the old pattern — left alone, they can't be opened |
-| BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | todo | job / good / push / push back / boundary / stuck |
+| BL-41 | **Rewrite all 7 system prompts** to the six-part standard | M | done | CMS-data change 2026-08-01, one versioned edit per chat (restorable in the Studio). Pricing = the spec's worked example. Guard pair: extraction held, brief fill passed, 0 raw degenerates both runs; push/push-back/stuck visibly firing in the committed reply corpus. The 4× depth gap is closed |
 | BL-42 | **Retire the dead `questions` field** | S | done | `d10aaae` 2026-07-31. All readers removed (primer pills, page fetch, type); `opening` kept as fallback; CMS column kept for now (prototyping caution) |
 | BL-43 | **Admin `?tab=prompts`** — list + edit form | M | done | `3f27beb` 2026-07-31. Pulled ahead of Tracks A/B (both blocked on the audit API key). Signed-out gates verified (403 JSON / redirect); signed-in flows need a staff-session test |
 | BL-44 | **Structured arc editor** | M | done | `3f0162d` 2026-07-31. Intent text / required / mode / reorder / add / remove-with-warning; existing keys locked, new keys snake_case-normalized; server validates and serializes. Needs a staff-session test alongside BL-43 |
