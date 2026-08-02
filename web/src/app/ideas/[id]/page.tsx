@@ -6,17 +6,16 @@ import ArtifactActions from "@/components/ArtifactActions";
 import ArtifactPicker from "@/components/ArtifactPicker";
 import ChatPanel from "@/components/ChatPanel";
 import CoverEditor from "@/components/CoverEditor";
-import DeckCollapse from "@/components/DeckCollapse";
+import DeckCollapse, { type DeckPip } from "@/components/DeckCollapse";
 import RailSection from "@/components/RailSection";
 import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
-import SignalMap from "@/components/SignalMap";
-import SignalPanel from "@/components/SignalPanel";
+import SignalNest, { type TopicSignal } from "@/components/SignalNest";
 import VisibilityMenu from "@/components/VisibilityMenu";
 import WalletChip from "@/components/WalletChip";
 import { Icons } from "@/components/icons";
 import { Card, Pill, SectionLabel, StageBadge, Bucks, Empty } from "@/components/ui";
-import { briefGate, topicCounts, type Brief } from "@/lib/agent";
+import { briefGate, SIGNAL_TOPICS, type Brief } from "@/lib/agent";
 import { clerkEnabled } from "@/lib/clerk";
 import { callTool } from "@/lib/mcp";
 
@@ -60,6 +59,7 @@ interface MemoryRow {
     intent_key?: string;
     kind?: string;
     entities?: string[];
+    created_at?: string;
   };
 }
 interface ActivityRow {
@@ -163,7 +163,7 @@ export default async function IdeaHub({
         { field: "idea", op: "eq", value: id },
         { field: "superseded", op: "ne", value: true },
       ],
-      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat", "intent_key", "kind", "entities"],
+      select: ["content", "verbatim", "feeds", "topic", "source_type", "source_label", "chat", "intent_key", "kind", "entities", "created_at"],
       limit: 200,
     }),
     callTool<{ entries: ActivityRow[] }>("query_entries", {
@@ -190,7 +190,36 @@ export default async function IdeaHub({
 
   const brief = idea.data.brief ?? {};
   const gate = briefGate(brief);
-  const counts = topicCounts(memories.entries.map((m) => ({ topic: m.data.topic })));
+  // Per-topic rows for the signals widget: the count, plus the newest thing the
+  // founder said on that topic (their words, which chat, when) — and for silent
+  // topics, the question that would open them.
+  const NUDGE: Record<string, string> = {
+    problem: "What's broken, and who feels it?",
+    customer: "Who exactly is this for?",
+    product: "What does it actually do?",
+    design: "How should it feel to use?",
+    brand: "What's it called, and how should it feel?",
+    pricing: "Who pays, and what for?",
+    gtm: "Where do these people already gather?",
+    competition: "Who else already serves them?",
+    tech: "What has to be built or integrated?",
+    risk: "What could kill this?",
+  };
+  const signalTopics: TopicSignal[] = SIGNAL_TOPICS.map((topic) => {
+    const mine = memories.entries.filter((m) => m.data.topic === topic);
+    const newest = mine.reduce<(typeof mine)[number] | undefined>(
+      (best, m) => (!best || (m.data.created_at ?? "") > (best.data.created_at ?? "") ? m : best),
+      undefined,
+    );
+    return {
+      topic,
+      count: mine.length,
+      latest: newest
+        ? { content: newest.data.verbatim?.trim() || newest.data.content, chat: newest.data.chat?.label, when: ago(newest.data.created_at) }
+        : undefined,
+      nudge: NUDGE[topic],
+    };
+  });
   // The brief is live state shown separately; the panel lists the real generated docs.
   const generatedArtifacts = artifacts.entries.filter((a) => !a.data.is_brief && a.data.type !== "brief");
   const listing = listings.entries[0] ?? null;
@@ -299,8 +328,18 @@ export default async function IdeaHub({
     .map((c) => coverage(c.data.template_key))
     .filter((x): x is { covered: number; total: number } => x !== null);
   const deckSummary = `${arcsWithCoverage.filter((x) => x.covered >= x.total).length}/${arcsWithCoverage.length} covered`;
+  const settledIntents = arcsWithCoverage.reduce((n, x) => n + x.covered, 0);
+  const totalIntents = arcsWithCoverage.reduce((n, x) => n + x.total, 0);
+  const deckPips: DeckPip[] = orderedChats.map((c) => {
+    const cov = coverage(c.data.template_key);
+    return {
+      state: (!cov ? "none" : cov.covered >= cov.total ? "done" : cov.covered > 0 ? "part" : "none") as DeckPip["state"],
+      here: activeChat?.id === c.id,
+      label: c.data.title,
+    };
+  });
   const chatDeck = (
-    <DeckCollapse count={chatList.length} summary={deckSummary}>
+    <DeckCollapse count={chatList.length} summary={deckSummary} pips={deckPips} here={activeChat?.data.title}>
       <div style={{ display: "flex", gap: 9, padding: "0 24px 15px", overflowX: "auto" }}>
         {orderedChats.map((c) => (
           <Link
@@ -312,11 +351,16 @@ export default async function IdeaHub({
           >
             <span className="cc-ic">{deckTemplates.get(c.data.template_key ?? "")?.icon ?? "◆"}</span>
             <b>{c.data.title}</b>
+            {/* Description AND coverage — showing only one left arc'd chats with
+                no explanation of what they're for (BL-71). */}
+            <span className="cc-sub">{deckSub(c.data.template_key)}</span>
             {(() => {
               const cov = coverage(c.data.template_key);
+              if (!cov) return null;
+              const done = cov.covered >= cov.total;
               return (
-                <span className="cc-sub" style={cov && cov.covered >= cov.total ? { color: "var(--success-text)" } : undefined}>
-                  {cov ? (cov.covered >= cov.total ? "✓ covered" : `${cov.covered}/${cov.total} covered`) : deckSub(c.data.template_key)}
+                <span className="cc-cov mono" style={{ color: done ? "var(--success-text)" : "var(--accent-text)" }}>
+                  {done ? "✓ covered" : `${cov.covered}/${cov.total} covered`}
                 </span>
               );
             })()}
@@ -336,13 +380,6 @@ export default async function IdeaHub({
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
             <h1 style={{ fontSize: 21, margin: 0, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>{idea.data.name}</h1>
-            {/* The quick pitch stays NEXT TO the brand name everywhere — a name
-                like "Cakefinder" doesn't say what it is; the tagline does. */}
-            {idea.data.one_liner && (
-              <span className="muted" style={{ fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                — {idea.data.one_liner}
-              </span>
-            )}
             <StageBadge stage={idea.data.stage} />
           </div>
           <div style={{ flex: 1 }} />
@@ -354,6 +391,13 @@ export default async function IdeaHub({
             <UserButton />
           </div>
         </div>
+        {/* The pitch sits on its own quiet line — beside the name it crowded the
+            header and truncated hard on narrow windows. */}
+        {idea.data.one_liner && (
+          <div className="muted" style={{ fontSize: 12.5, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {idea.data.one_liner}
+          </div>
+        )}
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
@@ -447,6 +491,34 @@ export default async function IdeaHub({
                     {idea.data.description}
                   </p>
                 )}
+                {/* Where the idea stands, before what to do about it. */}
+                <div className="hub-stats" style={{ marginBottom: 20 }}>
+                  <div className="hub-stat">
+                    <span className="hs-dot" style={{ background: gate.open ? "var(--success)" : "var(--border-strong)", boxShadow: gate.open ? "0 0 0 4px var(--success-soft)" : "none" }} />
+                    <div>
+                      <b>{gate.open ? "Open" : "Not yet"}</b>
+                      <div className="hs-lab">Build gate</div>
+                    </div>
+                  </div>
+                  <div className="hub-stat">
+                    <div>
+                      <b>{settledIntents}<span className="faint" style={{ fontSize: 13 }}>/{totalIntents}</span></b>
+                      <div className="hs-lab">Intents settled</div>
+                    </div>
+                  </div>
+                  <div className="hub-stat">
+                    <div>
+                      <b>{memories.entries.length}</b>
+                      <div className="hs-lab">Memories</div>
+                    </div>
+                  </div>
+                  <div className="hub-stat">
+                    <div>
+                      <b>{brief.open_questions?.length ?? 0}</b>
+                      <div className="hs-lab">{(brief.open_questions?.length ?? 0) === 1 ? "Open question" : "Open questions"}</div>
+                    </div>
+                  </div>
+                </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px" }}>
                   <SectionLabel>Your conversations · {orderedChats.length}</SectionLabel>
                   <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
@@ -541,6 +613,14 @@ export default async function IdeaHub({
                     })}
                   </RailSection>
                   <div style={{ height: 1, background: "var(--border)" }} />
+                  <div style={{ padding: "15px 18px" }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 10, display: "flex", alignItems: "baseline", gap: 8 }}>
+                      Signals
+                      <span className="faint" style={{ fontSize: 11, fontWeight: 400 }}>what your idea knows</span>
+                    </div>
+                    <SignalNest topics={signalTopics} total={memories.entries.length} />
+                  </div>
+                  <div style={{ height: 1, background: "var(--border)" }} />
                   <RailSection
                     title={<><Icons.brain size={15} /> Memory</>}
                     hint={`${memories.entries.length} captured`}
@@ -592,12 +672,7 @@ export default async function IdeaHub({
                       ))}
                     </div>
                   </RailSection>
-                  <div style={{ height: 1, background: "var(--border)" }} />
-                  <div style={{ padding: "16px 18px" }}>
-                    <SignalPanel hasSignal={Object.values(counts).some((n) => n > 0)}>
-                      <SignalMap counts={counts} />
-                    </SignalPanel>
-                  </div>
+
                 </Card>
               </aside>
             </div>

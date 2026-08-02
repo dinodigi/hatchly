@@ -300,3 +300,62 @@ input, textarea { font: inherit; color: inherit; }
   .feed-stats { width: 100%; justify-content: flex-end; padding: 0 18px 14px !important; }
   .wallet-summary { grid-template-columns: 1fr !important; }
 }
+
+/* ---- signals widget (Option K) — bars filling toward "properly explored" ---- */
+.signest { display: flex; flex-direction: column; }
+.snest-head { display: flex; align-items: center; gap: 11px; padding: 0 0 11px; border-bottom: 1px dashed var(--border); margin-bottom: 9px; }
+.snest-egg { width: 28px; height: 35px; flex: none; border-radius: 50% 50% 50% 50%/60% 60% 42% 42%;
+  background: radial-gradient(circle at 32% 26%, #FFF3D8 0 16%, transparent 42%), linear-gradient(160deg, #F0C36A, var(--accent));
+  box-shadow: 0 5px 12px -6px rgba(184,130,10,0.5); }
+.snest-tot { display: grid; gap: 1px; min-width: 0; }
+.snest-tot b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.snest-tot span { font-size: 11px; color: var(--text-muted); }
+.snest-row { display: flex; align-items: center; gap: 9px; padding: 4px 0; border-radius: 7px; transition: background 130ms ease; }
+.snest-row:hover { background: var(--accent-softer); }
+.snest-egglet { position: relative; width: 11px; height: 14px; flex: none; overflow: hidden;
+  border-radius: 50% 50% 50% 50%/60% 60% 42% 42%; border: 1.2px solid var(--accent); background: var(--surface-raised); }
+.snest-egglet i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #F0C36A, var(--accent)); }
+.snest-row.zero .snest-egglet { border-color: var(--border-strong); border-style: dashed; }
+.snest-name { width: 76px; flex: none; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10.5px; color: var(--text-secondary); }
+.snest-row.zero .snest-name { color: var(--text-muted); }
+.snest-track { flex: 1; height: 7px; border-radius: 99px; background: var(--surface); overflow: hidden; }
+.snest-row.zero .snest-track { background: none; border: 1px dashed var(--border); }
+.snest-fill { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #F0C36A, var(--accent)); }
+.snest-row.full .snest-fill { background: linear-gradient(90deg, #E8B454, var(--accent)); }
+.snest-num { width: 14px; flex: none; text-align: right; font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.snest-row.full .snest-num { color: var(--accent-text); font-weight: 700; }
+.snest-div { margin: 9px 0 4px; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+.snest-latest { margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--border); display: grid; gap: 4px; }
+.snest-lk { font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+.snest-lq { margin: 0; font-size: 12.5px; font-style: italic; color: var(--text-primary); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.snest-lm { font-size: 11px; color: var(--text-muted); }
+.snest-lm b { color: var(--accent-text); font-weight: 600; }
+.sig-empty-egg { width: 32px; height: 41px; margin: 4px auto 0; border-radius: 50% 50% 50% 50%/60% 60% 42% 42%;
+  border: 1.5px dashed var(--text-muted); opacity: 0.7; }
+
+/* ---- hub stat tiles ---- */
+.hub-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.hub-stat { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+  padding: 11px 14px; display: flex; align-items: center; gap: 11px; box-shadow: var(--shadow-card); }
+.hub-stat b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.hub-stat .hs-lab { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+.hub-stat .hs-dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+
+/* ---- collapsed chat deck: a closed drawer, not a divider ---- */
+.deck-bar { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 24px; padding: 7px 12px;
+  border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer;
+  font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.09em;
+  color: var(--text-secondary); font-weight: 500; text-align: left; transition: background 150ms ease, border-color 150ms ease; }
+.deck-bar:hover { background: var(--surface); }
+.deck-bar[data-open="false"] { background: var(--surface); border-color: var(--border); color: var(--text-primary); }
+.deck-bar .db-here { color: var(--accent-text); font-weight: 600; }
+.deck-pips { display: flex; gap: 4px; margin-left: 4px; flex: none; }
+.deck-pip { width: 15px; height: 4px; border-radius: 99px; background: var(--border-strong); }
+.deck-pip.done { background: var(--success); }
+.deck-pip.part { background: var(--accent); opacity: 0.5; }
+.deck-pip.here { background: var(--accent); opacity: 1; box-shadow: 0 0 0 2.5px var(--accent-soft); }
+.deck-bar .db-act { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--text-muted); flex: none; }
+.deck-bar[data-open="false"] .db-act { color: var(--accent-text); }
+@media (max-width: 820px) { .deck-pips { display: none; } }
