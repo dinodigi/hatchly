@@ -10,6 +10,7 @@ import DeckCollapse, { type DeckPip } from "@/components/DeckCollapse";
 import RailSection from "@/components/RailSection";
 import GateChecklist, { GATE_HELP } from "@/components/GateChecklist";
 import NewIdeaButton from "@/components/NewIdeaButton";
+import SettleCard from "@/components/SettleCard";
 import SignalNest, { type TopicSignal } from "@/components/SignalNest";
 import VisibilityMenu from "@/components/VisibilityMenu";
 import WalletChip from "@/components/WalletChip";
@@ -328,6 +329,23 @@ export default async function IdeaHub({
     .map((c) => coverage(c.data.template_key))
     .filter((x): x is { covered: number; total: number } => x !== null);
   const deckSummary = `${arcsWithCoverage.filter((x) => x.covered >= x.total).length}/${arcsWithCoverage.length} covered`;
+  // The one thing worth settling next: the first unresolved REQUIRED intent in
+  // pitch order. Real question, real owner chat — nothing generated (BL-67).
+  const nextUnsettled = (() => {
+    for (const c of orderedChats) {
+      const raw = c.data.template_key ? deckTemplates.get(c.data.template_key)?.question_arc : undefined;
+      if (!raw) continue;
+      let arc: { key: string; intent: string; required?: boolean }[] = [];
+      try {
+        arc = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      const open = arc.find((a) => a?.required && a.key && !answeredIntents.has(a.key));
+      if (open) return { chat: c, intentKey: open.key, question: open.intent };
+    }
+    return null;
+  })();
   const settledIntents = arcsWithCoverage.reduce((n, x) => n + x.covered, 0);
   const totalIntents = arcsWithCoverage.reduce((n, x) => n + x.total, 0);
   const deckPips: DeckPip[] = orderedChats.map((c) => {
@@ -519,6 +537,18 @@ export default async function IdeaHub({
                     </div>
                   </div>
                 </div>
+                {nextUnsettled && (
+                  <div style={{ marginBottom: 20 }}>
+                    <SettleCard
+                      ideaId={id}
+                      chatId={nextUnsettled.chat.id}
+                      chatTitle={nextUnsettled.chat.data.title}
+                      intentKey={nextUnsettled.intentKey}
+                      question={nextUnsettled.question}
+                      chatHref={href({ tab: "chats", chat: nextUnsettled.chat.id })}
+                    />
+                  </div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px" }}>
                   <SectionLabel>Your conversations · {orderedChats.length}</SectionLabel>
                   <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>

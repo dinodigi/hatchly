@@ -442,3 +442,18 @@ input, textarea { font: inherit; color: inherit; }
   .hatch-bar i, .egg-dots span, .egg-busy { animation: none; }
   .hatch-cta { opacity: 1; transform: none; }
 }
+
+/* ---- "one thing to settle": the co-founder initiating (BL-67) ---- */
+.settle-card { border: 1px solid var(--accent); border-radius: 14px; padding: 14px 17px;
+  background: linear-gradient(180deg, var(--accent-softer), var(--surface-raised) 85%); box-shadow: var(--shadow-card); }
+.settle-k { font-size: 9.5px; letter-spacing: 0.11em; text-transform: uppercase; font-weight: 700; color: var(--accent-text); }
+.settle-q { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; margin: 6px 0 4px;
+  font-size: 19px; line-height: 1.3; text-wrap: balance; }
+.settle-why { font-size: 12px; color: var(--text-secondary); margin: 0 0 11px; }
+.settle-row { display: flex; gap: 8px; align-items: center; }
+.settle-row .field { flex: 1; padding: 9px 12px; font-size: 13.5px; }
+.settle-err { font-size: 12px; color: var(--danger-text); margin: 8px 0 0; }
+.settle-foot { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+.settle-not-now { color: var(--text-muted); background: none; border: none; padding: 0; font-size: 12px; cursor: pointer; }
+.settle-not-now:hover { color: var(--text-secondary); }
+.settle-done { font-size: 13.5px; color: var(--success-text); font-weight: 500; margin: 8px 0 0; }
