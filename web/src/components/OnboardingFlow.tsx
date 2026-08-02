@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useMemo, useState } from "react";
+import HatchCeremony from "./HatchCeremony";
 import type { OnboardingQuestion } from "@/lib/onboarding";
 
 /* The dedicated idea-onboarding step: the founder's sentence, then the templated
@@ -24,6 +25,9 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
   const [i, setI] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The workspace id lands here when the API returns — the hatch ceremony
+  // holds on its last scene until it does, so the payoff is never cut off.
+  const [newIdeaId, setNewIdeaId] = useState<string | null>(null);
 
   // Re-evaluate visible steps whenever answers change (conditional questions).
   const steps = useMemo(() => questions.filter((q) => shows(q, answers)), [questions, answers]);
@@ -35,6 +39,10 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
   const setAnswer = (q: OnboardingQuestion, v: unknown) => setAnswers((a) => ({ ...a, [keyOf(q)]: v }));
 
   const advance = () => setI((n) => n + 1);
+
+  const enterWorkspace = useCallback(() => {
+    if (newIdeaId) router.push(`/ideas/${newIdeaId}`);
+  }, [newIdeaId, router]);
 
   const submit = async (finalAnswers: Record<string, unknown>) => {
     if (busy) return;
@@ -52,7 +60,7 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
         return;
       }
       if (!res.ok || !json.id) throw new Error(json.error ?? "Couldn't create the idea. Please try again.");
-      router.push(`/ideas/${json.id}`);
+      setNewIdeaId(json.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
       setBusy(false);
@@ -64,16 +72,7 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
     return (
       <div style={{ textAlign: "center", padding: "20px 0" }}>
         {busy ? (
-          <>
-            {/* The hatch — the moment between answering and landing in the workspace. */}
-            <div className="hatch-stage" aria-hidden="true">
-              <span className="hatch-ring" />
-              <span className="hatch-ring hatch-ring2" />
-              <span className="hatch-egg">🥚</span>
-            </div>
-            <div className="serif" style={{ fontSize: 26, fontStyle: "italic", margin: "18px 0 8px" }}>Hatching your workspace…</div>
-            <p className="muted" style={{ fontSize: 14 }}>Naming your idea and preparing your conversations.</p>
-          </>
+          <HatchCeremony ready={!!newIdeaId} onEnter={enterWorkspace} />
         ) : (
           <>
             <div className="serif" style={{ fontSize: 27, marginBottom: 10 }}>I think I&apos;ve got it.</div>

@@ -177,8 +177,10 @@ export default function ChatPanel({
           <div className="col gap4">
             <div className="row gap8">
               <span className="avatar avatar-ai" style={{ width: 26, height: 26, fontSize: 12 }}>H</span>
-              <span className="typing-dots" style={{ padding: "12px 0" }}>
-                <i /><i /><i />
+              {/* If Hatchly is working, an egg is working — the loader language
+                  is the product's own motif, never a generic spinner. */}
+              <span className="egg-dots" style={{ padding: "12px 0" }} aria-label="Your co-founder is thinking">
+                <span /><span /><span />
               </span>
             </div>
             {/* First-open initiation runs a full first take — without this line an
@@ -232,7 +234,7 @@ export default function ChatPanel({
           style={{ flex: 1 }}
         />
         <button className="btn btn-primary" disabled={busy || !input.trim()} onClick={() => send()}>
-          Send
+          {busy ? <span className="egg-busy" /> : "Send"}
         </button>
       </div>
       <p className="faint" style={{ fontSize: 11.5, textAlign: "center", margin: "8px 0 0" }}>
