@@ -38,6 +38,27 @@ moment in production — read a brief-fill dip against the degenerate-past-retry
 count before blaming a change (bit us on run `18-35-52`: problem t4 died
 twice, who/value never landed; the sibling run filled everything).
 
+## Re-test (fresh idea, post-fixes): 5 of 7 fix areas PASS
+
+Verdict: "closer to 'a partner with an occasional stutter' than 'a form
+filling itself out'". PASS: Activity integrity (33/33 clean — run 1's worst
+offender), Draft problem replaced end-to-end (BL-64 verified), contradiction
+never re-litigated + collapsed to ONE resolved fact (BL-66 verified), zero
+"took too long" in 24 exchanges (BL-62 verified), every settled chat ended
+with a next move (BL-60 half), zero fabrications/dupes in the memory audit.
+FAIL: (1) two garbled bubbles — a NEW `{fragment}` signature that threads all
+four BL-65 regexes → **BL-68**; word-mangling ("premury") is below the
+detection floor, watched residual. (2) "Settled" declared twice at 2/3 —
+third strike for prompt tuning → mechanical status injection, **BL-69**.
+New finding: speculative competitor ("Territory Foods") presented with
+founder-fact confidence → **BL-70**.
+
+Protect list additions (retro "Worked"): contradiction flow end-to-end
+(quote both → positioning implication → resolve → never resurface); real
+numbers on "help me figure it out" ($4.50–6.50, 35–45%); the founder's own
+phrasing ("group chat and whiteboard chaos") resurfacing unprompted across
+three chats — "the single best evidence this thing is actually listening."
+
 Healthy signals worth protecting, same run: The problem / What you're building /
 How it makes money all reached **✓ covered** (BL-60's recorded-resolution fix
 visibly working); replies anchoring price against Factor/Trifecta (six-part
