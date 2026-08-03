@@ -551,11 +551,12 @@ export default async function IdeaHub({
                 )}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 6px" }}>
                   <SectionLabel>Your conversations · {orderedChats.length}</SectionLabel>
-                  <span className="faint" style={{ fontSize: 12 }}>Work through them in order</span>
+                  <span className="faint" style={{ fontSize: 12 }}>Any order works — this one builds on itself</span>
                 </div>
                 <p className="muted" style={{ fontSize: 13, lineHeight: 1.55, margin: "0 0 14px" }}>
-                  Each one fills a part of your idea. Open one and it starts itself — you land on
-                  a first take you can push back on.
+                  Each one fills a part of your idea and they all share one memory, so a later
+                  chat already knows what an earlier one learned. Open any of them and it starts
+                  itself — you land on a first take you can push back on.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {orderedChats.map((c, i) => {

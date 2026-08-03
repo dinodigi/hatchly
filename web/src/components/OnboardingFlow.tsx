@@ -72,7 +72,11 @@ export default function OnboardingFlow({ questions }: { questions: OnboardingQue
     return (
       <div style={{ textAlign: "center", padding: "20px 0" }}>
         {busy ? (
-          <HatchCeremony ready={!!newIdeaId} onEnter={enterWorkspace} />
+          // The ceremony owns the screen — centred in the viewport rather than
+          // stacked under the wizard's header, which left it sitting high.
+          <div className="hatch-screen">
+            <HatchCeremony ready={!!newIdeaId} onEnter={enterWorkspace} />
+          </div>
         ) : (
           <>
             <div className="serif" style={{ fontSize: 27, marginBottom: 10 }}>I think I&apos;ve got it.</div>

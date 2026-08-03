@@ -457,3 +457,7 @@ input, textarea { font: inherit; color: inherit; }
 .settle-not-now { color: var(--text-muted); background: none; border: none; padding: 0; font-size: 12px; cursor: pointer; }
 .settle-not-now:hover { color: var(--text-secondary); }
 .settle-done { font-size: 13.5px; color: var(--success-text); font-weight: 500; margin: 8px 0 0; }
+
+/* The hatch owns the viewport while it runs — centred, above the wizard. */
+.hatch-screen { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  padding: 24px; background: var(--background); animation: fadeIn 260ms ease; }
